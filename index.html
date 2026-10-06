@@ -318,6 +318,14 @@ GONFLETTE.registerGame = def => { GONFLETTE.games.push(def); };
 <script src="games/pong.js"></script>
 <script src="games/dessine.js"></script>
 <script src="games/motinterdit.js"></script>
+<script src="games/bataille.js"></script>
+<script src="games/brasdefer.js"></script>
+<script src="games/morpion.js"></script>
+<script src="games/reflexes.js"></script>
+<script src="games/developpe.js"></script>
+<script src="games/uno.js"></script>
+<script src="games/undercover.js"></script>
+<script src="games/petitbac.js"></script>
 <script>
 (() => {
 "use strict";
@@ -325,8 +333,8 @@ const G = window.GONFLETTE, A = G.avatar;
 const $ = id => document.getElementById(id);
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
-const GAME_COLORS = ["#e63946", "#3a86ff", "#2a9d8f", "#8338ec", "#fb8500", "#ff006e"];
-const GAMES = G.games.slice(0, 6).map((g, i) => Object.assign({color: GAME_COLORS[i % GAME_COLORS.length]}, g));
+const GAME_COLORS = ["#e63946", "#3a86ff", "#2a9d8f", "#8338ec", "#fb8500", "#ff006e", "#06a77d", "#f15bb5", "#4361ee", "#ff7b00", "#9b5de5", "#00b4d8", "#d62828", "#80b918"];
+const GAMES = G.games.slice(0, 16).map((g, i) => Object.assign({color: GAME_COLORS[i % GAME_COLORS.length]}, g));
 const gameById = id => GAMES.find(g => g.id === id);
 
 /* ---------- profil (sur cet appareil) ---------- */
@@ -509,8 +517,13 @@ function hostTick() {
       const hp = peers.find(p => p.peer === M.h);
       const fin = hp && hp.presence.fin;
       if (fin && fin.mid === mid) { ms[mid] = Object.assign({}, M, {ph: "results", at: now, res: gainsFor(M, fin.res || {})}); changed = true; continue; }
-      const present = M.pl.filter(k => here.has(k)).length;
-      if (!here.has(M.h) || present < (g ? g.min : 2)) { delete ms[mid]; changed = true; continue; }
+      const stay = M.pl.filter(k => here.has(k));
+      if (!here.has(M.h) || stay.length < (g ? g.min : 2)) {
+        // Un joueur est parti : ceux qui restent gagnent par forfait (s'il en reste), sinon la partie est annulée.
+        if (stay.length) { ms[mid] = Object.assign({}, M, {ph: "results", at: now, res: gainsFor(M, {winners: stay, ranking: stay, summary: "Victoire par forfait : l'adversaire a quitté la partie."})}); }
+        else delete ms[mid];
+        changed = true; continue;
+      }
     }
     if (M.ph === "chosen" && M.pl.filter(k => here.has(k)).length < (g ? g.min : 2)) { delete ms[mid]; changed = true; continue; }
     if (M.ph === "results" && now - M.at > 11000) { delete ms[mid]; changed = true; }
@@ -592,8 +605,10 @@ const scene = $("scene"), floor = $("floor");
 let tileEls = [], inLobby = false;
 function tileRects() {
   const n = GAMES.length, portrait = scene.clientWidth < scene.clientHeight;
-  const cols = portrait ? 2 : 3, rows = Math.ceil(n / cols);
-  const padX = .06, padTop = .06, padBot = .2, gapX = .05, gapY = .08;
+  // 6 jeux : 2×3 / 3×2 ; 14 jeux : 3×5 en portrait, 5×3 en paysage
+  const cols = n <= 6 ? (portrait ? 2 : 3) : n <= 9 ? 3 : portrait ? 3 : Math.ceil(n / 3), rows = Math.ceil(n / cols);
+  const dense = n > 6;
+  const padX = dense ? .04 : .06, padTop = dense ? .04 : .06, padBot = dense ? .12 : .2, gapX = dense ? .03 : .05, gapY = dense ? .045 : .08;
   const w = (1 - padX * 2 - gapX * (cols - 1)) / cols, h = (1 - padTop - padBot - gapY * (rows - 1)) / rows;
   return GAMES.map((g, i) => ({g, x: padX + (i % cols) * (w + gapX), y: padTop + Math.floor(i / cols) * (h + gapY), w, h}));
 }
