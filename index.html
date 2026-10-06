@@ -449,6 +449,11 @@ async function boot() {
 }
 function presenceObj() {
   const o = {ps: profile.pseudo || null, lk: profile.look, xp: profile.xp, x: +me.x.toFixed(3), y: +me.y.toFixed(3), v: me.vote, ja: me.ja, ed: editing || !inLobby ? 1 : 0, f: me.facing, w: me.walking ? 1 : 0};
+  // La disposition des carrés dépend de l'écran (2 ou 3 colonnes) : sur un carré, on envoie la position
+  // RELATIVE à ce carré (t = id du jeu, u/q = position dans le carré) pour que tout le monde nous voie au bon endroit.
+  const tl = inLobby && tileEls.length ? tileAt(me.x, me.y) : null;
+  if (tl) { o.t = tl.r.g.id; o.u = +((me.x - tl.r.x) / tl.r.w).toFixed(3); o.q = +((me.y - tl.r.y) / tl.r.h).toFixed(3); }
+  else { o.t = null; o.u = null; o.q = null; }
   o.st = mySt || null;
   o.fin = myFin || null;
   return o;
@@ -460,6 +465,22 @@ function pushPresence() {
   if (now - lastPresenceSent > 90) send(); else if (!presenceTimer) presenceTimer = setTimeout(send, 90);
 }
 const players = () => peers.filter(p => p.presence && p.presence.ps);
+// Position d'un autre joueur dans MA disposition : sur un carré, on le replace sur le même jeu chez moi.
+// Hors carré, sa position libre est gardée, mais on l'écarte des carrés pour qu'il ne semble pas sur un autre jeu.
+function posOf(pr) {
+  if (pr.t && typeof pr.u === "number" && typeof pr.q === "number") {
+    const t = tileEls.find(e => e.r.g.id === pr.t);
+    if (t) return [t.r.x + Math.max(.05, Math.min(.95, pr.u)) * t.r.w, t.r.y + Math.max(.05, Math.min(.95, pr.q)) * t.r.h];
+  }
+  if (typeof pr.x !== "number" || typeof pr.y !== "number") return [null, null];
+  let x = pr.x, y = pr.y;
+  const t = tileAt(x, y);
+  if (t) { // tombe sur un carré chez moi alors qu'il n'est sur aucun : on le pousse juste au bord le plus proche
+    const dl = x - t.r.x, dr = t.r.x + t.r.w - x, du = y - t.r.y, dd = t.r.y + t.r.h - y, m = Math.min(dl, dr, du, dd);
+    if (m === dl) x = t.r.x - .015; else if (m === dr) x = t.r.x + t.r.w + .015; else if (m === du) y = t.r.y - .015; else y = t.r.y + t.r.h + .015;
+  }
+  return [x, y];
+}
 function hostPeer() {
   const ps = players().slice().sort((a, b) => (a.presence.ja - b.presence.ja) || (a.peer < b.peer ? -1 : 1));
   return ps[0] ? ps[0].peer : null;
@@ -647,7 +668,7 @@ function renderEntities() {
     const host = hostPeer(), list = [];
     for (const p of players()) {
       const pr = p.presence, isMe = p.peer === myPeer;
-      const x = isMe ? me.x : pr.x, y = isMe ? me.y : pr.y;
+      const [ox, oy] = isMe ? [me.x, me.y] : posOf(pr); const x = ox, y = oy;
       if (typeof x !== "number" || typeof y !== "number") continue;
       const xp = isMe ? profile.xp : pr.xp || 0, BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
       list.push({key: p.peer, x, y, svg: cachedSvg(isMe ? profile.look : pr.lk, xp), name: pr.ps, sub: BM ? "🎮 " + (bg ? bg.name : "en partie") : A.tier(xp).name,
@@ -662,7 +683,7 @@ function renderEntities() {
   const live = new Set();
   for (const p of players()) {
     const pr = p.presence, isMe = p.peer === myPeer;
-    const x = isMe ? me.x : pr.x, y = isMe ? me.y : pr.y;
+    const [ox, oy] = isMe ? [me.x, me.y] : posOf(pr); const x = ox, y = oy;
     if (typeof x !== "number" || typeof y !== "number") continue;
     live.add(p.peer);
     let e = entEls.get(p.peer);
