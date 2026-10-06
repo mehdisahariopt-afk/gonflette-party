@@ -638,7 +638,8 @@ function init3D() {
   catch (e) { console.warn("3D indisponible", e); s3d = null; }
   syncBtn3D();
 }
-function stop3D() { if (s3d) { try { s3d.destroy(); } catch (e) {} s3d = null; window.__s3d = null; scene.classList.remove("three"); } syncBtn3D(); }
+let inGame = false;
+function stop3D(keep) { if (s3d) { try { s3d.destroy(); } catch (e) {} s3d = null; window.__s3d = null; scene.classList.remove("three"); } syncBtn3D(); }
 function syncBtn3D() { const b = $("btn-3d"); const ok = !!(G.scene3d && G.scene3d.supported); b.hidden = !ok; b.setAttribute("aria-pressed", !!s3d); b.textContent = s3d ? "3D" : "2D"; }
 $("btn-3d").addEventListener("click", () => {
   want3D = !s3d; try { localStorage.setItem("gonflette-3d", want3D ? "1" : "0"); } catch (e) {}
@@ -648,7 +649,7 @@ $("btn-3d").addEventListener("click", () => {
 let lastFrame = performance.now();
 function frame(now) {
   const dt = Math.min(.05, (now - lastFrame) / 1000); lastFrame = now;
-  if (inLobby) {
+  if (inLobby && !inGame) {
     const dx = me.tx - me.x, dy = me.ty - me.y, d = Math.hypot(dx, dy * .8);
     const wasWalking = me.walking;
     if (d > .004) {
@@ -766,7 +767,7 @@ function renderMe() {
   $("me-lvl").textContent = `${t.name} · ${profile.xp} XP`;
   $("me-xp").style.width = (t.to ? (profile.xp - t.from) / (t.to - t.from) * 100 : 100) + "%";
 }
-function renderLobby() { renderNet(); if (!inLobby) return; renderEntities(); renderTiles(); renderAction(); renderRoster(); }
+function renderLobby() { renderNet(); if (!inLobby || inGame) return; renderEntities(); renderTiles(); renderAction(); renderRoster(); }
 function renderAll() { renderMe(); renderLobby(); }
 function enterLobby() {
   inLobby = true; show("scr-lobby"); layoutTiles(); init3D(); renderAll(); pushPresence();
@@ -825,6 +826,8 @@ async function mountGame(M) {
   const layer = $("game-layer"), root = $("game-root");
   root.innerHTML = "";
   layer.classList.remove("hidden");
+  // Pendant une partie, le lobby (décor 3D compris) est complètement arrêté : toute la puissance va au jeu.
+  inGame = true; stop3D(true); $("scr-lobby").classList.add("hidden");
   $("game-title").textContent = def.name;
   $("game-who").innerHTML = M.pl.length === 2 ? `<span class="spec" style="background:var(--panel);border:2px solid var(--line)">${esc(M.ro[M.pl[0]].p)} vs ${esc(M.ro[M.pl[1]].p)}</span>` : "";
   const offs = [];
@@ -867,6 +870,7 @@ function unmountGame() {
   mounted = null;
   $("game-layer").classList.add("hidden");
   $("game-root").innerHTML = "";
+  if (inGame) { inGame = false; if (inLobby) { $("scr-lobby").classList.remove("hidden"); layoutTiles(); init3D(); renderAll(); } }
 }
 
 requestAnimationFrame(frame);

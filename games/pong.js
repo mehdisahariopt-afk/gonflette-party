@@ -445,7 +445,7 @@ GONFLETTE.registerGame({
     function hostLoop() {
       const now = performance.now();
       let d = lastHT ? (now - lastHT) / 1000 : 0; lastHT = now;
-      if (d > 0.2) d = 0.2;
+      if (d > 0.5) d = 0.5; // un petit coup de mou est rattrapé au lieu de ralentir la partie
       acc += d;
       while (acc >= TICK) { acc -= TICK; hostStep(TICK); }
       if (now - lastPub >= (H.ph === "o" ? 250 : PUB_MS) - 2) { lastPub = now; publish(); }
@@ -481,7 +481,8 @@ GONFLETTE.registerGame({
         if (s.k < buf[buf.length - 1].s.k - 600) { buf.length = 0; offset = null; } else return;
       }
       const sample = nowS() - t;
-      if (offset === null || sample < offset) offset = sample; else offset += (sample - offset) * 0.02;
+      // décalage horloge : suit vite les avances, et assez vite les retards pour ne pas figer puis téléporter la balle
+      if (offset === null || sample < offset) offset = sample; else offset += (sample - offset) * 0.08;
       buf.push({t, s});
       if (buf.length > 60) buf.splice(0, buf.length - 60);
       for (const e of s.v || []) if (e[0] > lastEvQueued) { evQueue.push(e); lastEvQueued = e[0]; }
@@ -497,7 +498,7 @@ GONFLETTE.registerGame({
       const A = buf[i], B = buf[i + 1];
       let f = 0, ext = 0;
       if (B && rt > A.t) f = clamp((rt - A.t) / (B.t - A.t), 0, 1);
-      else if (!B) ext = clamp(rt - A.t, 0, 0.1);
+      else if (!B) ext = clamp(rt - A.t, 0, 0.25); // si un paquet tarde, la balle continue sur sa lancée
       const a = A.s, bS = B ? B.s : null;
       const balls = [];
       const bIdx = {};
