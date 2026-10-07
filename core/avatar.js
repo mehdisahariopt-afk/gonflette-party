@@ -198,7 +198,16 @@
     return s;
   }
 
-  // Plus il est musclé, plus le perso prend de place à l'écran : ×1 (Crevette) → ×1,45 (Montagne) → ×1,75 (Titan).
-  function size(xp) { const m = muscle(xp); return 1 + .45 * Math.min(m, 1) + .3 * Math.max(0, m - 1) / .35; }
+  // Plus il est musclé, plus le perso prend de place à l'écran :
+  // ×1 Crevette (0 XP) → ×2 Costaud (700) → ×4 Montagne (1 500) → ×8 Titan démesuré (2 000 XP et plus).
+  const SIZE_STEPS = [[0, 1], [700, 2], [1500, 4], [2000, 8]];
+  function size(xp) {
+    xp = Math.max(0, xp || 0);
+    for (let i = 1; i < SIZE_STEPS.length; i++) {
+      const [x0, s0] = SIZE_STEPS[i - 1], [x1, s1] = SIZE_STEPS[i];
+      if (xp <= x1) return s0 * Math.pow(s1 / s0, (xp - x0) / (x1 - x0)); // progression géométrique entre paliers
+    }
+    return SIZE_STEPS[SIZE_STEPS.length - 1][1];
+  }
   G.avatar = {svg, tier, muscle, size, SKINS, HAIR_COLORS, HAIR_STYLES, CLOTH, TOPS, ACCS, TIERS, DEFAULT_LOOK};
 })();

@@ -102,12 +102,12 @@ body[data-theme="salle"] .d-salle,body[data-theme="plage"] .d-plage{display:bloc
 .tile .votes i{width:clamp(8px,1.5vw,12px);height:clamp(8px,1.5vw,12px);border-radius:50%;background:var(--good);border:2px solid var(--ink)}
 .tile.mine{transform:scale(1.05)}
 .tile.off{filter:grayscale(.8) brightness(.7)}
-.ent{position:absolute;transform:translate(-50%,-100%);transition:left .16s linear,top .16s linear;pointer-events:none;width:calc(var(--sw) * .17 * var(--d) * var(--k,1));z-index:5}
+.ent{position:absolute;transform:translate(-50%,-100%);transition:left .16s linear,top .16s linear;pointer-events:none;width:calc(var(--sw) * .085 * var(--d) * var(--k,1));z-index:5}
 .ent .body{position:relative}
 .ent .av{width:100%;height:auto;display:block;overflow:visible}
 .ent.left .av{transform:scaleX(-1)}
 .ent.walking .body{animation:walk .32s ease-in-out infinite alternate}
-.ent .tag{position:absolute;left:50%;bottom:100%;transform:translateX(-50%);white-space:nowrap;background:rgba(0,0,0,.72);border:2px solid #ffffff44;color:#fff;border-radius:8px;padding:1px 7px;font-weight:800;font-size:clamp(.62rem,1.4vw,.85rem);text-align:center;line-height:1.1}
+.ent .tag{position:absolute;transform-origin:bottom center;left:50%;bottom:100%;transform:translateX(-50%);white-space:nowrap;background:rgba(0,0,0,.72);border:2px solid #ffffff44;color:#fff;border-radius:8px;padding:1px 7px;font-weight:800;font-size:clamp(.62rem,1.4vw,.85rem);text-align:center;line-height:1.1}
 .ent .tag small{display:block;font-size:.8em;color:#ffd977;font-weight:700}
 .ent.me .tag{background:var(--gold);color:var(--ink);border-color:var(--ink)}
 .ent.me .tag small{color:#5b3a00}
@@ -217,7 +217,7 @@ body[data-theme="plage"] .tile.mine{box-shadow:0 0 0 4px #ffd23f,4px 6px 0 rgba(
   .preview{max-width:260px;margin:0 auto;width:100%}
   .scene{aspect-ratio:3/4}
   .floor,.d-salle .floorbg,.d-plage .floorbg{height:76%}
-  .ent{width:calc(var(--sw) * .25 * var(--d) * var(--k,1))}
+  .ent{width:calc(var(--sw) * .12 * var(--d) * var(--k,1))}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 </style>
@@ -688,7 +688,7 @@ function renderEntities() {
       if (typeof x !== "number" || typeof y !== "number") continue;
       const xp = isMe ? profile.xp : pr.xp || 0, BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
       list.push({key: p.peer, x, y, svg: cachedSvg(isMe ? profile.look : pr.lk, xp), name: pr.ps, sub: BM ? "🎮 " + (bg ? bg.name : "en partie") : A.tier(xp).name,
-        me: isMe, scale: A.size(xp), walking: !!(isMe ? me.walking : pr.w), facing: (isMe ? me.facing : pr.f) === -1 ? -1 : 1, busy: !!BM && !isMe, crown: host === p.peer, voted: !!pr.v && !BM});
+        me: isMe, scale: A.size(xp) * .55, walking: !!(isMe ? me.walking : pr.w), facing: (isMe ? me.facing : pr.f) === -1 ? -1 : 1, busy: !!BM && !isMe, crown: host === p.peer, voted: !!pr.v && !BM});
     }
     s3d.setEntities(list);
     return;
@@ -798,7 +798,7 @@ function rosterAv(M, k, pose, view) { const r = M.ro[k]; return r ? A.svg(r.l, r
 function showChosen(M) {
   const g = gameById(M.g);
   $("overlay").innerHTML = `<div class="ov"><div class="ov-card"><p>C'est parti pour</p><h2>${esc(g ? g.name : M.g)}</h2>
-    <div class="versus">${M.pl.map((k, i) => `${i && M.pl.length === 2 ? `<div class="vs">VS</div>` : ""}<figure style="width:${Math.round(110 * A.size(M.ro[k].x))}px">${rosterAv(M, k, "flex")}<figcaption>${esc(M.ro[k].p)}</figcaption></figure>`).join("")}</div>
+    <div class="versus">${M.pl.map((k, i) => `${i && M.pl.length === 2 ? `<div class="vs">VS</div>` : ""}<figure style="width:min(${Math.round(70 * A.size(M.ro[k].x))}px,${M.pl.length === 2 ? 42 : 30}vw)">${rosterAv(M, k, "flex")}<figcaption>${esc(M.ro[k].p)}</figcaption></figure>`).join("")}</div>
     <div class="count" id="countdown">4</div></div></div>`;
   let c = 4; const tick = setInterval(() => { c--; const el = $("countdown"); if (!el || c <= 0) { clearInterval(tick); return; } el.textContent = c; }, 1000);
 }
@@ -819,7 +819,7 @@ function showResults(M) {
   const title = res.winners.length ? (res.winners.length === 1 ? `${esc(M.ro[res.winners[0]].p)} gagne !` : "Victoire partagée !") : "Match nul !";
   $("overlay").innerHTML = `<div class="ov"><div class="ov-card"><p>${esc(g ? g.name : "")}</p><h2>${title}</h2>
     ${res.summary ? `<p>${esc(res.summary)}</p>` : ""}
-    <div class="podium">${order.concat(others).map(k => `<figure class="${res.winners.includes(k) ? "win" : ""}" style="width:min(${Math.round(130 * A.size(M.ro[k].x))}px,40vw)">${rosterAv(M, k, res.winners.includes(k) ? "flex" : "idle")}<figcaption><b>${esc(M.ro[k].p)}</b><span class="gain">+${res.gains[k] || 0} XP</span></figcaption></figure>`).join("")}</div>
+    <div class="podium">${order.concat(others).map(k => `<figure class="${res.winners.includes(k) ? "win" : ""}" style="width:min(${Math.round(75 * A.size(M.ro[k].x))}px,${M.pl.length <= 2 ? 44 : 30}vw)">${rosterAv(M, k, res.winners.includes(k) ? "flex" : "idle")}<figcaption><b>${esc(M.ro[k].p)}</b><span class="gain">+${res.gains[k] || 0} XP</span></figcaption></figure>`).join("")}</div>
     ${gained ? `<p>Vous gagnez <b>+${gained} XP</b> : ${profile.xp} XP au total.</p>` : ""}
     ${gained && ta.index > tb.index ? `<div class="levelup-title">Nouveau palier : ${esc(ta.name)} !</div><div class="levelup"><div style="align-self:end;transform-origin:bottom;transform:scale(${(A.size(before) / A.size(profile.xp)).toFixed(3)})">${A.svg(profile.look, before)}</div><div class="arrow">→</div><div>${A.svg(profile.look, profile.xp, {pose: "flex"})}</div></div>` : ""}
     <p style="font-size:.95rem">Retour au lobby dans quelques secondes…</p><button class="btn alt" type="button" id="res-close">Revenir au lobby maintenant</button></div></div>`;
