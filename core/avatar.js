@@ -198,5 +198,7 @@
     return s;
   }
 
-  G.avatar = {svg, tier, muscle, SKINS, HAIR_COLORS, HAIR_STYLES, CLOTH, TOPS, ACCS, TIERS, DEFAULT_LOOK};
+  // Plus il est musclé, plus le perso prend de place à l'écran : ×1 (Crevette) → ×1,45 (Montagne) → ×1,75 (Titan).
+  function size(xp) { const m = muscle(xp); return 1 + .45 * Math.min(m, 1) + .3 * Math.max(0, m - 1) / .35; }
+  G.avatar = {svg, tier, muscle, size, SKINS, HAIR_COLORS, HAIR_STYLES, CLOTH, TOPS, ACCS, TIERS, DEFAULT_LOOK};
 })();
