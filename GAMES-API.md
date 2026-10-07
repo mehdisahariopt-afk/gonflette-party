@@ -67,3 +67,16 @@ Le lobby annule la partie tout seul s'il reste moins de `min` joueurs.
 Ouvrez `index.html?mock` dans plusieurs onglets du même navigateur : ils se voient comme des téléphones
 (simulation par BroadcastChannel). Dans la console de l'hôte (le premier entré, 👑) :
 `GONFLETTE.debug.launch("<id>")` lance directement le jeu avec tous les joueurs du lobby.
+
+## Jeux d'équipe (2 équipes)
+
+Ajoutez `teams: true` à la définition (`GONFLETTE.registerGame({id, name, min, max, teams: true, create})`).
+Le lobby forme alors deux équipes avec les joueurs qui ont validé : il garde les équipes choisies dans le lobby
+(zones rouge et bleue, nommées par le premier arrivé) et répartit les autres pour équilibrer.
+
+- `api.teams` : `[{index: 0, name, color, keys: [...]}, {index: 1, name, color, keys: [...]}]` (null pour un jeu normal).
+  Une équipe peut être plus nombreuse que l'autre d'un joueur ; avec 2 joueurs, c'est du 1 contre 1.
+- `api.teamOf(key)` : 0, 1 ou null.
+- Fin de partie : `api.finish({winners: [toutes les clés de l'équipe gagnante], ranking: [...], summary})`.
+  Chaque gagnant reçoit +100 XP et l'équipe gagne +3 points au tableau de score du lobby. Match nul : `winners: []`.
+- Affichez les noms et couleurs des équipes (`color` : rouge `#e63946`, bleu `#3a86ff`).
