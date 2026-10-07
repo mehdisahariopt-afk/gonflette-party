@@ -26,14 +26,22 @@ GONFLETTE.registerGame({
     const BPM0 = 120, BPM_STEP = 10;     // tempo du 1er tir, accélération à chaque tir
     const PULL_MS = 30000;               // durée max d'un tir (temps comptés)
     const LEAD = 4;                      // 4 temps d'appel « 3, 2, 1, TIREZ ! » avant les temps comptés
-    const GRACE = 600;                   // l'hôte attend ce délai après la fin d'un temps pour recevoir les coups
+    const GRACE = 1100;                  // l'hôte attend ce délai après la fin de la fenêtre d'un temps (+½ temps) pour recevoir les coups
+                                         // (relais p2p = 2 sauts par sens, téléphones lents : plusieurs centaines de ms)
     const K = 3.5;                       // avance de la corde par temps, par point de force d'écart (ligne = 100)
     const LINE = 55;                     // distance (unités de scène) entre le centre et une ligne de victoire
     const MAX_PULLS = 5;                 // garde-fou en cas d'égalités répétées
     const PILE = 0.2, BIEN = 0.36;       // tolérances (en fraction de temps) pour PILE et BIEN
     const VAL = [0, 0.15, 0.55, 1];      // valeur d'un temps : rien, à côté / brouillon, bien, pile
     const SYNC_MAX = 0.6;                // bonus de synchro quand toute l'équipe tape pile ensemble (+60 %)
-    const PUB_MS = 100, SEND_MS = 100, ROUND_PAUSE = 3400, FINISH_MS = 2800, FORFEIT_MS = 2500;
+    const PUB_MS = 100, SEND_MS = 60, ROUND_PAUSE = 3400, FINISH_MS = 2800;
+    // Forfait : une équipe entière doit avoir disparu de la salle de jeu (api.connected) pendant longtemps.
+    // Un téléphone verrouillé une seconde, un relais p2p qui change ou un réseau lent ne doivent PAS faire perdre.
+    // Le lobby gère de son côté les joueurs vraiment partis.
+    const FORFEIT_MS = 15000, NEVER_MS = 30000;
+    const INTRO_MIN = 2600, INTRO_MAX = 12000; // l'hôte attend que tous les téléphones aient rejoint (au plus 12 s)
+    const CLOCK_WIN = 4000;              // fenêtre (ms) des échantillons pour recaler l'horloge de l'hôte (délai minimal)
+    const IDLE_MAX = 2;                  // tirs de suite sans aucun coup : match nul
 
     // ---------- équipes ----------
     const DEF_COL = ["#e63946", "#3a86ff"];
@@ -331,8 +339,11 @@ GONFLETTE.registerGame({
     // ---------- logique de l'hôte ----------
     let finished = false;
     if (api.isHost) {
-      const H = {ph: "i", n: 0, sc: [0, 0], bpm: BPM0, nb: 60, e: 0, p: 0, k: LEAD - 1, f: [0, 0], s: [0, 0], hc: "", w: -1, W: -1, ff: 0, g: P.map(() => 0)};
-      let origin = 0, period = 500, phT = now(), lastPub = 0, ct = [0, 0], rec = {}, goneSince = [0, 0], dirty = true;
+      const H = {ph: "i", n: 0, sc: [0, 0], bpm: BPM0, nb: 60, e: 0, p: 0, k: LEAD - 1, f: [0, 0], s: [0, 0], hc: "", w: -1, W: -1, ff: 0, nt: 0, cn: 0, g: P.map(() => 0)};
+      let origin = 0, period = 500, phT = now(), lastPub = 0, ct = [0, 0], rec = {}, dirty = true;
+      let pullTaps = 0, idleRun = 0;
+      let t00 = now(), lastTick = now();
+      const lastSeen = [0, 0];
       const conn = () => { const c = new Set(api.connected()); return [0, 1].map(t => TEAMS[t].keys.filter(k => c.has(k))); };
       const pub = () => {
         if (H.ph === "p") H.e = Math.round(now() - origin);
@@ -346,8 +357,8 @@ GONFLETTE.registerGame({
         period = 60000 / H.bpm;
         H.nb = Math.round(PULL_MS / period);
         origin = now() + 500;
-        H.ph = "p"; H.p = 0; H.k = LEAD - 1; H.f = [0, 0]; H.s = [0, 0]; H.hc = ""; H.w = -1;
-        ct = [0, 0]; rec = {};
+        H.ph = "p"; H.p = 0; H.k = LEAD - 1; H.f = [0, 0]; H.s = [0, 0]; H.hc = ""; H.w = -1; H.nt = 0;
+        ct = [0, 0]; rec = {}; pullTaps = 0;
         pub();
       };
       const endMatch = (W, ff) => {
@@ -359,7 +370,7 @@ GONFLETTE.registerGame({
           const others = P.map(p => p.key).filter(k => teamOf(k) === null);
           if (W < 0) {
             const ranking = P.map(p => p.key).sort((a, b) => H.g[pIdx[b]] - H.g[pIdx[a]]);
-            api.finish({winners: [], ranking, summary: `Match nul : ${H.sc[0]} tir${H.sc[0] > 1 ? "s" : ""} partout, la corde n'a pas tranché.`});
+            api.finish({winners: [], ranking, summary: H.nt ? "Match nul : personne n'a tiré sur la corde." : `Match nul : ${H.sc[0]} tir${H.sc[0] > 1 ? "s" : ""} partout, la corde n'a pas tranché.`});
             return;
           }
           const L = 1 - W, byGood = arr => arr.slice().sort((a, b) => H.g[pIdx[b]] - H.g[pIdx[a]]);
@@ -371,6 +382,10 @@ GONFLETTE.registerGame({
       };
       const endPull = w => {
         H.w = w;
+        // personne n'a tapé de tout le tir : pas de vainqueur (on rejoue ; deux fois de suite = match nul)
+        H.nt = pullTaps ? 0 : 1;
+        if (H.nt) { H.w = w = -1; idleRun += 1; } else idleRun = 0;
+        if (H.nt && idleRun >= IDLE_MAX) { endMatch(-1, false); return; }
         if (w >= 0) H.sc[w] += 1;
         if (w >= 0 && H.sc[w] >= 2) { endMatch(w, false); return; }
         H.ph = "r"; phT = now();
@@ -407,30 +422,36 @@ GONFLETTE.registerGame({
           for (const it of inp.h.slice(-12)) {
             if (!Array.isArray(it)) continue;
             const k = it[0] | 0, code = it[1] | 0;
-            if (k > H.k && k >= LEAD && k < LEAD + H.nb && code >= 1 && code <= 3) r[k] = code;
+            if (k > H.k && k >= LEAD && k < LEAD + H.nb && code >= 1 && code <= 3) { if (!r[k]) pullTaps++; r[k] = code; }
           }
         }
       });
       const tick = () => {
         if (dead) return;
         const t = now();
-        // forfait : une équipe entièrement partie
+        // forfait : une équipe entièrement absente de la salle de jeu depuis longtemps (pas « lente » : absente).
+        // Si je ne vois plus personne d'autre, c'est sans doute MA connexion qui flanche : pas de forfait.
+        // onglet de l'hôte endormi (écran verrouillé, onglet en arrière-plan) : ce temps-là ne compte pas comme une absence
+        const gap = t - lastTick;
+        lastTick = t;
+        if (gap > 1000) { t00 += gap; for (let i = 0; i < 2; i++) if (lastSeen[i]) lastSeen[i] += gap; }
+        const c = conn();
+        for (let i = 0; i < 2; i++) if (c[i].length) lastSeen[i] = t;
         if (H.ph !== "f") {
-          const c = conn();
-          for (let i = 0; i < 2; i++) {
-            if (c[i].length) goneSince[i] = 0;
-            else if (!goneSince[i]) goneSince[i] = t;
-          }
-          const gone = [0, 1].map(i => goneSince[i] && t - goneSince[i] > FORFEIT_MS);
-          if (gone[0] !== gone[1]) { endMatch(gone[0] ? 1 : 0, true); return; }
+          const othersHere = c[0].concat(c[1]).some(k => k !== api.me);
+          const gone = [0, 1].map(i => !c[i].length && (lastSeen[i] ? t - lastSeen[i] > FORFEIT_MS : t - t00 > NEVER_MS));
+          if (othersHere && gone[0] !== gone[1]) { endMatch(gone[0] ? 1 : 0, true); return; }
         }
         if (H.ph === "i") {
-          if (t - phT > 2600) startPull(); else if (dirty) pub();
+          // on attend que tous les téléphones aient rejoint la partie (ou au moins un par équipe après INTRO_MAX)
+          const cn = c[0].length + c[1].length, all = cn >= TEAMS[0].keys.length + TEAMS[1].keys.length;
+          if (cn !== H.cn) { H.cn = cn; dirty = true; }
+          if (t - phT > INTRO_MIN && (all || (t - phT > INTRO_MAX && c[0].length && c[1].length))) startPull(); else if (dirty) pub();
           return;
         }
         if (H.ph === "p") {
           const e = t - origin, last = LEAD + H.nb - 1;
-          while (H.ph === "p" && H.k < last && e > (H.k + 1.5) * period + GRACE) {
+          while (H.ph === "p" && H.k < last && e > (H.k + 1.5) * period + GRACE) { // fenêtre du temps k+1 : jusqu'à (k+1,5) temps
             applyBeat(H.k + 1);
             if (Math.abs(H.p) >= 100) { endPull(H.p > 0 ? 0 : 1); return; }
           }
@@ -455,7 +476,7 @@ GONFLETTE.registerGame({
     }
 
     // ---------- affichage + jeu local (tout le monde) ----------
-    let S = null, curN = -1, origin = 0, period = 500, nb = 60;
+    let S = null, curN = -1, origin = 0, period = 500, nb = 60, clk = [];
     let taps = new Map(), fin = new Set(), hist = [], good = 0, okc = 0, bad = 0, sent = "", lastSend = 0, mySeq = 0;
     let lastK = -1, lastPh = "", shownBeat = -999, dispShift = 0, lastFrame = now();
     const tgtShift = () => {
@@ -543,10 +564,19 @@ GONFLETTE.registerGame({
       const prev = S;
       S = s;
       if (s.ph === "p" || s.ph === "r") {
-        if (s.n !== curN) {
-          curN = s.n; resetPull();
-          origin = now() - s.e;
-        } else if (s.ph === "p") origin = Math.min(origin, now() - s.e);
+        // Horloge : uniquement des durées (performance.now locale + temps écoulé « e » publié par l'hôte), jamais Date.now
+        // (les horloges des téléphones peuvent différer de plusieurs secondes). L'origine du tir dans MON horloge =
+        // réception − e, au délai réseau près : on garde l'échantillon le plus rapide des dernières secondes
+        // (fenêtre glissante, pour suivre un onglet mis en pause ou une horloge qui dérive).
+        const t = now();
+        if (s.n !== curN) { curN = s.n; resetPull(); clk = []; }
+        if (s.ph === "p") {
+          clk.push([t, t - s.e]);
+          while (clk.length > 1 && t - clk[0][0] > CLOCK_WIN) clk.shift();
+          let o = Infinity;
+          for (const c of clk) if (c[1] < o) o = c[1];
+          origin = o;
+        } else if (!clk.length) origin = t - s.e;
         period = 60000 / s.bpm; nb = s.nb;
       }
       rndEl.textContent = s.n ? `TIR ${s.n}${s.n > 3 ? "" : "/3"}` : "TIR 1/3";
@@ -569,6 +599,10 @@ GONFLETTE.registerGame({
         }
         mateEls.forEach(m => { const c = s.hc[pIdx[m.dataset.k]] || "0"; m.className = "tc-mate" + (c === "3" ? " c3" : c === "2" ? " c2" : ""); });
       }
+      if (s.ph === "i" && lastPh === "i") {
+        const tot = TEAMS[0].keys.length + TEAMS[1].keys.length;
+        ban.querySelector("p").textContent = s.cn < tot ? `On attend les téléphones… (${s.cn}/${tot})` : "La synchro bat la vitesse : tapez ENSEMBLE sur le temps !";
+      }
       if (s.ph !== lastPh || (prev && prev.n !== s.n)) {
         const was = lastPh;
         lastPh = s.ph;
@@ -579,16 +613,17 @@ GONFLETTE.registerGame({
           if (coreEl) coreEl.textContent = "TIRE";
           hh.textContent = "";
           const w = s.w;
-          if (w < 0) setBanner("Égalité !", "On rejoue ce tir");
+          if (s.nt) setBanner("Personne ne tire ?!", "On rejoue : tapez sur le temps !");
+          else if (w < 0) setBanner("Égalité !", "On rejoue ce tir");
           else if (canTap) setBanner(w === myTeam ? "Tir gagné !" : "Tir perdu…", w === myTeam ? `${s.sc[myTeam]} – ${s.sc[1 - myTeam]} · dans la boue, les autres !` : `${s.sc[myTeam]} – ${s.sc[1 - myTeam]} · on se relève !`);
           else setBanner(`${TEAMS[w].name} prend le tir`, `${s.sc[LT]} – ${s.sc[RT]}`, true);
           pullOver(w);
-          feedback(w === myTeam ? "BRAVO !" : w < 0 ? "ENCORE !" : "COURAGE !", w === myTeam ? "g" : "o");
+          feedback(w < 0 ? "ENCORE !" : w === myTeam ? "BRAVO !" : "COURAGE !", w === myTeam ? "g" : "o");
         } else if (s.ph === "f") {
           if (tapBtn) tapBtn.classList.add("tc-off");
           hh.textContent = "";
           const W = s.W;
-          if (W < 0) setBanner("Match nul !", "Personne ne lâche rien");
+          if (W < 0) setBanner("Match nul !", s.nt ? "Personne n'a tiré sur la corde" : "Personne ne lâche rien");
           else {
             const nm = TEAMS[W].name, L = 1 - W;
             const sub = s.ff ? `${nm} ${verb(nm)} par forfait` : `${nm} ${verb(nm)} ${s.sc[W]} tir${s.sc[W] > 1 ? "s" : ""} à ${s.sc[L]}`;
@@ -621,6 +656,10 @@ GONFLETTE.registerGame({
       const a = taps.get(k) || [];
       a.push(dev); taps.set(k, a);
       const c = judge(a);
+      // envoyé tout de suite (provisoire : un 2e coup sur le même temps le déclasse avant que l'hôte ne compte ce temps)
+      const it = hist.find(h => h[0] === k);
+      if (it) it[1] = c; else { hist.push([k, c]); if (hist.length > 8) hist.shift(); }
+      logic();
       if (a.length > 1) feedback("TROP VITE !", "b");
       else if (c === 3) { feedback("PILE !", "g"); yank(api.me, 0); }
       else if (c === 2) feedback("BIEN", "o");
@@ -657,12 +696,10 @@ GONFLETTE.registerGame({
           fin.add(k);
           const c = judge(arr);
           if (c === 3) good++; else if (c === 2) okc++; else bad++;
-          hist.push([k, c]);
-          if (hist.length > 8) hist.shift();
           taps.delete(k);
         }
       }
-      const payload = JSON.stringify([curN, hist]);
+      const payload = JSON.stringify([curN, hist, good, okc, bad]);
       if (payload !== sent && t - lastSend >= SEND_MS) {
         sent = payload; lastSend = t;
         api.setInput({n: curN, q: ++mySeq, h: hist.slice(), g: good, o: okc, m: bad});
@@ -718,7 +755,7 @@ GONFLETTE.registerGame({
     }
     raf = requestAnimationFrame(frame);
     setLean(0, 8); setLean(1, 8);
-    root.tcDebug = () => ({origin, period, nb, ph: S && S.ph, n: curN, lead: LEAD, k: S && S.k, p: S && S.p, sc: S && S.sc, f: S && S.f, s: S && S.s, hc: S && S.hc});
+    root.tcDebug = () => ({origin, period, nb, ph: S && S.ph, n: curN, lead: LEAD, k: S && S.k, p: S && S.p, sc: S && S.sc, f: S && S.f, s: S && S.s, hc: S && S.hc, nt: S && S.nt, ff: S && S.ff, W: S && S.W, w: S && S.w, ban: ban.classList.contains("on") ? ban.textContent.trim() : ""});
 
     return {
       destroy() {

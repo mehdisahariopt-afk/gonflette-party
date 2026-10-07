@@ -749,6 +749,14 @@ function noteHostT(t) {
   skewS.push([now, now - t]); skewS = skewS.filter(x => now - x[0] < 120000).slice(-30);
 }
 const hostNow = () => amHost() || !skewS.length ? Date.now() : Date.now() - Math.min(...skewS.map(x => x[1]));
+// Absence dans une partie : retenue seulement si elle dure plus de `ms`.
+const FORFEIT_GRACE_MS = 12000, goneSince = {};
+function lacking(mid, missing, here, ms) {
+  if (!missing) { delete goneSince[mid]; return false; }
+  const now = Date.now();
+  if (!goneSince[mid]) goneSince[mid] = now;
+  return now - goneSince[mid] > ms;
+}
 function hostTick() {
   if (!amHost()) { if (mySt) { mySt = null; pushPresence(); } return; }
   if (!mySt) { const prev = hostSt; setSt(prev && prev.ms ? prev : {n: 0, ms: {}, pend: {}, teams: [{n: null}, {n: null}], ts: [0, 0]}); return; }
@@ -763,6 +771,7 @@ function hostTick() {
     if (!mem.length && teams[i].n) { teams[i].n = null; changed = true; }
     if (!teams[i].n) { const c = mem.find(p => p.presence.tn && p.presence.tn.t === i && p.presence.tn.n); if (c) { teams[i].n = String(c.presence.tn.n).slice(0, 18); changed = true; } }
   }
+  for (const mid of Object.keys(goneSince)) if (!ms[mid]) delete goneSince[mid];
   // 1. faire avancer les parties en cours
   for (const mid of Object.keys(ms)) {
     const M = ms[mid], g = gameById(M.g);
@@ -778,14 +787,16 @@ function hostTick() {
         ms[mid] = Object.assign({}, M, {ph: "results", at: now, res}); changed = true; continue;
       }
       const stay = M.pl.filter(k => here.has(k));
-      if (!here.has(M.h) || stay.length < (g ? g.min : 2)) {
+      // Délai de grâce : en p2p, la liste des joueurs se vide un instant lors d'un changement de relais.
+      if (!lacking(mid, !here.has(M.h) || stay.length < (g ? g.min : 2), here, FORFEIT_GRACE_MS)) continue;
+      {
         // Un joueur est parti : ceux qui restent gagnent par forfait (s'il en reste), sinon la partie est annulée.
         if (stay.length) { ms[mid] = Object.assign({}, M, {ph: "results", at: now, res: gainsFor(M, {winners: stay, ranking: stay, summary: "Victoire par forfait : l'adversaire a quitté la partie."})}); }
         else delete ms[mid];
         changed = true; continue;
       }
     }
-    if (M.ph === "chosen" && M.pl.filter(k => here.has(k)).length < (g ? g.min : 2)) { delete ms[mid]; changed = true; continue; }
+    if (M.ph === "chosen" && lacking(mid, M.pl.filter(k => here.has(k)).length < (g ? g.min : 2), here, 5000)) { delete ms[mid]; changed = true; continue; }
     if (M.ph === "results" && now - M.at > 11000) { delete ms[mid]; changed = true; }
   }
   // 2. former de nouvelles parties avec les joueurs libres qui ont validé
