@@ -935,6 +935,8 @@
         en.me = !!d.me; en.walking = !!d.walking; en.busy = !!d.busy;
         en.k = typeof d.scale === "number" && d.scale > 0 ? d.scale : 1;
         en.facing = d.facing === -1 ? -1 : 1;
+        const pz = d.pose || null;                         // pose en cours : petit « pop » + anneau doré
+        if (pz !== (en.pose || null)) { en.pose = pz; if (pz) en.popT = 0; }
         if (en.me) { en.x = d.x; en.y = d.y; }
         if (d.svg !== en.svg) {
           const old = en.svg;
@@ -1026,7 +1028,9 @@
         const bob = Math.abs(Math.sin(en.ph)) * .09 * walkAmt;
         const wob = Math.sin(en.ph) * .07 * walkAmt;
         const breath = reduced ? 1 : 1 + Math.sin(en.ph * .5) * .012 * (1 - walkAmt);
-        const sz = CHAR_SIZE * (en.k || 1), hy = sz * stretch;
+        let pop = 1;
+        if (en.popT != null) { en.popT += dt; const pk = en.popT / .45; if (pk < 1 && !reduced) pop = 1 + .2 * Math.sin(pk * Math.PI); else if (pk >= 1) en.popT = null; }
+        const sz = CHAR_SIZE * (en.k || 1) * pop, hy = sz * stretch;
         en.mesh.scale.set(sz * en.facing, hy * breath, 1);
         en.mesh.position.set(X, floorY + bob - FOOT_FRAC * hy, Z);
         en.mesh.rotation.set(0, Math.atan2(camera.position.x - X, camera.position.z - Z), wob * en.facing);
@@ -1037,7 +1041,7 @@
         const shw = Math.max(.7, ((e && e.rx) || 40) * 2.3 * SU) * (en.k || 1) * (1 - bob * 1.5);
         en.sh.scale.set(shw, 1, shw * .42); en.sh.position.set(X, floorY + .012, Z + .05);
         en.shMat.opacity = en.fade * (en.busy ? .5 : 1);
-        en.ring.visible = en.me; en.ring.position.set(X, floorY + .014, Z + .05); en.ring.scale.set(shw * .62, 1, shw * .3);
+        en.ring.visible = en.me || !!en.pose; en.ring.position.set(X, floorY + .014, Z + .05); en.ring.scale.set(shw * .62, 1, shw * .3);
         // étiquette au-dessus de la tête
         const headH = ((e && e.top) || .9) - FOOT_FRAC;
         en.tag.position.set(X, floorY + bob + headH * hy * breath + .06, Z);

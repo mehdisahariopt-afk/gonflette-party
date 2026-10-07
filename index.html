@@ -211,6 +211,125 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
 .teambar .t0{border-color:#e63946}.teambar .t1{border-color:#3a86ff}
 .ent.tm0 .tag{box-shadow:0 0 0 3px #e63946}.ent.tm1 .tag{box-shadow:0 0 0 3px #3a86ff}
 .lbl-decor{font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:.78rem;color:var(--dim)}
+
+/* ---------- progression : boutique, shaker mystère, poses, rivaux ---------- */
+.wallet{font-weight:900;font-size:.95rem;background:#ffffff14;border:2px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.chip .badge{display:inline-block;margin-left:4px;background:var(--accent);color:#fff;border-radius:999px;padding:0 7px;font-size:.78rem;font-weight:900;animation:badgebeat 1s ease-in-out infinite alternate}
+.chip.loot-chip{background:linear-gradient(90deg,#ff2e88,#ffb703);color:var(--ink);border-color:var(--ink);animation:badgebeat 1.2s ease-in-out infinite alternate}
+.posebar{display:flex;gap:6px;margin-top:10px}
+.pose-btn{flex:1 1 0;min-width:0;display:grid;justify-items:center;gap:1px;padding:6px 4px;border:2px solid var(--line);border-radius:12px;background:var(--panel);cursor:pointer;font-weight:800;font-size:.8rem;line-height:1.05;text-transform:uppercase;letter-spacing:.02em;color:var(--text)}
+.pose-btn .e{font-size:1.45rem;line-height:1}
+.pose-btn:active{transform:scale(.94)}
+.pose-btn:disabled{opacity:.4;cursor:wait}
+.pose-btn.chick{border-color:#ffcc33;background:#4a2a10}
+.ent .posefx{position:absolute;left:50%;top:18%;transform:translate(-50%,-50%);font-size:clamp(1.4rem,4vw,2.6rem);pointer-events:none;animation:posefx 1.4s ease-out forwards;filter:drop-shadow(0 2px 0 #0008);z-index:3}
+.ent .poseflash{position:absolute;left:50%;top:55%;width:150%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#fff8 0,#ffcc3355 35%,transparent 70%);animation:poseflash .7s ease-out forwards;pointer-events:none}
+.ent.posing .body{animation:posepop .45s cubic-bezier(.2,1.6,.4,1)}
+.ent .tag small.pz{color:#ffcc33}
+.ent.me .tag small.pz{color:#7a1b00}
+.sheet{position:fixed;inset:0;z-index:215;display:grid;place-items:center;padding:12px;background:rgba(10,6,14,.86);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.sheet-card{position:relative;width:min(100%,980px);max-height:calc(100vh - 24px);overflow:auto;background:var(--panel);border:4px solid var(--ink);box-shadow:0 0 0 3px var(--gold);border-radius:22px;padding:16px;animation:pop .3s cubic-bezier(.2,1.5,.4,1)}
+.sheet-card.narrow{width:min(100%,520px);text-align:center}
+.sheet-x{position:absolute;right:10px;top:10px;width:40px;height:40px;border-radius:50%;border:3px solid var(--ink);background:var(--gold);color:var(--ink);font-weight:900;font-size:1.2rem;cursor:pointer;z-index:2}
+.sheet h2{font-family:var(--f-display);font-weight:400;text-transform:uppercase;font-size:clamp(1.6rem,6vw,2.6rem);color:var(--gold);text-shadow:3px 3px 0 var(--accent);margin:0 44px 4px 0;line-height:1}
+.sheet-card.narrow h2{margin:0 30px 4px}
+.sheet .sub{color:var(--dim);font-weight:700;margin:0 0 10px}
+.shop{display:grid;grid-template-columns:250px minmax(0,1fr);gap:14px;align-items:start}
+.shop-prev{position:sticky;top:0;background:radial-gradient(circle at 50% 65%,#ffffff26,transparent 62%),#00000033;border:2px solid var(--line);border-radius:16px;padding:8px;text-align:center}
+.shop-prev .av{width:100%;height:auto;display:block}
+.shop-prev .nm{font-family:var(--f-display);font-size:1.25rem;text-transform:uppercase;line-height:1.05;margin-top:4px}
+.shop-prev .ds{color:var(--dim);font-weight:600;font-size:.92rem;margin:4px 0 8px;min-height:2.4em}
+.shop-prev .acts{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.shop-tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:thin}
+.shop-tabs .chip{white-space:nowrap;flex:none}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+.item{--rc:#a9b4c2;position:relative;border:3px solid var(--rc);border-radius:14px;background:#ffffff0a;padding:6px;cursor:pointer;text-align:center;color:var(--text);font:inherit;display:grid;gap:3px;justify-items:center}
+.item[aria-pressed="true"]{background:#ffffff22;box-shadow:0 0 0 3px #fff}
+.item .av{width:100%;height:auto;aspect-ratio:1;display:block}
+.item b{font-size:.92rem;line-height:1.05;font-weight:800}
+.item .price{font-weight:900;font-size:.95rem}
+.item .tagown{position:absolute;top:4px;right:4px;background:var(--good);color:var(--ink);border:2px solid var(--ink);border-radius:999px;font-size:.7rem;font-weight:900;padding:0 6px;text-transform:uppercase}
+.item .tagown.eq{background:var(--gold)}
+.item.legendaire{background:linear-gradient(160deg,#ffb70333,#ffffff08 60%)}
+.item.epique{background:linear-gradient(160deg,#b14dff2a,#ffffff08 60%)}
+.rar{display:inline-block;font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;padding:1px 8px;border-radius:999px;background:var(--rc);color:#120b18}
+.mg-panel{background:#ffffff0c;border:2px solid var(--line);border-radius:14px;padding:10px 12px;text-align:left}
+.mg-panel h3{margin:0 0 8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.85rem;color:var(--dim);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mg-panel .pts{background:var(--accent);color:#fff;border-radius:999px;padding:1px 9px;letter-spacing:.02em;animation:badgebeat 1s ease-in-out infinite alternate}
+.mg-panel .pts.ok{background:#ffffff1a;color:var(--dim);animation:none}
+.mg-row{display:grid;grid-template-columns:5.8em minmax(30px,1fr) 1.8em 38px 38px;gap:6px;align-items:center;margin:5px 0;font-weight:800}
+.mg-bar{height:14px;border-radius:8px;background:#ffffff1a;overflow:hidden;border:2px solid #0006}
+.mg-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));transition:width .3s}
+.mg-row b{text-align:center;font-family:var(--f-display);font-weight:400;font-size:1.2rem}
+.mg-row button{height:36px;border-radius:10px;border:3px solid var(--ink);background:var(--gold);color:var(--ink);font-weight:900;font-size:1.2rem;cursor:pointer;box-shadow:0 3px 0 var(--ink)}
+.mg-row button[data-d="-1"]{background:var(--panel);color:var(--text);border-color:var(--line);box-shadow:none}
+.mg-row button:disabled{opacity:.3;cursor:not-allowed}
+.mg-panel small{display:block;color:var(--dim);font-weight:600;margin-top:6px}
+.sld{display:inline-block;margin:8px 0 2px;font-family:var(--f-display);font-size:1.5rem;color:#fff;background:#d62828;border:3px solid var(--ink);border-radius:10px;padding:2px 12px;transform:rotate(-4deg);box-shadow:3px 3px 0 var(--ink);animation:sldwob 1.6s ease-in-out infinite}
+.sld-mini{color:#ffd23f;font-weight:900}
+.preview{position:relative}
+.preview .sld{position:absolute;left:50%;bottom:62px;transform:translateX(-50%) rotate(-6deg);white-space:nowrap;font-size:1.25rem;animation:none}
+.ed-extra{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+.ed-box{background:#ffffff0c;border:2px solid var(--line);border-radius:14px;padding:10px 12px}
+.ed-box h3{margin:0 0 8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.85rem;color:var(--dim)}
+.eq-list{display:flex;flex-wrap:wrap;gap:6px}
+.eq-list .opt{--rc:#a9b4c2;border-color:var(--rc);font-size:.88rem}
+.eq-list .opt[aria-pressed="true"]{background:var(--rc);color:var(--ink)}
+.rivals{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.rivals li{display:flex;justify-content:space-between;gap:8px;background:#ffffff0a;border-radius:10px;padding:5px 8px;font-weight:700}
+.rivals li b{font-family:var(--f-display);font-weight:400;font-size:1.05rem;letter-spacing:.02em;white-space:nowrap}
+.nem{display:inline-block;background:#7a0d2e;color:#fff;border:2px solid #ff4d6d;border-radius:8px;padding:0 7px;font-weight:900;font-size:.8rem;letter-spacing:.04em;white-space:nowrap}
+.nem.vic{background:#0d4a2e;border-color:#3ccf8e}
+.h2h{margin:8px auto 0;display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;background:#00000055;border:2px solid var(--line);border-radius:14px;padding:6px 14px;font-family:var(--f-display);font-size:clamp(1.2rem,4.5vw,1.8rem);text-transform:uppercase}
+.h2h .sc{color:var(--gold);font-size:1.25em}
+.h2h-note{font-weight:800;color:#ff8fa3;margin:4px 0 0}
+.versus figure{position:relative}
+.versus figure .nem{position:absolute;left:50%;top:-6px;transform:translateX(-50%) rotate(-6deg);animation:sldwob 1.4s ease-in-out infinite}
+.revanche{margin:10px auto;max-width:460px;font-family:var(--f-display);font-size:clamp(1.7rem,7vw,2.6rem);line-height:1;color:#fff;background:linear-gradient(90deg,#d62828,#ff7b00,#d62828);border:4px solid var(--ink);border-radius:16px;padding:8px 10px 6px;text-shadow:3px 3px 0 var(--ink);transform:rotate(-2deg);animation:revpop .6s cubic-bezier(.2,1.6,.4,1)}
+.revanche small{display:block;font-family:var(--f-ui);font-size:1rem;font-weight:800;text-shadow:none;margin-top:2px}
+.gain,.shk{white-space:nowrap}
+.shk{display:inline-block;background:#ff8fc8;color:var(--ink);border:2px solid var(--ink);border-radius:999px;padding:1px 8px;font-weight:900;margin-left:3px}
+.res-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0 4px}
+.btn.loot{background:linear-gradient(90deg,#ff2e88,#ffb703);animation:badgebeat 1s ease-in-out infinite alternate}
+.btn.pts{background:var(--good)}
+/* shaker mystère */
+.loot{display:grid;justify-items:center;gap:8px}
+.shaker{position:relative;width:min(56vw,210px);aspect-ratio:3/4;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.shaker svg{width:100%;height:100%;display:block;filter:drop-shadow(0 8px 0 #0006)}
+.shaker.hit{animation:shakehit .22s ease-in-out}
+.shaker.wild{animation:shakewild .12s linear infinite}
+.gauge{width:min(100%,320px);height:22px;border-radius:12px;border:3px solid var(--ink);background:#00000066;overflow:hidden}
+.gauge i{display:block;height:100%;width:0;background:repeating-linear-gradient(45deg,#ffb703 0 12px,#ff2e88 12px 24px);transition:width .15s}
+.loot .hint{color:var(--dim);font-weight:700;margin:0}
+.loot .left{font-weight:800;color:var(--gold)}
+.reveal{position:relative;display:grid;justify-items:center;gap:6px;min-height:280px;width:100%}
+.reveal .halo{position:absolute;left:50%;top:44%;width:min(80vw,340px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,var(--rc) 0,transparent 66%);opacity:.75;animation:halospin 1.2s linear infinite}
+.reveal .halo::after{content:"";position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from 0deg,#ffffff30 0 10deg,transparent 10deg 30deg)}
+.reveal .card{position:relative;width:min(70vw,260px);border:4px solid var(--rc);border-radius:18px;background:#120b18;padding:8px;animation:revpop .55s cubic-bezier(.2,1.6,.4,1)}
+.reveal .card .av{width:100%;height:auto;display:block}
+.reveal .rname{font-family:var(--f-display);font-size:1.5rem;text-transform:uppercase;line-height:1}
+.reveal .big-r{font-family:var(--f-display);font-size:clamp(1.8rem,8vw,2.8rem);color:var(--rc);text-shadow:3px 3px 0 var(--ink);text-transform:uppercase;line-height:1;position:relative}
+.reveal .dup{font-weight:800;color:#ff8fc8}
+.suspense{font-family:var(--f-display);font-size:clamp(1.6rem,7vw,2.6rem);color:var(--rc,#fff);text-transform:uppercase;text-shadow:3px 3px 0 var(--ink);transition:color .1s}
+.fw{position:fixed;left:0;top:0;width:10px;height:10px;border-radius:50%;pointer-events:none;z-index:230;animation:fw 1.3s cubic-bezier(.1,.7,.3,1) forwards}
+.flashwhite{position:fixed;inset:0;background:#fff;z-index:229;pointer-events:none;animation:flashout .6s ease-out forwards}
+.rival-card .duo{display:flex;justify-content:center;align-items:flex-end;gap:10px}
+.rival-card .duo figure{margin:0;width:min(36vw,150px);position:relative}
+.rival-card .duo .av{width:100%;height:auto}
+.rival-card .duo figcaption{font-weight:800}
+.roster li[data-peer]{cursor:pointer}
+.roster li[data-peer]:hover{background:#ffffff16}
+@keyframes badgebeat{to{transform:scale(1.07)}}
+@keyframes posefx{0%{transform:translate(-50%,-30%) scale(.3);opacity:0}20%{transform:translate(-50%,-90%) scale(1.25);opacity:1}75%{opacity:1}100%{transform:translate(-50%,-170%) scale(1);opacity:0}}
+@keyframes poseflash{from{opacity:1;transform:translate(-50%,-50%) scale(.4)}to{opacity:0;transform:translate(-50%,-50%) scale(1.3)}}
+@keyframes posepop{0%{transform:scale(1)}40%{transform:scale(1.14,1.08)}100%{transform:scale(1)}}
+@keyframes sldwob{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(3deg) scale(1.05)}}
+@keyframes revpop{from{transform:scale(.3) rotate(-12deg);opacity:0}}
+@keyframes shakehit{0%{transform:rotate(0)}25%{transform:rotate(-14deg) translateY(-6%)}75%{transform:rotate(12deg) translateY(-3%)}100%{transform:rotate(0)}}
+@keyframes shakewild{0%{transform:translate(-4%,0) rotate(-8deg)}50%{transform:translate(4%,-3%) rotate(9deg)}100%{transform:translate(-4%,0) rotate(-8deg)}}
+@keyframes halospin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes fw{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+@keyframes flashout{to{opacity:0}}
 @media (max-width:860px){
   .long{display:none}
   .wrap{padding-block:8px 24px}
@@ -228,6 +347,19 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
   .scene{aspect-ratio:3/4}
   .floor,.d-salle .floorbg,.d-plage .floorbg{height:76%}
   .ent{width:calc(var(--sw) * .12 * var(--d) * var(--k,1))}
+  .shop{grid-template-columns:minmax(0,1fr)}
+  .shop-prev{position:static;display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;align-items:center;text-align:left}
+  .shop-prev .acts{justify-content:flex-start}
+  .shop-prev .ds{min-height:0}
+  .shop-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .item{padding:4px}
+  .item b{font-size:.8rem}
+  .ed-extra{grid-template-columns:minmax(0,1fr)}
+  .pose-btn{font-size:.68rem;padding:5px 2px}
+  .pose-btn .e{font-size:1.25rem}
+  .sheet{padding:8px}
+  .sheet-card{padding:12px;max-height:calc(100vh - 16px)}
+  .wallet{font-size:.85rem;padding:3px 8px}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 </style>
@@ -259,7 +391,8 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
       <div class="preview"><div id="ed-preview"></div><div class="who" id="ed-name"></div><div class="lvl" id="ed-lvl"></div></div>
       <div class="opts" id="ed-opts"></div>
     </div>
-    <p class="muscle-note">Les muscles ne se choisissent pas, ils se gagnent : <b>+100 XP par victoire</b>, +40 pour la 2e place, +25 pour chaque partie jouée. À 1 500 XP vous êtes une montagne, à 2 000 XP un titan démesuré.</p>
+    <div class="ed-extra" id="ed-extra"></div>
+    <p class="muscle-note">Les muscles ne se choisissent pas, ils se gagnent : <b>+100 XP par victoire</b>, +40 pour la 2e place, +25 pour chaque partie jouée. À 1 500 XP vous êtes une montagne, à 2 000 XP un titan démesuré. Tous les 100 XP, <b>1 point de muscle</b> à placer où vous voulez… même si vos jambes vont le regretter.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="ed-go">Entrer dans le lobby</button><button class="btn alt" type="button" id="ed-rename">Changer de pseudo</button></div>
   </div>
 </section>
@@ -272,6 +405,9 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
       <div class="mecard"><div class="mini" id="me-mini"></div><div><b id="me-name"></b><small id="me-lvl"></small><div class="xpbar"><i id="me-xp"></i></div></div></div>
       <div class="tools">
         <button class="chip" type="button" id="btn-edit">Mon perso</button>
+        <button class="chip" type="button" id="btn-shop">🛒 Boutique</button>
+        <span class="wallet" id="wallet" title="Vos shakers de protéines">🥤 0</span>
+        <button class="chip loot-chip" type="button" id="btn-loot" hidden>🎁 Shakers à ouvrir : <b id="loot-n">0</b></button>
         <span class="roomtag" id="roomtag" hidden></span>
         <button class="chip" type="button" id="btn-share" hidden>Copier le lien</button>
         <span class="netbadge" id="netbadge" role="status"></span>
@@ -295,6 +431,7 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
             <div class="floorbg"></div></div>
           <div class="floor" id="floor" aria-label="Sol du lobby : touchez pour vous déplacer"></div>
         </div>
+        <div class="posebar" id="posebar" role="group" aria-label="Prendre la pose"></div>
         <div class="actionbar"><div class="msg" id="act-msg" role="status" aria-live="polite"></div><div class="tools" id="act-btns"></div></div>
       </div>
       <aside class="roster">
@@ -311,6 +448,7 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
 </section>
 
 <div id="overlay"></div>
+<div id="sheet"></div>
 <div class="game-layer hidden" id="game-layer"><div class="game-top"><b id="game-title"></b><span id="game-who"></span></div><div class="game-root" id="game-root"></div></div>
 
 <script src="vendor/peerjs.min.js"></script>
@@ -340,6 +478,8 @@ GONFLETTE.registerGame = def => { GONFLETTE.games.push(def); };
 <script src="games/tiracorde.js"></script>
 <script src="games/pictionary.js"></script>
 <script src="games/relais.js"></script>
+<script src="games/quiadit.js"></script>
+<script src="games/spotteur.js"></script>
 <script>
 (() => {
 "use strict";
@@ -352,9 +492,41 @@ const GAMES = G.games.slice(0, 24).map((g, i) => Object.assign({color: GAME_COLO
 const gameById = id => GAMES.find(g => g.id === id);
 
 /* ---------- profil (sur cet appareil) ---------- */
+// ?prof=xxx : un profil séparé par onglet (tests en mode ?mock, où tous les onglets partagent le même stockage)
+const PROF_KEY = "gonflette-profile" + (((location.search.match(/[?&]prof=([\w-]{1,20})/) || [])[1]) ? ":" + location.search.match(/[?&]prof=([\w-]{1,20})/)[1] : "");
 let profile = {pseudo: "", look: Object.assign({}, A.DEFAULT_LOOK), xp: 0, lastMid: null};
-try { const s = JSON.parse(localStorage.getItem("gonflette-profile") || "null"); if (s && s.pseudo) profile = Object.assign(profile, s); } catch (e) {}
-function saveProfile() { try { localStorage.setItem("gonflette-profile", JSON.stringify(profile)); } catch (e) {} }
+try { const s = JSON.parse(localStorage.getItem(PROF_KEY) || "null"); if (s && s.pseudo) profile = Object.assign(profile, s); } catch (e) {}
+function saveProfile() { try { localStorage.setItem(PROF_KEY, JSON.stringify(profile)); } catch (e) {} }
+/* Champs ajoutés au profil (tous facultatifs : les anciens profils sont complétés ici)
+   id : identifiant aléatoire persistant (rivalités) · mg : [bras, pecs, dos, jambes] points de muscle placés
+   sh : shakers 🥤 (monnaie) · own : objets possédés · eq : {emplacement: objet équipé} · loot : shakers mystère à ouvrir
+   h2h : {idAdversaire: {n, w, l, last, gw, gl}} face-à-face enregistrés sur cet appareil */
+const rid = () => Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 8);
+function migrateProfile() {
+  if (typeof profile.id !== "string" || !/^[a-z0-9]{6,16}$/.test(profile.id)) profile.id = rid();
+  if (!Array.isArray(profile.mg) || profile.mg.length !== 4) profile.mg = [0, 0, 0, 0];
+  profile.mg = profile.mg.map(v => Math.max(0, Math.floor(+v || 0)));
+  if (typeof profile.sh !== "number" || !isFinite(profile.sh)) profile.sh = 100; // cadeau de bienvenue
+  profile.sh = Math.max(0, Math.floor(profile.sh));
+  if (!Array.isArray(profile.own)) profile.own = [];
+  profile.own = profile.own.filter((id, i, a) => A.ITEM[id] && a.indexOf(id) === i);
+  if (!profile.eq || typeof profile.eq !== "object") profile.eq = {};
+  for (const k of Object.keys(profile.eq)) { const it = A.ITEM[profile.eq[k]]; if (!it || it.s !== k || !profile.own.includes(it.id)) delete profile.eq[k]; }
+  if (typeof profile.loot !== "number" || !isFinite(profile.loot)) profile.loot = 0;
+  if (!profile.h2h || typeof profile.h2h !== "object") profile.h2h = {};
+  if (typeof profile.xp !== "number" || !isFinite(profile.xp)) profile.xp = 0;
+}
+migrateProfile();
+const ptsTotal = () => Math.floor(Math.max(0, profile.xp) / A.POINT_XP);
+const ptsAvail = () => Math.max(0, ptsTotal() - profile.mg.reduce((a, b) => a + b, 0));
+// Le look diffusé : apparence + répartition musculaire + objets équipés (compacts, tout passe par presence.lk)
+function myLook() {
+  const l = Object.assign({}, profile.look);
+  if (profile.mg.some(v => v > 0)) l.mg = profile.mg.slice();
+  const it = Object.values(profile.eq).filter(id => A.ITEM[id] && profile.own.includes(id));
+  if (it.length) l.it = it;
+  return l;
+}
 let theme = "plage";
 try { theme = localStorage.getItem("gonflette-theme") || "plage"; } catch (e) {}
 if (theme !== "plage" && theme !== "salle") theme = "plage";
@@ -396,13 +568,14 @@ const OPTS = [
 ];
 let editing = false;
 function drawEditor() {
-  $("ed-preview").innerHTML = A.svg(profile.look, profile.xp, {pose: "flex"});
+  $("ed-preview").innerHTML = A.svg(myLook(), profile.xp, {pose: "flex"}) + (A.skipLegDay(myLook()) ? `<span class="sld">SKIP LEG DAY 🐔</span>` : "");
   $("ed-name").textContent = profile.pseudo;
   const t = A.tier(profile.xp);
   $("ed-lvl").textContent = `${t.name} · ${profile.xp} XP`;
   $("ed-opts").innerHTML = OPTS.map(o => `<div class="opt-group"><h3>${o.label}</h3><div class="opt-row">${
     o.sw ? o.sw.map(c => `<button type="button" class="opt sw" style="background:${c}" data-k="${o.k}" data-v="${c}" aria-label="${o.label} ${c}" aria-pressed="${profile.look[o.k] === c}"></button>`).join("")
          : o.list.map(([v, l]) => `<button type="button" class="opt" data-k="${o.k}" data-v="${v}" aria-pressed="${profile.look[o.k] === v}">${l}</button>`).join("")}</div></div>`).join("");
+  drawEdExtra();
 }
 $("ed-opts").addEventListener("click", e => {
   const b = e.target.closest("[data-k]"); if (!b) return;
@@ -470,7 +643,9 @@ async function boot() {
   pushPresence();
 }
 function presenceObj() {
-  const o = {ps: profile.pseudo || null, lk: profile.look, xp: profile.xp, x: +me.x.toFixed(3), y: +me.y.toFixed(3), v: me.vote, ja: me.ja, ed: editing || !inLobby ? 1 : 0, f: me.facing, w: me.walking ? 1 : 0};
+  const o = {ps: profile.pseudo || null, lk: myLook(), xp: profile.xp, x: +me.x.toFixed(3), y: +me.y.toFixed(3), v: me.vote, ja: me.ja, ed: editing || !inLobby ? 1 : 0, f: me.facing, w: me.walking ? 1 : 0};
+  o.id = profile.id;                                   // identifiant persistant (rivalités)
+  o.po = myPose ? [myPose.p, myPose.seq] : null;       // dernière pose [id, numéro] : les autres l'affichent ~2,5 s
   // La disposition des carrés dépend de l'écran (2 ou 3 colonnes) : sur un carré, on envoie la position
   // RELATIVE à ce carré (t = id du jeu, u/q = position dans le carré) pour que tout le monde nous voie au bon endroit.
   const tl = inLobby && tileEls.length ? tileAt(me.x, me.y) : null;
@@ -587,7 +762,7 @@ let midCounter = 0;
 function newMatch(gid, grp, now) {
   const seed = Math.floor(Math.random() * 2 ** 31);
   const ro = {};
-  grp.forEach(p => ro[p.peer] = {p: p.presence.ps, l: p.presence.lk, x: p.presence.xp || 0});
+  grp.forEach(p => ro[p.peer] = {p: p.presence.ps, l: p.presence.lk, x: p.presence.xp || 0, i: typeof p.presence.id === "string" ? p.presence.id.slice(0, 16) : undefined});
   const mid = (now % 1e9).toString(36) + (++midCounter) + Math.floor(Math.random() * 1e3);
   const M = {g: gid, mid, seed, h: grp[0].peer, pl: grp.map(p => p.peer), ro, ph: "chosen", at: now};
   const gdef = gameById(gid);
@@ -613,11 +788,30 @@ function gainsFor(M, res) {
 }
 // Outils de test : l'hôte peut lancer un jeu avec tous les joueurs libres.
 let forceVote = null;
-G.debug = {launch(gid) { if (!amHost()) return false; forceVote = gid; return true; }, state: () => hostSt, me: () => myPeer, profile: () => profile};
+G.debug = {launch(gid) { if (!amHost()) return false; forceVote = gid; return true; }, state: () => hostSt, me: () => myPeer, profile: () => profile,
+  giveXp(n) { profile.xp = Math.max(0, profile.xp + (+n || 0)); saveProfile(); pushPresence(); renderAll(); if (editing) drawEditor(); return profile.xp; },
+  giveShakers(n) { profile.sh = Math.max(0, profile.sh + (+n || 0)); saveProfile(); renderAll(); return profile.sh; },
+  giveLoot(n) { profile.loot = Math.max(0, profile.loot + (n == null ? 1 : +n || 0)); saveProfile(); renderAll(); return profile.loot; },
+  muscles(mg) { if (Array.isArray(mg) && mg.length === 4) { profile.mg = mg.map(v => Math.max(0, Math.floor(+v || 0))); saveProfile(); pushPresence(); renderAll(); if (editing) drawEditor(); } return profile.mg; },
+  give(id) { if (!A.ITEM[id]) return false; if (!profile.own.includes(id)) profile.own.push(id); profile.eq[A.ITEM[id].s] = id; saveProfile(); pushPresence(); renderAll(); return true; },
+  pose: p => strikePose(p, true),
+  openLoot: () => openLoot(),
+  // Termine tout de suite MA partie en cours (si ce téléphone la fait tourner) : winners = clés des gagnants.
+  finish(winners, summary) {
+    const M = matchOf(hostSt, myPeer);
+    if (!M || M.h !== myPeer || M.ph !== "playing") return false;
+    const w = (winners || [myPeer]).filter(k => M.pl.includes(k));
+    myFin = {mid: M.mid, res: {winners: w, ranking: w.concat(M.pl.filter(k => !w.includes(k))), summary: summary || "Fin forcée (debug)."}};
+    pushPresence(); return true;
+  },
+  h2h: () => profile.h2h};
 
 /* ---------- réaction à l'état ---------- */
 let seenKey = null, mounted = null, resultsShown = null, myMid = null;
 function onRoom() {
+  checkPoses();
+  // mode ?mock sans ?prof : les onglets partagent le profil, donc le même id. On en régénère un pour rester distincts.
+  if (myPeer && peers.some(p => p.peer !== myPeer && p.peer < myPeer && p.presence && p.presence.id === profile.id)) { profile.id = rid(); pushPresence(); }
   const h = hostPeer();
   const hp = peers.find(p => p.peer === h);
   if (hp && hp.presence.st) hostSt = hp.presence.st;
@@ -633,9 +827,12 @@ function applySt(st) {
   seenKey = key;
   if (!M) {
     if (myMid && resultsShown !== myMid) toast("Partie annulée : retour au lobby");
+    const wasResults = myMid && resultsShown === myMid && $("overlay").innerHTML;
     myMid = null; myFin = null; closeOverlay(); unmountGame(); pushPresence();
+    if (wasResults) afterResults();
     return;
   }
+  if (M.ph !== "results") closeSheet(); // une nouvelle partie démarre : boutique / shaker fermés (le shaker reste à ouvrir)
   myMid = M.mid;
   if (me.vote) { me.vote = null; pushPresence(); }
   if (M.ph === "chosen") showChosen(M);
@@ -694,10 +891,10 @@ floor.addEventListener("pointerdown", e => {
 let s3d = null, want3D = true;
 try { want3D = localStorage.getItem("gonflette-3d") !== "0"; } catch (e) {}
 const svgCache = new Map();
-function cachedSvg(look, xp) {
-  const k = JSON.stringify([look, xp]);
+function cachedSvg(look, xp, pose) {
+  const k = JSON.stringify([look, xp, pose || ""]);
   let v = svgCache.get(k);
-  if (!v) { v = A.svg(look, xp); svgCache.set(k, v); if (svgCache.size > 200) svgCache.delete(svgCache.keys().next().value); }
+  if (!v) { v = A.svg(look, xp, pose ? {pose} : undefined); svgCache.set(k, v); if (svgCache.size > 200) svgCache.delete(svgCache.keys().next().value); }
   return v;
 }
 function tileData() { return tileEls.map(t => ({id: t.r.g.id, name: t.r.g.name, sub: t.r.team !== undefined ? "Zone d'équipe" : (t.r.g.min === t.r.g.max ? t.r.g.min : t.r.g.min + "–" + t.r.g.max) + " joueurs", color: t.r.g.color, x: t.r.x, y: t.r.y, w: t.r.w, h: t.r.h})); }
@@ -741,8 +938,9 @@ function renderEntities() {
       const [ox, oy] = isMe ? [me.x, me.y] : posOf(pr); const x = ox, y = oy;
       if (typeof x !== "number" || typeof y !== "number") continue;
       const xp = isMe ? profile.xp : pr.xp || 0, BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
-      list.push({key: p.peer, x, y, svg: cachedSvg(isMe ? profile.look : pr.lk, xp), name: pr.ps, sub: (pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " : "") + (BM ? "🎮 " + (bg ? bg.name : "en partie") : A.tier(xp).name),
-        me: isMe, scale: A.size(xp) * .55, walking: !!(isMe ? me.walking : pr.w), facing: (isMe ? me.facing : pr.f) === -1 ? -1 : 1, busy: !!BM && !isMe, crown: host === p.peer, voted: !!pr.v && !BM});
+      const look = isMe ? myLook() : pr.lk, pz = BM ? null : poseOf(p.peer), pd = pz && POSE[pz];
+      list.push({key: p.peer, x, y, svg: cachedSvg(look, xp, pz), name: pr.ps, sub: (pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " : "") + (BM ? "🎮 " + (bg ? bg.name : "en partie") : pd ? pd[2] + " " + pd[1] + " !" : titleOf(look, xp)),
+        me: isMe, scale: A.size(xp) * .55, pose: pz, walking: !!(isMe ? me.walking : pr.w), facing: (isMe ? me.facing : pr.f) === -1 ? -1 : 1, busy: !!BM && !isMe, crown: host === p.peer, voted: !!pr.v && !BM});
     }
     s3d.setEntities(list);
     return;
@@ -759,11 +957,13 @@ function renderEntities() {
     let e = entEls.get(p.peer);
     if (!e) { e = {el: document.createElement("div"), key: ""}; e.el.className = "ent"; floor.appendChild(e.el); entEls.set(p.peer, e); }
     const BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
-    const key = JSON.stringify([pr.lk, pr.xp, pr.ps, pr.v, host === p.peer, isMe ? profile.look : 0, isMe ? profile.xp : 0, BM ? BM.g : 0]);
+    const pz = BM ? null : poseOf(p.peer), pd = pz && POSE[pz];
+    const key = JSON.stringify([pr.lk, pr.xp, pr.ps, pr.v, host === p.peer, isMe ? myLook() : 0, isMe ? profile.xp : 0, BM ? BM.g : 0, pz ? pz + (isMe ? myPose.seq : (seenPoses.get(p.peer) || {}).k) : 0]);
     if (key !== e.key) {
       e.key = key;
-      const look = isMe ? profile.look : pr.lk, xp = isMe ? profile.xp : pr.xp || 0;
-      e.el.innerHTML = `<div class="body">${A.svg(look, xp)}${pr.v && !BM ? `<span class="voted" title="A validé">✔</span>` : ""}${host === p.peer ? `<span class="crown" title="Hôte">👑</span>` : ""}</div><div class="tag">${esc(pr.ps)}<small>${BM ? "🎮 " + esc(bg ? bg.name : "en partie") : esc(A.tier(xp).name)}</small></div>`;
+      const look = isMe ? myLook() : pr.lk, xp = isMe ? profile.xp : pr.xp || 0;
+      e.el.innerHTML = `<div class="body">${A.svg(look, xp, pz ? {pose: pz} : undefined)}${pr.v && !BM ? `<span class="voted" title="A validé">✔</span>` : ""}${host === p.peer ? `<span class="crown" title="Hôte">👑</span>` : ""}${pd ? `<span class="poseflash"></span><span class="posefx">${pd[2]}</span>` : ""}</div><div class="tag">${esc(pr.ps)}${BM ? `<small>🎮 ${esc(bg ? bg.name : "en partie")}</small>` : pd ? `<small class="pz">${pd[2]} ${esc(pd[1])} !</small>` : `<small>${esc(titleOf(look, xp))}</small>`}</div>`;
+      e.el.classList.toggle("posing", !!pd);
     }
     e.el.classList.toggle("busy", !!BM && !isMe);
     const tmv = isMe ? me.team : pr.tm;
@@ -868,14 +1068,20 @@ function renderRoster() {
   $("roster").innerHTML = ps.map(p => {
     const pr = p.presence, isMe = p.peer === myPeer, xp = isMe ? profile.xp : pr.xp || 0;
     const g = pr.v && gameById(pr.v), BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
-    return `<li><div class="mini">${A.svg(isMe ? profile.look : pr.lk, xp, {view: "bust"})}</div><div><b>${esc(pr.ps)}${isMe ? " (vous)" : ""}${host === p.peer ? " 👑" : ""}</b><small>${pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " + esc(teamLabel(pr.tm)) + " · " : ""}${esc(A.tier(xp).name)} · ${xp} XP</small></div><span class="st ${g || BM ? "ok" : ""}${BM ? " play" : ""}">${BM ? "🎮 " + esc(bg ? bg.name : "") : pr.ed ? "se prépare" : g ? "✔ " + esc(g.name) : "choisit…"}</span></li>`;
+    const look = isMe ? myLook() : pr.lk, rec = !isMe && typeof pr.id === "string" ? profile.h2h[pr.id] : null;
+    return `<li data-peer="${esc(p.peer)}" title="${isMe ? "Mes rivaux" : "Face-à-face"}"><div class="mini">${A.svg(look, xp, {view: "bust"})}</div><div><b>${esc(pr.ps)}${isMe ? " (vous)" : ""}${host === p.peer ? " 👑" : ""}${rec && nemOf(rec) ? ` <span class="nem${nemOf(rec) === "victime" ? " vic" : ""}">${nemOf(rec) === "victime" ? "VICTIME 😇" : "NÉMÉSIS 😈"}</span>` : ""}</b><small>${pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " + esc(teamLabel(pr.tm)) + " · " : ""}${A.skipLegDay(look) ? `<span class="sld-mini">🐔 Skip Leg Day</span>` : esc(A.tier(xp).name)} · ${xp} XP${rec && (rec.w || rec.l) ? ` · ⚔️ ${rec.w}–${rec.l}` : ""}</small></div><span class="st ${g || BM ? "ok" : ""}${BM ? " play" : ""}">${BM ? "🎮 " + esc(bg ? bg.name : "") : pr.ed ? "se prépare" : g ? "✔ " + esc(g.name) : "choisit…"}</span></li>`;
   }).join("");
 }
 function renderMe() {
-  $("me-mini").innerHTML = A.svg(profile.look, profile.xp, {view: "bust"});
+  $("me-mini").innerHTML = A.svg(myLook(), profile.xp, {view: "bust"});
   $("me-name").textContent = profile.pseudo;
   const t = A.tier(profile.xp);
-  $("me-lvl").textContent = `${t.name} · ${profile.xp} XP`;
+  $("me-lvl").textContent = `${titleOf(myLook(), profile.xp)} · ${profile.xp} XP`;
+  $("wallet").textContent = `🥤 ${profile.sh}`;
+  $("btn-loot").hidden = !(profile.loot > 0); $("loot-n").textContent = profile.loot;
+  const av = ptsAvail();
+  $("btn-edit").innerHTML = `Mon perso${av ? `<span class="badge">+${av}</span>` : ""}`;
+  renderPoseBar();
   $("me-xp").style.width = (t.to ? (profile.xp - t.from) / (t.to - t.from) * 100 : 100) + "%";
 }
 function renderTeambar() {
@@ -899,20 +1105,36 @@ function closeOverlay() { $("overlay").innerHTML = ""; }
 function rosterAv(M, k, pose, view) { const r = M.ro[k]; return r ? A.svg(r.l, r.x, {pose, view}) : ""; }
 function showChosen(M) {
   const g = gameById(M.g);
+  // Duel : bilan des face-à-face (vu depuis ce téléphone) et étiquette NÉMÉSIS si quelqu'un mène de 3 victoires
+  let h2h = "", badge = {};
+  if (M.pl.length === 2 && M.pl.includes(myPeer)) {
+    const o = M.pl.find(k => k !== myPeer), oid = idOfPlayer(M, o);
+    if (oid && oid !== profile.id) {
+      const rec = recOf(oid), nm = nemOf(rec);
+      if (nm === "nemesis") badge[o] = nemBadge("nemesis"); else if (nm === "victime") badge[myPeer] = nemBadge("nemesis");
+      h2h = `<div class="h2h"><span>${esc(M.ro[myPeer].p)}</span><span class="sc">${rec.w} – ${rec.l}</span><span>${esc(M.ro[o].p)}</span></div>
+        <p class="h2h-note">${rec.last === "l" ? "🔥 Revanche en jeu : une victoire vaut +50 XP et +20 🥤 !" : !rec.w && !rec.l ? "Premier face-à-face !" : nm === "nemesis" ? "😈 Votre pire cauchemar est de retour." : nm === "victime" ? "😇 Votre victime préférée…" : ""}</p>`;
+    }
+  }
   $("overlay").innerHTML = `<div class="ov"><div class="ov-card"><p>C'est parti pour</p><h2>${esc(g ? g.name : M.g)}</h2>
-    <div class="versus">${M.pl.map((k, i) => `${i && M.pl.length === 2 ? `<div class="vs">VS</div>` : ""}<figure style="width:min(${Math.round(70 * A.size(M.ro[k].x))}px,${M.pl.length === 2 ? 42 : 30}vw)">${rosterAv(M, k, "flex")}<figcaption>${esc(M.ro[k].p)}</figcaption></figure>`).join("")}</div>
-    <div class="count" id="countdown">4</div></div></div>`;
+    <div class="versus">${M.pl.map((k, i) => `${i && M.pl.length === 2 ? `<div class="vs">VS</div>` : ""}<figure style="width:min(${Math.round(70 * A.size(M.ro[k].x))}px,${M.pl.length === 2 ? 42 : 30}vw)">${badge[k] || ""}${rosterAv(M, k, "flex")}<figcaption>${esc(M.ro[k].p)}</figcaption></figure>`).join("")}</div>
+    ${h2h}<div class="count" id="countdown">4</div></div></div>`;
   let c = 4; const tick = setInterval(() => { c--; const el = $("countdown"); if (!el || c <= 0) { clearInterval(tick); return; } el.textContent = c; }, 1000);
 }
 function showResults(M) {
   if (resultsShown === M.mid) return;
   resultsShown = M.mid;
   const res = M.res || {winners: [], ranking: [], gains: {}};
+  res.gains = res.gains || {}; res.winners = res.winners || []; res.ranking = res.ranking || [];
   const before = profile.xp;
-  let gained = 0;
+  let gained = 0, shk = 0, duel = null;
   if (M.pl.includes(myPeer) && profile.lastMid !== M.mid) {
     gained = res.gains[myPeer] || 0;
-    profile.xp += gained; profile.lastMid = M.mid; saveProfile(); pushPresence();
+    shk = shakersFor(gained);
+    duel = recordH2H(M, res);
+    if (duel && duel.revanche) { gained += 50; shk += 20; } // REVANCHE : bonus calculé sur ce téléphone
+    profile.xp += gained; profile.sh += shk; profile.loot += 1; lootPending = M.mid;
+    profile.lastMid = M.mid; saveProfile(); pushPresence();
   }
   const tb = A.tier(before), ta = A.tier(profile.xp);
   const order = res.ranking.length ? res.ranking : M.pl;
@@ -922,12 +1144,309 @@ function showResults(M) {
   const title = wTeam !== undefined ? `${esc((M.tn && M.tn[wTeam]) || "L'équipe")} gagne !` : res.winners.length ? (res.winners.length === 1 ? `${esc(M.ro[res.winners[0]].p)} gagne !` : "Victoire partagée !") : "Match nul !";
   $("overlay").innerHTML = `<div class="ov"><div class="ov-card"><p>${esc(g ? g.name : "")}</p><h2>${title}</h2>
     ${res.summary ? `<p>${esc(res.summary)}</p>` : ""}
-    <div class="podium">${order.concat(others).map(k => `<figure class="${res.winners.includes(k) ? "win" : ""}" style="width:min(${Math.round(75 * A.size(M.ro[k].x))}px,${M.pl.length <= 2 ? 44 : 30}vw)">${rosterAv(M, k, res.winners.includes(k) ? "flex" : "idle")}<figcaption><b>${esc(M.ro[k].p)}</b><span class="gain">+${res.gains[k] || 0} XP</span></figcaption></figure>`).join("")}</div>
-    ${gained ? `<p>Vous gagnez <b>+${gained} XP</b> : ${profile.xp} XP au total.</p>` : ""}
-    ${gained && ta.index > tb.index ? `<div class="levelup-title">Nouveau palier : ${esc(ta.name)} !</div><div class="levelup"><div style="align-self:end;transform-origin:bottom;transform:scale(${(A.size(before) / A.size(profile.xp)).toFixed(3)})">${A.svg(profile.look, before)}</div><div class="arrow">→</div><div>${A.svg(profile.look, profile.xp, {pose: "flex"})}</div></div>` : ""}
+    <div class="podium">${order.concat(others).map(k => `<figure class="${res.winners.includes(k) ? "win" : ""}" style="width:min(${Math.round(75 * A.size(M.ro[k].x))}px,${M.pl.length <= 2 ? 44 : 30}vw)">${rosterAv(M, k, res.winners.includes(k) ? "flex" : "idle")}<figcaption><b>${esc(M.ro[k].p)}</b><span class="gain">+${res.gains[k] || 0} XP</span><span class="shk">+${shakersFor(res.gains[k] || 0)} 🥤</span></figcaption></figure>`).join("")}</div>
+    ${duel && duel.revanche ? `<div class="revanche">🔥 REVANCHE ! 🔥<small>Vous avez vengé votre défaite contre ${esc(duel.name)} : +50 XP et +20 🥤</small></div>` : ""}
+    ${gained ? `<p>Vous gagnez <b>+${gained} XP</b> et <b>+${shk} 🥤</b> : ${profile.xp} XP au total, ${profile.sh} shakers.</p>` : ""}
+    ${M.pl.includes(myPeer) ? `<div class="res-actions">${profile.loot > 0 ? `<button class="btn loot" type="button" data-openloot>🎁 Shaker mystère : secouez-le !</button>` : ""}${ptsAvail() > 0 ? `<button class="btn pts" type="button" data-points>💪 +${ptsAvail()} point${ptsAvail() > 1 ? "s" : ""} à placer !</button>` : ""}</div>` : ""}
+    ${gained && ta.index > tb.index ? `<div class="levelup-title">Nouveau palier : ${esc(ta.name)} !</div><div class="levelup"><div style="align-self:end;transform-origin:bottom;transform:scale(${(A.size(before) / A.size(profile.xp)).toFixed(3)})">${A.svg(myLook(), before)}</div><div class="arrow">→</div><div>${A.svg(myLook(), profile.xp, {pose: "flex"})}</div></div>` : ""}
     <p style="font-size:.95rem">Retour au lobby dans quelques secondes…</p><button class="btn alt" type="button" id="res-close">Revenir au lobby maintenant</button></div></div>`;
-  $("res-close").onclick = closeOverlay;
+  $("res-close").onclick = () => { closeOverlay(); afterResults(); };
   renderMe();
+}
+
+/* ---------- poses dans le lobby ---------- */
+const POSE = {}; A.POSES.forEach(p => { POSE[p[0]] = p; });
+const POSE_SHORT = {flex: "Biceps", most: "Most musc.", kiss: "Bisou", back: "Dos", leg: "Jambe"};
+const POSE_MS = 2600;
+let myPose = null, poseSeq = Math.floor(Math.random() * 1e5), poseHist = [], poseCdUntil = 0;
+const seenPoses = new Map(); // pose des autres : affichée ~2,5 s à partir du moment où CE téléphone la reçoit (horloges différentes)
+const titleOf = (look, xp) => A.skipLegDay(look) ? "🐔 Skip Leg Day" : A.tier(xp).name;
+function strikePose(p, force) {
+  if (!POSE[p]) return false;
+  const now = Date.now();
+  if (!force) {
+    if (!inLobby || inGame || now < poseCdUntil) return false;
+    poseHist = poseHist.filter(t => now - t < 20000);
+    if (poseHist.length >= 6) { toast("Doucement Musclor, tes fibres ont besoin de repos ! 😮‍💨"); poseCdUntil = now + 4000; renderPoseBar(); setTimeout(renderPoseBar, 4100); return false; }
+  }
+  poseHist.push(now); poseCdUntil = now + 2000;
+  myPose = {p, seq: ++poseSeq, at: now};
+  pushPresence(); renderLobby(); renderPoseBar();
+  setTimeout(renderPoseBar, 2050);
+  setTimeout(renderLobby, POSE_MS + 40);
+  return true;
+}
+function poseOf(peer) {
+  const now = Date.now();
+  if (peer === myPeer) return myPose && now - myPose.at < POSE_MS ? myPose.p : null;
+  const s = seenPoses.get(peer);
+  return s && s.p && now - s.at < POSE_MS ? s.p : null;
+}
+function checkPoses() {
+  const now = Date.now();
+  for (const p of peers) {
+    if (p.peer === myPeer) continue;
+    const po = p.presence && Array.isArray(p.presence.po) && POSE[p.presence.po[0]] ? p.presence.po : null;
+    const k = po ? po[0] + ":" + po[1] : "";
+    const s = seenPoses.get(p.peer);
+    if (!s) { seenPoses.set(p.peer, {k, p: po && po[0], at: 0}); continue; } // pose déjà ancienne quand on arrive : on ne la rejoue pas
+    if (s.k !== k) { s.k = k; s.p = po && po[0]; s.at = po ? now : 0; if (po) setTimeout(renderLobby, POSE_MS + 40); }
+  }
+}
+function renderPoseBar() {
+  const bar = $("posebar"); if (!bar) return;
+  const cd = Date.now() < poseCdUntil, skip = A.skipLegDay(myLook());
+  const html = A.POSES.map(([id, name, e]) => `<button type="button" class="pose-btn${id === "leg" && skip ? " chick" : ""}" data-pose="${id}"${cd ? " disabled" : ""} title="${esc(name)}" aria-label="Pose : ${esc(name)}"><span class="e">${id === "leg" && skip ? "🐔" : e}</span>${esc(POSE_SHORT[id] || name)}</button>`).join("");
+  if (bar.dataset.h !== html) { bar.innerHTML = html; bar.dataset.h = html; }
+}
+$("posebar").addEventListener("click", e => { const b = e.target.closest("[data-pose]"); if (b && !b.disabled) strikePose(b.dataset.pose); });
+
+/* ---------- shakers, objets, rivaux ---------- */
+const shakersFor = g => g >= 100 ? 30 : g >= 40 ? 15 : g > 0 ? 10 : 0;
+const RAR = r => A.RARITIES[r] || A.RARITIES.commun;
+const slotOf = s => A.SLOTS.find(x => x[0] === s) || ["", "", ""];
+const nemOf = r => !r ? null : (r.l - r.w >= 3 ? "nemesis" : r.w - r.l >= 3 ? "victime" : null);
+const nemBadge = t => t === "victime" ? `<span class="nem vic">VICTIME 😇</span>` : `<span class="nem">NÉMÉSIS 😈</span>`;
+function idOfPlayer(M, k) {
+  const r = M && M.ro && M.ro[k];
+  if (r && typeof r.i === "string") return r.i;
+  const p = peers.find(q => q.peer === k);
+  return p && p.presence && typeof p.presence.id === "string" ? p.presence.id.slice(0, 16) : null;
+}
+function recOf(id) { return Object.assign({n: "", w: 0, l: 0, last: null, gw: 0, gl: 0, t: 0}, (id && profile.h2h[id]) || {}); }
+// Enregistre le résultat de MA partie contre chaque adversaire (sur cet appareil). Renvoie l'info de revanche pour un duel.
+function recordH2H(M, res) {
+  const opps = M.pl.filter(k => k !== myPeer), iWon = res.winners.includes(myPeer);
+  let out = null;
+  if (M.pl.length === 2) {
+    const o = opps[0], oid = idOfPlayer(M, o);
+    if (!oid || oid === profile.id) return null;
+    const rec = recOf(oid), oWon = res.winners.includes(o);
+    rec.n = String((M.ro[o] && M.ro[o].p) || rec.n || "?").slice(0, 14); rec.t = Date.now();
+    const r = iWon && !oWon ? "w" : oWon && !iWon ? "l" : null;
+    out = {name: rec.n, r, revanche: r === "w" && rec.last === "l"};
+    if (r) { rec[r]++; rec.last = r; }
+    profile.h2h[oid] = rec;
+  } else if (!M.tm) {
+    for (const o of opps) {
+      const oid = idOfPlayer(M, o); if (!oid || oid === profile.id) continue;
+      const rec = recOf(oid), oWon = res.winners.includes(o);
+      rec.n = String((M.ro[o] && M.ro[o].p) || rec.n || "?").slice(0, 14); rec.t = Date.now();
+      if (iWon && !oWon) rec.gw++; else if (oWon && !iWon) rec.gl++;
+      profile.h2h[oid] = rec;
+    }
+  }
+  const ids = Object.keys(profile.h2h);
+  if (ids.length > 80) ids.sort((a, b) => (profile.h2h[a].t || 0) - (profile.h2h[b].t || 0)).slice(0, ids.length - 80).forEach(id => delete profile.h2h[id]);
+  return out;
+}
+function rivalsList() {
+  const rs = Object.values(profile.h2h).filter(r => r.w || r.l || r.gw || r.gl)
+    .sort((a, b) => (b.w + b.l) - (a.w + a.l) || (b.gw + b.gl) - (a.gw + a.gl)).slice(0, 12);
+  if (!rs.length) return `<p class="sub" style="margin:0">Aucun duel pour l'instant. Défiez quelqu'un sur un jeu à 2 !</p>`;
+  return `<ul class="rivals">${rs.map(r => { const nm = nemOf(r); return `<li><span>${esc(r.n || "?")} ${nm ? nemBadge(nm) : ""}${r.gw || r.gl ? `<small style="color:var(--dim)"> · en groupe ${r.gw}–${r.gl}</small>` : ""}</span><b>${r.w} – ${r.l}</b></li>`; }).join("")}</ul><small style="color:var(--dim);font-weight:600">Duels : vos victoires – vos défaites (sur ce téléphone).</small>`;
+}
+function musclePanel() {
+  const av = ptsAvail(), tot = ptsTotal(), mx = Math.max(4, ...profile.mg);
+  return `<div class="mg-panel"><h3>💪 Groupes musculaires <span class="pts${av ? "" : " ok"}">${av ? `+${av} point${av > 1 ? "s" : ""} à placer !` : `${tot} point${tot > 1 ? "s" : ""} placé${tot > 1 ? "s" : ""}`}</span></h3>
+    ${A.GROUPS.map(([k, n, e], i) => `<div class="mg-row"><span>${e} ${n}</span><div class="mg-bar"><i style="width:${Math.round(profile.mg[i] / mx * 100)}%"></i></div><b>${profile.mg[i]}</b><button type="button" data-mg="${i}" data-d="-1" aria-label="Retirer un point : ${n}"${profile.mg[i] ? "" : " disabled"}>−</button><button type="button" data-mg="${i}" data-d="1" aria-label="Ajouter un point : ${n}"${av ? "" : " disabled"}>+</button></div>`).join("")}
+    ${A.skipLegDay(myLook()) ? `<div style="text-align:center"><span class="sld">SKIP LEG DAY 🐔</span></div>` : ""}
+    <small>1 point tous les ${A.POINT_XP} XP gagnés (${tot} au total). Un point peut être repris pour être replacé. Négliger les jambes a des conséquences…</small></div>`;
+}
+function drawEdExtra() {
+  const el = $("ed-extra"); if (!el) return;
+  const owned = A.ITEMS.filter(i => profile.own.includes(i.id));
+  el.innerHTML = `${musclePanel()}
+    <div class="ed-box"><h3>🎽 Mon équipement</h3>${owned.length ? `<div class="eq-list">${owned.map(it => `<button type="button" class="opt" style="--rc:${RAR(it.r).color}" data-eq="${it.id}" aria-pressed="${profile.eq[it.s] === it.id}">${slotOf(it.s)[2]} ${esc(it.n)}</button>`).join("")}</div>` : `<p class="sub" style="margin:0">Rien pour l'instant. Gagnez des shakers 🥤 en jouant et passez à la boutique !</p>`}
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" type="button" data-shop>🛒 Boutique · 🥤 ${profile.sh}</button>${profile.loot ? `<button class="btn loot" type="button" data-openloot>🎁 Shakers à ouvrir : ${profile.loot}</button>` : ""}</div></div>
+    <div class="ed-box"><h3>⚔️ Mes rivaux</h3>${rivalsList()}</div>`;
+}
+function buyItem(id) {
+  const it = A.ITEM[id]; if (!it || profile.own.includes(id)) return;
+  if (profile.sh < it.price) { toast(`Pas assez de shakers : il en manque ${it.price - profile.sh} 🥤`); return; }
+  profile.sh -= it.price; profile.own.push(id); profile.eq[it.s] = id;
+  saveProfile(); pushPresence(); renderAll(); toast(`${it.n} : acheté et équipé ! 💪`);
+}
+function equipItem(id, on) {
+  const it = A.ITEM[id]; if (!it || !profile.own.includes(id)) return;
+  if (on) profile.eq[it.s] = id; else if (profile.eq[it.s] === id) delete profile.eq[it.s];
+  saveProfile(); pushPresence(); renderAll();
+}
+const withItem = (look, id) => { const it = A.ITEM[id]; const l = Object.assign({}, look); l.it = (l.it || []).filter(x => A.ITEM[x] && A.ITEM[x].s !== it.s).concat(id); return l; };
+const itemPose = it => it && (it.s === "poignets" || it.s === "peau") ? "flex" : "idle";
+
+/* ---------- fenêtres du lobby (boutique, shaker, rivaux, points) ---------- */
+let sheetKind = null, sheetCleanup = null;
+function openSheet(kind, html, narrow) {
+  closeSheet();
+  sheetKind = kind;
+  $("sheet").innerHTML = `<div class="sheet" data-kind="${kind}"><div class="sheet-card${narrow ? " narrow" : ""}" role="dialog" aria-modal="true"><button class="sheet-x" type="button" data-close aria-label="Fermer">✕</button><div class="sheet-body">${html || ""}</div></div></div>`;
+  return $("sheet").querySelector(".sheet-body");
+}
+function closeSheet() {
+  if (sheetCleanup) { const c = sheetCleanup; sheetCleanup = null; try { c(); } catch (e) { console.warn(e); } }
+  if (!sheetKind && !$("sheet").innerHTML) return;
+  sheetKind = null; $("sheet").innerHTML = "";
+}
+const sheetBody = () => $("sheet").querySelector(".sheet-body");
+$("sheet").addEventListener("click", e => {
+  if (e.target.closest("[data-close]") || e.target.classList.contains("sheet")) { closeSheet(); renderAll(); if (editing) drawEditor(); return; }
+  const t = e.target.closest("[data-tab],[data-item],[data-buy],[data-equip],[data-unequip],[data-lt-equip]");
+  if (!t) return;
+  if (t.dataset.tab) { shopTab = t.dataset.tab; shopSel = null; drawShop(); }
+  else if (t.dataset.item) { shopSel = shopSel === t.dataset.item ? null : t.dataset.item; drawShop(); }
+  else if (t.dataset.buy) { buyItem(t.dataset.buy); drawShop(); }
+  else if (t.dataset.equip) { equipItem(t.dataset.equip, true); drawShop(); }
+  else if (t.dataset.unequip) { equipItem(t.dataset.unequip, false); drawShop(); }
+  else if (t.dataset.ltEquip) { equipItem(t.dataset.ltEquip, true); t.disabled = true; t.textContent = "Équipé ✔"; toast("Équipé ! Tout le monde le voit 😎"); }
+});
+addEventListener("keydown", e => { if (e.key === "Escape" && sheetKind) { closeSheet(); renderAll(); } });
+// boutons présents dans plusieurs écrans (résultats, éditeur, fenêtres)
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-openloot],[data-shop],[data-points],[data-mg],[data-eq]");
+  if (!t || t.disabled) return;
+  if (t.hasAttribute("data-openloot")) openLoot();
+  else if (t.hasAttribute("data-shop")) openShop();
+  else if (t.hasAttribute("data-points")) openPoints();
+  else if (t.dataset.eq) { const it = A.ITEM[t.dataset.eq]; equipItem(it.id, profile.eq[it.s] !== it.id); if (editing) drawEditor(); }
+  else if (t.dataset.mg) {
+    const i = +t.dataset.mg, d = +t.dataset.d;
+    if (!(i >= 0 && i < 4) || (d > 0 && ptsAvail() <= 0) || (d < 0 && profile.mg[i] <= 0)) return;
+    profile.mg[i] += d > 0 ? 1 : -1; saveProfile(); pushPresence();
+    if (sheetKind === "points") drawPoints();
+    if (editing) drawEditor();
+    renderAll();
+  }
+});
+
+// Boutique
+let shopTab = "tete", shopSel = null;
+function openShop(tab) { if (tab) shopTab = tab; shopSel = null; openSheet("shop"); drawShop(); }
+$("btn-shop").addEventListener("click", () => openShop());
+function drawShop() {
+  const body = sheetBody(); if (!body || sheetKind !== "shop") return;
+  const base = myLook(), sel = shopSel && A.ITEM[shopSel];
+  const R = sel && RAR(sel.r), owned = sel && profile.own.includes(sel.id), on = sel && profile.eq[sel.s] === sel.id;
+  const acts = !sel ? "" : owned ? (on ? `<button class="btn alt" type="button" data-unequip="${sel.id}">Retirer</button>` : `<button class="btn" type="button" data-equip="${sel.id}">Équiper</button>`)
+    : profile.sh >= sel.price ? `<button class="btn red" type="button" data-buy="${sel.id}">Acheter · 🥤 ${sel.price}</button>` : `<button class="btn" type="button" disabled>Il manque 🥤 ${sel.price - profile.sh}</button>`;
+  const card = it => {
+    const R2 = RAR(it.r), own = profile.own.includes(it.id), eq = profile.eq[it.s] === it.id, bust = it.s === "tete" || it.s === "visage" || it.s === "cou";
+    return `<button type="button" class="item ${it.r}" style="--rc:${R2.color}" data-item="${it.id}" aria-pressed="${shopSel === it.id}">${A.svg(withItem(base, it.id), profile.xp, {view: bust ? "bust" : undefined, pose: itemPose(it)})}<b>${esc(it.n)}</b><span class="rar">${R2.name}</span>${own ? "" : `<span class="price">🥤 ${it.price}</span>`}${own ? `<span class="tagown${eq ? " eq" : ""}">${eq ? "Équipé" : "À vous"}</span>` : ""}</button>`;
+  };
+  body.innerHTML = `<h2>Boutique Protéines</h2><p class="sub">Vous avez <b style="color:var(--gold)">🥤 ${profile.sh} shakers</b> · victoire +30, 2e place +15, participation +10.</p>
+    <div class="shop"><div class="shop-prev">${A.svg(sel ? withItem(base, sel.id) : base, profile.xp, {pose: sel ? itemPose(sel) : "flex"})}<div><div class="nm">${sel ? esc(sel.n) : "Cabine d'essayage"}</div>${sel ? `<span class="rar" style="--rc:${R.color}">${R.name}</span>` : ""}<p class="ds">${sel ? esc(sel.d) : "Touchez un objet pour l'essayer sur votre perso."}</p><div class="acts">${acts}</div></div></div>
+    <div><div class="shop-tabs" role="group" aria-label="Emplacements">${A.SLOTS.map(([k, n, e]) => `<button class="chip" type="button" data-tab="${k}" aria-pressed="${k === shopTab}">${e} ${n}</button>`).join("")}</div>
+    <div class="shop-grid">${A.ITEMS.filter(i => i.s === shopTab).map(card).join("")}</div></div></div>`;
+}
+
+// Points de muscle (après les résultats)
+function openPoints() { openSheet("points", "", true); drawPoints(); }
+function drawPoints() {
+  const body = sheetBody(); if (!body || sheetKind !== "points") return;
+  body.innerHTML = `<h2>Séance de muscu</h2><p class="sub">Placez vos points : chaque groupe se voit sur votre perso, chez tout le monde.</p><div style="max-width:230px;margin:0 auto">${A.svg(myLook(), profile.xp, {pose: "flex"})}</div>${musclePanel()}<div class="res-actions"><button class="btn" type="button" data-close>C'est bon !</button></div>`;
+}
+
+// Rivaux
+$("roster").addEventListener("click", e => {
+  const li = e.target.closest("li[data-peer]"); if (!li) return;
+  if (li.dataset.peer === myPeer) openRivals(); else openRival(li.dataset.peer);
+});
+function openRivals() { openSheet("rivals", `<h2>Mes rivaux</h2><p class="sub">Vos face-à-face en duel, gardés sur ce téléphone.</p>${rivalsList()}`, true); }
+function openRival(k) {
+  const p = peers.find(q => q.peer === k); if (!p || !p.presence || !p.presence.ps) return;
+  const pr = p.presence, rec = recOf(typeof pr.id === "string" ? pr.id : null), nm = nemOf(rec);
+  const note = !rec.w && !rec.l ? "Jamais affrontés en duel. Retrouvez-vous sur un jeu à 2 !"
+    : nm === "nemesis" ? `😈 ${esc(pr.ps)} est votre NÉMÉSIS. L'heure de la vengeance a sonné.`
+    : nm === "victime" ? `😇 Vous êtes la NÉMÉSIS de ${esc(pr.ps)}. Il ou elle en fait des cauchemars.`
+    : rec.last === "l" ? "🔥 Vous avez perdu le dernier duel : la prochaine victoire vaut une REVANCHE (+50 XP, +20 🥤) !" : "Duel serré. Qui craquera le premier ?";
+  openSheet("rival", `<div class="rival-card"><h2>Face-à-face</h2><div class="duo"><figure>${nm === "victime" ? nemBadge("nemesis") : ""}${A.svg(myLook(), profile.xp, {pose: "flex", view: "bust"})}<figcaption>${esc(profile.pseudo)}</figcaption></figure><div class="vs" style="font-family:var(--f-display);font-size:2rem;color:var(--accent);align-self:center">VS</div><figure>${nm === "nemesis" ? nemBadge("nemesis") : ""}${A.svg(pr.lk, pr.xp || 0, {pose: "flex", view: "bust"})}<figcaption>${esc(pr.ps)}</figcaption></figure></div>
+    <div class="h2h"><span>${esc(profile.pseudo)}</span><span class="sc">${rec.w} – ${rec.l}</span><span>${esc(pr.ps)}</span></div><p class="h2h-note">${note}</p>${rec.gw || rec.gl ? `<p class="sub">En partie à plusieurs : vous l'avez battu ${rec.gw} fois, il vous a battu ${rec.gl} fois.</p>` : ""}</div>`, true);
+}
+
+/* ---------- shaker mystère ---------- */
+let lootPending = null;
+$("btn-loot").addEventListener("click", () => openLoot());
+function afterResults() {
+  const M = matchOf(hostSt, myPeer); // (peut encore être la partie en phase résultats)
+  const want = lootPending && profile.loot > 0 && !inGame && !sheetKind && !(M && M.ph !== "results") && inLobby && !editing;
+  lootPending = null;
+  if (want) openLoot();
+}
+const SHAKER_SVG = `<svg viewBox="0 0 120 160" aria-hidden="true"><rect x="34" y="2" width="20" height="18" rx="4" fill="#1d1420"/><rect x="16" y="14" width="88" height="28" rx="9" fill="#2b2b33" stroke="#1d1420" stroke-width="4"/><path d="M26 22h68" stroke="#fff" stroke-width="3" opacity=".25"/><path d="M20 42h80l-9 106q-1 9 -10 9h-42q-9 0 -10 -9z" fill="#ff8fc8" stroke="#1d1420" stroke-width="4" stroke-linejoin="round"/><path d="M24 70h72" stroke="#fff" stroke-width="3" opacity=".45"/><path d="M33 50l7 92" stroke="#fff" stroke-width="6" opacity=".35" stroke-linecap="round"/><text x="60" y="63" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="12" fill="#1d1420" letter-spacing=".5">GONFLETTE</text><text x="62" y="128" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="52" fill="#ffd23f" stroke="#1d1420" stroke-width="3">?</text></svg>`;
+function fireworks(bursts, colors) {
+  if (reduced) return;
+  for (let b = 0; b < bursts; b++) setTimeout(() => {
+    const cx = innerWidth * (.2 + Math.random() * .6), cy = innerHeight * (.15 + Math.random() * .35);
+    for (let i = 0; i < 34; i++) {
+      const d = document.createElement("i"), a = i / 34 * Math.PI * 2, r = 70 + Math.random() * 130;
+      d.className = "fw"; d.style.left = cx + "px"; d.style.top = cy + "px"; d.style.background = colors[i % colors.length];
+      d.style.setProperty("--dx", (Math.cos(a) * r).toFixed(0) + "px"); d.style.setProperty("--dy", (Math.sin(a) * r + 50).toFixed(0) + "px");
+      document.body.appendChild(d); setTimeout(() => d.remove(), 1400);
+    }
+  }, b * 360);
+}
+function openLoot() {
+  if (profile.loot <= 0) { toast("Aucun shaker à ouvrir : jouez une partie !"); return; }
+  const body = openSheet("loot", "", true);
+  const timers = [];
+  let fill = 0, done = false, lastShake = 0, motionOn = false, asked = false;
+  const hasMotion = typeof DeviceMotionEvent !== "undefined";
+  const needPerm = hasMotion && typeof DeviceMotionEvent.requestPermission === "function";
+  body.innerHTML = `<div class="loot"><h2>Shaker mystère</h2><p class="hint">Tapotez le shaker comme un forcené${hasMotion ? " (ou secouez votre téléphone)" : ""} !</p><button class="shaker" type="button" id="lt-shaker" aria-label="Secouer le shaker">${SHAKER_SVG}</button><div class="gauge" role="progressbar" aria-label="Remplissage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="lt-gauge"></i></div><p class="left">${profile.loot} shaker${profile.loot > 1 ? "s" : ""} à ouvrir</p></div>`;
+  const onMotion = e => {
+    let mag = 0;
+    const a = e.acceleration;
+    if (a && a.x != null) mag = Math.hypot(a.x || 0, a.y || 0, a.z || 0);
+    else { const g = e.accelerationIncludingGravity; if (!g || g.x == null) return; mag = Math.abs(Math.hypot(g.x || 0, g.y || 0, g.z || 0) - 9.81); }
+    const now = performance.now();
+    if (mag > 12 && now - lastShake > 110) { lastShake = now; add(.07); }
+  };
+  const startMotion = () => { if (motionOn || !hasMotion) return; motionOn = true; addEventListener("devicemotion", onMotion); };
+  if (hasMotion && !needPerm) startMotion(); // Android / ordinateur : pas de permission ; iOS : demandée au premier toucher
+  sheetCleanup = () => { removeEventListener("devicemotion", onMotion); timers.forEach(clearTimeout); };
+  function add(v) {
+    if (done || sheetKind !== "loot") return;
+    fill = Math.min(1, fill + v);
+    const g = $("lt-gauge"); if (g) { g.style.width = (fill * 100).toFixed(0) + "%"; g.parentNode.setAttribute("aria-valuenow", Math.round(fill * 100)); }
+    const sh = $("lt-shaker"); if (sh) { sh.classList.remove("hit"); void sh.offsetWidth; sh.classList.add("hit"); }
+    try { navigator.vibrate && navigator.vibrate(12); } catch (e) {}
+    if (fill >= 1) { done = true; reveal(); }
+  }
+  $("lt-shaker").addEventListener("click", () => {
+    if (needPerm && !asked) { asked = true; try { DeviceMotionEvent.requestPermission().then(r => { if (r === "granted") startMotion(); }).catch(() => {}); } catch (e) {} }
+    add(.1);
+  });
+  function reveal() {
+    // tirage : commun 60 %, rare 28 %, épique 10 %, légendaire 2 %
+    const x = Math.random(), rk = x < .02 ? "legendaire" : x < .12 ? "epique" : x < .40 ? "rare" : "commun";
+    const pool = A.ITEMS.filter(i => i.r === rk), it = pool[Math.floor(Math.random() * pool.length)], R = RAR(rk);
+    const dup = profile.own.includes(it.id);
+    profile.loot = Math.max(0, profile.loot - 1);
+    if (dup) profile.sh += R.dup; else profile.own.push(it.id);
+    saveProfile(); renderMe();
+    const sh = $("lt-shaker"); if (sh) sh.classList.add("wild");
+    const hint = body.querySelector(".hint"); if (hint) hint.innerHTML = `<span class="suspense" id="lt-sus">Ça mousse…</span>`;
+    const order = ["commun", "rare", "epique", "legendaire"];
+    const delays = [90, 90, 100, 110, 120, 140, 170, 210, 260, 330, 420];
+    let t = 0, i = Math.floor(Math.random() * 4);
+    delays.forEach((d, n) => {
+      t += d;
+      timers.push(setTimeout(() => {
+        const last = n === delays.length - 1, r = last ? rk : order[(i++) % 4], el = $("lt-sus");
+        if (el) { el.textContent = last ? RAR(r).name + " !" : RAR(r).name + "…"; el.style.setProperty("--rc", RAR(r).color); }
+      }, t));
+    });
+    timers.push(setTimeout(() => {
+      if (sheetKind !== "loot") return;
+      const look = withItem(myLook(), it.id);
+      body.innerHTML = `<div class="reveal" style="--rc:${R.color}"><div class="halo"></div><div class="big-r">${R.name} !</div><div class="card">${A.svg(look, profile.xp, {pose: itemPose(it) === "flex" || rk === "legendaire" ? "flex" : "idle"})}<div class="rname">${slotOf(it.s)[2]} ${esc(it.n)}</div><p class="sub" style="margin:2px 0 0">${esc(it.d)}</p></div>
+        ${dup ? `<p class="dup">Doublon ! Converti en <b>+${R.dup} 🥤</b> shakers.</p>` : `<p class="sub" style="margin:0">Nouvel objet dans votre vestiaire !</p>`}
+        <div class="res-actions">${dup ? "" : `<button class="btn red" type="button" data-lt-equip="${it.id}">Équiper</button>`}${profile.loot > 0 ? `<button class="btn loot" type="button" data-openloot>Encore un ! (${profile.loot})</button>` : ""}<button class="btn alt" type="button" data-close>Super !</button></div></div>`;
+      if (rk === "legendaire") { const fl = document.createElement("div"); fl.className = "flashwhite"; document.body.appendChild(fl); setTimeout(() => fl.remove(), 700); fireworks(5, ["#ffb703", "#fff3b0", "#ff2e88", "#7fe7ff", "#ffffff"]); }
+      else if (rk === "epique") fireworks(2, ["#b14dff", "#ff8fc8", "#ffffff"]);
+      renderAll(); if (editing) drawEditor();
+    }, t + 350));
+  }
 }
 
 /* ---------- jeux ---------- */
