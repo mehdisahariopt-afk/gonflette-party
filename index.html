@@ -348,7 +348,7 @@ const $ = id => document.getElementById(id);
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const GAME_COLORS = ["#e63946", "#3a86ff", "#2a9d8f", "#8338ec", "#fb8500", "#ff006e", "#06a77d", "#f15bb5", "#4361ee", "#ff7b00", "#9b5de5", "#00b4d8", "#d62828", "#80b918"];
-const GAMES = G.games.slice(0, 16).map((g, i) => Object.assign({color: GAME_COLORS[i % GAME_COLORS.length]}, g));
+const GAMES = G.games.slice(0, 24).map((g, i) => Object.assign({color: GAME_COLORS[i % GAME_COLORS.length]}, g));
 const gameById = id => GAMES.find(g => g.id === id);
 
 /* ---------- profil (sur cet appareil) ---------- */
