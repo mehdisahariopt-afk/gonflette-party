@@ -171,7 +171,13 @@ body[data-theme="plage"] .tile.mine{box-shadow:0 0 0 4px #ffd23f,4px 6px 0 rgba(
 .ov-card{width:min(100%,760px);max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);border:4px solid var(--ink);box-shadow:0 0 0 3px var(--gold);border-radius:22px;padding:20px;text-align:center;animation:pop .35s cubic-bezier(.2,1.5,.4,1)}
 .ov-card h2{margin:0;font-family:var(--f-display);font-weight:400;font-size:clamp(2rem,7vw,3.4rem);text-transform:uppercase;line-height:1;color:var(--gold);text-shadow:3px 3px 0 var(--accent)}
 .ov-card p{margin:8px 0;color:var(--dim);font-size:1.1rem}
-.count{font-family:var(--f-display);font-size:4rem;color:#fff}
+.cd{display:grid;justify-items:center;gap:0;margin-top:6px;min-height:7.2rem}
+.cd small{font-weight:800;font-size:1.1rem;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.cd b{font-family:var(--f-display);font-weight:400;font-size:clamp(4.5rem,22vw,7rem);line-height:1;color:#fff;text-shadow:4px 4px 0 var(--accent),8px 8px 0 var(--ink);animation:cdpop .9s cubic-bezier(.2,1.6,.4,1) both}
+.cd b.sm{font-size:clamp(2.4rem,11vw,3.6rem);animation:none}
+.cd.go b{color:var(--good);animation:cdgo .5s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes cdpop{0%{transform:scale(2.2);opacity:0}25%{transform:scale(1);opacity:1}85%{opacity:1}100%{transform:scale(.8);opacity:.25}}
+@keyframes cdgo{from{transform:scale(.3) rotate(-10deg);opacity:0}}
 .versus{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:10px;margin:12px 0}
 .versus figure{margin:0;width:110px}
 .versus .av{width:100%;height:auto}
@@ -186,11 +192,14 @@ body[data-theme="plage"] .tile.mine{box-shadow:0 0 0 4px #ffd23f,4px 6px 0 rgba(
 .levelup .av{width:100%;height:auto}
 .levelup .arrow{font-family:var(--f-display);font-size:2rem;color:var(--gold)}
 .levelup-title{font-family:var(--f-display);font-size:1.6rem;color:var(--gold);text-transform:uppercase;margin-top:6px}
-.game-layer{position:fixed;inset:0;z-index:200;background:var(--bg);display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden}
-.game-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 14px;padding-top:calc(8px + env(safe-area-inset-top,0px));background:var(--panel);border-bottom:3px solid var(--ink)}
-.game-top b{font-family:var(--f-display);font-weight:400;text-transform:uppercase;font-size:1.3rem;letter-spacing:.02em}
-.game-top .spec{background:var(--accent);color:#fff;border-radius:999px;padding:2px 10px;font-weight:800;font-size:.85rem}
-.game-root{position:relative;overflow:auto;min-height:0}
+/* Écran de jeu : tout l'écran du téléphone (100dvh, encoches comprises), bandeau de titre minimal. */
+.game-layer{position:fixed;inset:0;width:100%;height:100vh;height:100dvh;z-index:200;background:var(--bg);display:grid;grid-template-rows:auto minmax(0,1fr);grid-template-columns:minmax(0,1fr);overflow:hidden;overscroll-behavior:none}
+.game-top{display:flex;align-items:center;gap:10px;padding:8px 14px;padding-top:calc(8px + env(safe-area-inset-top,0px));padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));background:var(--panel);border-bottom:3px solid var(--ink);min-width:0}
+.game-top b{font-family:var(--f-display);font-weight:400;text-transform:uppercase;font-size:1.3rem;letter-spacing:.02em;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.game-top #game-who{flex:0 1 auto;min-width:0;display:flex}
+.game-top .spec{background:var(--accent);color:#fff;border-radius:999px;padding:2px 10px;font-weight:800;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.game-fs{flex:none;width:34px;height:34px;border-radius:10px;border:2px solid var(--line);background:#ffffff14;color:var(--text);font-size:1.15rem;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.game-root{position:relative;overflow:auto;min-height:0;min-width:0;width:100%;height:100%;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);-webkit-overflow-scrolling:touch}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:220;background:var(--gold);color:var(--ink);font-weight:800;border:3px solid var(--ink);border-radius:12px;padding:8px 16px;animation:pop .3s;max-width:calc(100% - 32px);text-align:center}
 
 @keyframes walk{from{transform:translateY(0) rotate(-3deg)}to{transform:translateY(-6%) rotate(3deg)}}
@@ -210,6 +219,22 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
 .teambar .tb b{font-size:1.4rem}
 .teambar .t0{border-color:#e63946}.teambar .t1{border-color:#3a86ff}
 .ent.tm0 .tag{box-shadow:0 0 0 3px #e63946}.ent.tm1 .tag{box-shadow:0 0 0 3px #3a86ff}
+.place-chip{display:inline-flex;align-items:center;gap:4px}
+.place-chip .pcount{display:inline-grid;place-items:center;min-width:1.5em;height:1.5em;border-radius:999px;background:#0004;font-size:.8rem;padding:0 4px}
+.place-chip[aria-pressed="true"] .pcount{background:var(--ink);color:var(--gold)}
+.ptag{display:inline-block;white-space:nowrap;font-weight:900;font-size:.85em;color:var(--text);background:#ffffff14;border-radius:999px;padding:0 6px;margin-right:2px}
+.ptag.salle{background:#00e5ff22}.ptag.plage{background:#ffd23f22}
+.place-wipe{position:absolute;inset:0;z-index:50;display:grid;place-items:center;text-align:center;pointer-events:none;color:#fff;animation:wipein .38s cubic-bezier(.6,0,.4,1) both}
+.place-wipe.plage{background:linear-gradient(180deg,#3a2163,#b83b6e 40%,#ff8a3d 70%,#ffd36e)}
+.place-wipe.salle{background:radial-gradient(circle at 50% 40%,#2d3640,#111417 70%)}
+.place-wipe div{display:grid;gap:2px;animation:pop .45s .2s cubic-bezier(.2,1.5,.4,1) both}
+.place-wipe .e{font-size:clamp(2.6rem,10vw,4.4rem);line-height:1}
+.place-wipe b{font-family:var(--f-display);font-weight:400;font-size:clamp(1.8rem,7vw,3rem);text-transform:uppercase;line-height:1;text-shadow:3px 3px 0 #0008}
+.place-wipe.salle b{color:#fff;text-shadow:0 0 8px #ff2e88,0 0 20px #ff2e88}
+.place-wipe small{font-weight:800;font-size:1.05rem}
+.place-wipe.out{animation:wipeout .5s cubic-bezier(.6,0,.4,1) both}
+@keyframes wipein{from{clip-path:circle(0% at 50% 100%)}to{clip-path:circle(150% at 50% 100%)}}
+@keyframes wipeout{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-8%)}}
 .lbl-decor{font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:.78rem;color:var(--dim)}
 
 /* ---------- progression : boutique, shaker mystère, poses, rivaux ---------- */
@@ -221,7 +246,6 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
 .pose-btn .e{font-size:1.45rem;line-height:1}
 .pose-btn:active{transform:scale(.94)}
 .pose-btn:disabled{opacity:.4;cursor:wait}
-.pose-btn.chick{border-color:#ffcc33;background:#4a2a10}
 .ent .posefx{position:absolute;left:50%;top:18%;transform:translate(-50%,-50%);font-size:clamp(1.4rem,4vw,2.6rem);pointer-events:none;animation:posefx 1.4s ease-out forwards;filter:drop-shadow(0 2px 0 #0008);z-index:3}
 .ent .poseflash{position:absolute;left:50%;top:55%;width:150%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#fff8 0,#ffcc3355 35%,transparent 70%);animation:poseflash .7s ease-out forwards;pointer-events:none}
 .ent.posing .body{animation:posepop .45s cubic-bezier(.2,1.6,.4,1)}
@@ -253,22 +277,20 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
 .item.legendaire{background:linear-gradient(160deg,#ffb70333,#ffffff08 60%)}
 .item.epique{background:linear-gradient(160deg,#b14dff2a,#ffffff08 60%)}
 .rar{display:inline-block;font-size:.7rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;padding:1px 8px;border-radius:999px;background:var(--rc);color:#120b18}
-.mg-panel{background:#ffffff0c;border:2px solid var(--line);border-radius:14px;padding:10px 12px;text-align:left}
-.mg-panel h3{margin:0 0 8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.85rem;color:var(--dim);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.mg-panel .pts{background:var(--accent);color:#fff;border-radius:999px;padding:1px 9px;letter-spacing:.02em;animation:badgebeat 1s ease-in-out infinite alternate}
-.mg-panel .pts.ok{background:#ffffff1a;color:var(--dim);animation:none}
-.mg-row{display:grid;grid-template-columns:5.8em minmax(30px,1fr) 1.8em 38px 38px;gap:6px;align-items:center;margin:5px 0;font-weight:800}
-.mg-bar{height:14px;border-radius:8px;background:#ffffff1a;overflow:hidden;border:2px solid #0006}
-.mg-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));transition:width .3s}
-.mg-row b{text-align:center;font-family:var(--f-display);font-weight:400;font-size:1.2rem}
-.mg-row button{height:36px;border-radius:10px;border:3px solid var(--ink);background:var(--gold);color:var(--ink);font-weight:900;font-size:1.2rem;cursor:pointer;box-shadow:0 3px 0 var(--ink)}
-.mg-row button[data-d="-1"]{background:var(--panel);color:var(--text);border-color:var(--line);box-shadow:none}
-.mg-row button:disabled{opacity:.3;cursor:not-allowed}
-.mg-panel small{display:block;color:var(--dim);font-weight:600;margin-top:6px}
-.sld{display:inline-block;margin:8px 0 2px;font-family:var(--f-display);font-size:1.5rem;color:#fff;background:#d62828;border:3px solid var(--ink);border-radius:10px;padding:2px 12px;transform:rotate(-4deg);box-shadow:3px 3px 0 var(--ink);animation:sldwob 1.6s ease-in-out infinite}
-.sld-mini{color:#ffd23f;font-weight:900}
+.grow-panel{background:#ffffff0c;border:2px solid var(--line);border-radius:14px;padding:10px 12px;text-align:left}
+.grow-panel h3{margin:0 0 8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.85rem;color:var(--dim)}
+.grow-panel .lv{font-family:var(--f-display);font-size:1.6rem;color:var(--gold);line-height:1}
+.grow-bar{height:16px;border-radius:9px;background:#ffffff1a;overflow:hidden;border:2px solid #0006;margin:6px 0}
+.grow-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));transition:width .4s}
+.grow-panel small{display:block;color:var(--dim);font-weight:600}
+.grow-steps{display:flex;align-items:flex-end;gap:4px;margin-top:6px}
+.grow-steps div{flex:1 1 0;min-width:0}
+.grow-steps .av{width:100%;height:auto;display:block}
+.gonfle{display:inline-block;margin:8px auto 2px;font-family:var(--f-display);font-size:clamp(1.6rem,7vw,2.4rem);line-height:1;color:#fff;background:linear-gradient(90deg,#3ccf8e,#ffcc33);color:var(--ink);border:4px solid var(--ink);border-radius:14px;padding:6px 14px 4px;transform:rotate(-3deg);box-shadow:4px 4px 0 var(--ink);animation:gonfle 1.1s cubic-bezier(.2,1.6,.4,1) both,sldwob 1.6s 1.1s ease-in-out infinite}
+.gonfle small{display:block;font-family:var(--f-ui);font-size:.95rem;font-weight:800;margin-top:2px}
+.nowin{font-weight:800;color:#ff8fa3;margin:6px 0}
+@keyframes gonfle{0%{transform:scale(.2) rotate(-12deg);opacity:0}55%{transform:scale(1.25) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(-3deg)}}
 .preview{position:relative}
-.preview .sld{position:absolute;left:50%;bottom:62px;transform:translateX(-50%) rotate(-6deg);white-space:nowrap;font-size:1.25rem;animation:none}
 .ed-extra{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
 .ed-box{background:#ffffff0c;border:2px solid var(--line);border-radius:14px;padding:10px 12px}
 .ed-box h3{margin:0 0 8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.85rem;color:var(--dim)}
@@ -291,7 +313,6 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
 .shk{display:inline-block;background:#ff8fc8;color:var(--ink);border:2px solid var(--ink);border-radius:999px;padding:1px 8px;font-weight:900;margin-left:3px}
 .res-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0 4px}
 .btn.loot{background:linear-gradient(90deg,#ff2e88,#ffb703);animation:badgebeat 1s ease-in-out infinite alternate}
-.btn.pts{background:var(--good)}
 /* shaker mystère */
 .loot{display:grid;justify-items:center;gap:8px}
 .shaker{position:relative;width:min(56vw,210px);aspect-ratio:3/4;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
@@ -360,6 +381,16 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
   .sheet{padding:8px}
   .sheet-card{padding:12px;max-height:calc(100vh - 16px)}
   .wallet{font-size:.85rem;padding:3px 8px}
+  /* téléphone : bandeau de jeu réduit au strict minimum, le jeu prend tout le reste */
+  .game-top{padding:3px 8px;padding-top:calc(3px + env(safe-area-inset-top,0px));padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));border-bottom-width:2px;gap:6px}
+  .game-top b{font-size:1rem}
+  .game-top .spec{font-size:.72rem;padding:1px 8px}
+  .game-fs{width:28px;height:28px;font-size:1rem;border-radius:8px}
+}
+@media (max-height:500px){
+  .game-top{padding-block:2px;padding-top:calc(2px + env(safe-area-inset-top,0px))}
+  .game-top b{font-size:.95rem}
+  .game-fs{width:26px;height:26px}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 </style>
@@ -392,7 +423,7 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
       <div class="opts" id="ed-opts"></div>
     </div>
     <div class="ed-extra" id="ed-extra"></div>
-    <p class="muscle-note">Les muscles ne se choisissent pas, ils se gagnent : <b>+100 XP par victoire</b>, +40 pour la 2e place, +25 pour chaque partie jouée. À 1 500 XP vous êtes une montagne, à 2 000 XP un titan démesuré. Tous les 100 XP, <b>1 point de muscle</b> à placer où vous voulez… même si vos jambes vont le regretter.</p>
+    <p class="muscle-note">Les muscles ne se choisissent pas, ils se gagnent : <b>+100 XP par victoire</b>, +40 pour la 2e place, +25 pour chaque partie jouée. <b>Tous les 100 XP, votre perso gonfle d'un cran</b> : à 1 500 XP vous êtes une montagne, à 2 000 XP un titan démesuré. Seuls les gagnants remportent des shakers 🥤 et un shaker mystère.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="ed-go">Entrer dans le lobby</button><button class="btn alt" type="button" id="ed-rename">Changer de pseudo</button></div>
   </div>
 </section>
@@ -413,10 +444,10 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
         <span class="netbadge" id="netbadge" role="status"></span>
       </div>
     </div>
-    <div class="tools" role="group" aria-label="Décor du lobby" style="margin-bottom:10px">
-      <span class="lbl-decor">Décor</span>
-      <button class="chip" type="button" data-theme-btn="plage"><span class="long">Muscle </span>Beach</button>
-      <button class="chip" type="button" data-theme-btn="salle">Salle <span class="long">de muscu</span></button>
+    <div class="tools placebar" role="group" aria-label="Lieu du lobby" style="margin-bottom:10px">
+      <span class="lbl-decor">Lieu</span>
+      <button class="chip place-chip" type="button" data-theme-btn="plage">🏖️ <span class="long">Muscle </span>Beach <b class="pcount" data-pcount="plage"></b></button>
+      <button class="chip place-chip" type="button" data-theme-btn="salle">🏋️ Salle <span class="long">de muscu</span> <b class="pcount" data-pcount="salle"></b></button>
       <button class="chip" type="button" id="btn-3d" aria-pressed="true">3D</button>
     </div>
     <p class="net-help" id="net-help" hidden></p>
@@ -440,7 +471,7 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
         <div class="howto">
           <p><b>Touchez le sol</b> pour marcher jusqu'au carré d'un jeu, puis <b>validez</b>.</p>
           <p>Dès qu'il y a assez de joueurs sur un carré, leur partie se lance. <b>Plusieurs parties tournent en même temps</b> : 2 sur Pong, 2 sur Qui est-ce…</p>
-          <p>Chaque victoire rapporte de l'XP : votre perso grossit à vue d'œil.</p>
+          <p>Chaque partie rapporte de l'XP : <b>tous les 100 XP</b>, votre perso gonfle d'un cran. Les <b>gagnants</b> repartent avec des shakers 🥤 et un shaker mystère 🎁.</p>
         </div>
       </aside>
     </div>
@@ -449,7 +480,7 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
 
 <div id="overlay"></div>
 <div id="sheet"></div>
-<div class="game-layer hidden" id="game-layer"><div class="game-top"><b id="game-title"></b><span id="game-who"></span></div><div class="game-root" id="game-root"></div></div>
+<div class="game-layer hidden" id="game-layer"><div class="game-top"><b id="game-title"></b><span id="game-who"></span><button class="game-fs" type="button" id="game-fs" hidden aria-label="Plein écran" title="Plein écran">⛶</button></div><div class="game-root" id="game-root"></div></div>
 
 <script src="vendor/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -490,6 +521,18 @@ const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({"&": "&am
 const GAME_COLORS = ["#e63946", "#3a86ff", "#2a9d8f", "#8338ec", "#fb8500", "#ff006e", "#06a77d", "#f15bb5", "#4361ee", "#ff7b00", "#9b5de5", "#00b4d8", "#d62828", "#80b918"];
 const GAMES = G.games.slice(0, 24).map((g, i) => Object.assign({color: GAME_COLORS[i % GAME_COLORS.length]}, g));
 const gameById = id => GAMES.find(g => g.id === id);
+/* ---------- deux lieux : chaque jeu a sa place ----------
+   Muscle Beach = plein air, jeux de plage et de société ; Salle de muscu = force, duels, vestiaire.
+   Un jeu absent de cette table (nouveau jeu) va à la plage par défaut. */
+const PLACE_OF = {
+  pong: "plage", puissance4: "plage", bataille: "plage", morpion: "plage", flip7: "plage", petitbac: "plage", dessine: "plage", tiracorde: "plage", relais: "plage",
+  brasdefer: "salle", developpe: "salle", spotteur: "salle", reflexes: "salle", uno: "salle", quiestce: "salle", motinterdit: "salle", undercover: "salle", quiadit: "salle", pictionary: "salle"
+};
+const PLACES = {plage: {emoji: "🏖️", name: "Muscle Beach", short: "Beach", tag: "🏖️ Plage", go: "Direction la plage !"}, salle: {emoji: "🏋️", name: "Salle de muscu", short: "Salle", tag: "🏋️ Salle", go: "Direction la salle !"}};
+const placeOfGame = g => PLACE_OF[g.id] === "salle" ? "salle" : "plage";
+const gamesIn = pl => GAMES.filter(g => placeOfGame(g) === pl);
+// presence.pc : "s" = dans la salle ; absent (anciens clients) ou autre = plage
+const placeOf = pr => pr && pr.pc === "s" ? "salle" : "plage";
 
 /* ---------- profil (sur cet appareil) ---------- */
 // ?prof=xxx : un profil séparé par onglet (tests en mode ?mock, où tous les onglets partagent le même stockage)
@@ -498,14 +541,13 @@ let profile = {pseudo: "", look: Object.assign({}, A.DEFAULT_LOOK), xp: 0, lastM
 try { const s = JSON.parse(localStorage.getItem(PROF_KEY) || "null"); if (s && s.pseudo) profile = Object.assign(profile, s); } catch (e) {}
 function saveProfile() { try { localStorage.setItem(PROF_KEY, JSON.stringify(profile)); } catch (e) {} }
 /* Champs ajoutés au profil (tous facultatifs : les anciens profils sont complétés ici)
-   id : identifiant aléatoire persistant (rivalités) · mg : [bras, pecs, dos, jambes] points de muscle placés
+   id : identifiant aléatoire persistant (rivalités) · (mg : ancien choix de groupes musculaires, ignoré)
    sh : shakers 🥤 (monnaie) · own : objets possédés · eq : {emplacement: objet équipé} · loot : shakers mystère à ouvrir
    h2h : {idAdversaire: {n, w, l, last, gw, gl}} face-à-face enregistrés sur cet appareil */
 const rid = () => Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 8);
 function migrateProfile() {
   if (typeof profile.id !== "string" || !/^[a-z0-9]{6,16}$/.test(profile.id)) profile.id = rid();
-  if (!Array.isArray(profile.mg) || profile.mg.length !== 4) profile.mg = [0, 0, 0, 0];
-  profile.mg = profile.mg.map(v => Math.max(0, Math.floor(+v || 0)));
+  delete profile.mg; // plus de choix des muscles : le perso grossit tout seul tous les 100 XP
   if (typeof profile.sh !== "number" || !isFinite(profile.sh)) profile.sh = 100; // cadeau de bienvenue
   profile.sh = Math.max(0, Math.floor(profile.sh));
   if (!Array.isArray(profile.own)) profile.own = [];
@@ -517,21 +559,19 @@ function migrateProfile() {
   if (typeof profile.xp !== "number" || !isFinite(profile.xp)) profile.xp = 0;
 }
 migrateProfile();
-const ptsTotal = () => Math.floor(Math.max(0, profile.xp) / A.POINT_XP);
-const ptsAvail = () => Math.max(0, ptsTotal() - profile.mg.reduce((a, b) => a + b, 0));
-// Le look diffusé : apparence + répartition musculaire + objets équipés (compacts, tout passe par presence.lk)
+// Le look diffusé : apparence + objets équipés (compacts, tout passe par presence.lk)
 function myLook() {
   const l = Object.assign({}, profile.look);
-  if (profile.mg.some(v => v > 0)) l.mg = profile.mg.slice();
+  delete l.mg;
   const it = Object.values(profile.eq).filter(id => A.ITEM[id] && profile.own.includes(id));
   if (it.length) l.it = it;
   return l;
 }
+// Le lieu où je suis (= le décor affiché). Tout le monde arrive à la plage.
 let theme = "plage";
-try { theme = localStorage.getItem("gonflette-theme") || "plage"; } catch (e) {}
-if (theme !== "plage" && theme !== "salle") theme = "plage";
-function setTheme(t) { theme = t; if (window.__s3d) window.__s3d.setTheme(t); document.body.dataset.theme = t; try { localStorage.setItem("gonflette-theme", t); } catch (e) {} document.querySelectorAll("[data-theme-btn]").forEach(b => b.setAttribute("aria-pressed", b.dataset.themeBtn === t)); }
+function setTheme(t) { theme = t; if (window.__s3d) window.__s3d.setTheme(t); document.body.dataset.theme = t; document.querySelectorAll("[data-theme-btn]").forEach(b => b.setAttribute("aria-pressed", b.dataset.themeBtn === t)); }
 setTheme(theme);
+let place = theme, placeBusy = false;
 
 function toast(msg) {
   const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t);
@@ -568,10 +608,10 @@ const OPTS = [
 ];
 let editing = false;
 function drawEditor() {
-  $("ed-preview").innerHTML = A.svg(myLook(), profile.xp, {pose: "flex"}) + (A.skipLegDay(myLook()) ? `<span class="sld">SKIP LEG DAY 🐔</span>` : "");
+  $("ed-preview").innerHTML = A.svg(myLook(), profile.xp, {pose: "flex"});
   $("ed-name").textContent = profile.pseudo;
   const t = A.tier(profile.xp);
-  $("ed-lvl").textContent = `${t.name} · ${profile.xp} XP`;
+  $("ed-lvl").textContent = `${t.name} · Niv. ${A.level(profile.xp)} · ${profile.xp} XP`;
   $("ed-opts").innerHTML = OPTS.map(o => `<div class="opt-group"><h3>${o.label}</h3><div class="opt-row">${
     o.sw ? o.sw.map(c => `<button type="button" class="opt sw" style="background:${c}" data-k="${o.k}" data-v="${c}" aria-label="${o.label} ${c}" aria-pressed="${profile.look[o.k] === c}"></button>`).join("")
          : o.list.map(([v, l]) => `<button type="button" class="opt" data-k="${o.k}" data-v="${v}" aria-pressed="${profile.look[o.k] === v}">${l}</button>`).join("")}</div></div>`).join("");
@@ -651,6 +691,7 @@ function presenceObj() {
   const tl = inLobby && tileEls.length ? tileAt(me.x, me.y) : null;
   if (tl) { o.t = tl.r.g.id; o.u = +((me.x - tl.r.x) / tl.r.w).toFixed(3); o.q = +((me.y - tl.r.y) / tl.r.h).toFixed(3); }
   else { o.t = null; o.u = null; o.q = null; }
+  o.pc = place === "salle" ? "s" : null;              // lieu (absent = plage, rétrocompatible) ; t est relatif aux carrés de CE lieu
   o.tm = me.team === 0 || me.team === 1 ? me.team : null;
   o.tn = me.teamName || null;
   o.st = mySt || null;
@@ -664,6 +705,8 @@ function pushPresence() {
   if (now - lastPresenceSent > 90) send(); else if (!presenceTimer) presenceTimer = setTimeout(send, 90);
 }
 const players = () => peers.filter(p => p.presence && p.presence.ps);
+// joueurs visibles sur MON sol : ceux du même lieu (moi compris)
+const playersHere = () => players().filter(p => p.peer === myPeer || placeOf(p.presence) === place);
 // Position d'un autre joueur dans MA disposition : sur un carré, on le replace sur le même jeu chez moi.
 // Hors carré, sa position libre est gardée, mais on l'écarte des carrés pour qu'il ne semble pas sur un autre jeu.
 function posOf(pr) {
@@ -692,8 +735,20 @@ const amHost = () => myPeer && hostPeer() === myPeer;
    Plusieurs parties peuvent tourner en même temps : chaque groupe de joueurs a la sienne. */
 let myFin = null;
 function rngFrom(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-function setSt(st) { mySt = st; pushPresence(); applySt(st); }
+function setSt(st) { st.t = Date.now(); mySt = st; pushPresence(); applySt(st); }
 const PEND_MS = 7000;
+// Écran « C'est parti » : face-à-face ~1,3 s puis compte à rebours 3-2-1, GO ! ; le jeu s'ouvre à CHOSEN_MS.
+const CHOSEN_MS = 4600, CD_START = 1300;
+/* Horloge de l'hôte : les téléphones n'ont pas la même heure (écarts de plusieurs secondes possibles).
+   Chaque état publié porte st.t (heure de l'hôte) ; à la réception, Date.now() - st.t = décalage + latence.
+   Le plus petit écart observé récemment est la meilleure estimation du décalage. */
+let skewS = [], lastHostT = null;
+function noteHostT(t) {
+  if (typeof t !== "number" || t === lastHostT) return;
+  lastHostT = t; const now = Date.now();
+  skewS.push([now, now - t]); skewS = skewS.filter(x => now - x[0] < 120000).slice(-30);
+}
+const hostNow = () => amHost() || !skewS.length ? Date.now() : Date.now() - Math.min(...skewS.map(x => x[1]));
 function hostTick() {
   if (!amHost()) { if (mySt) { mySt = null; pushPresence(); } return; }
   if (!mySt) { const prev = hostSt; setSt(prev && prev.ms ? prev : {n: 0, ms: {}, pend: {}, teams: [{n: null}, {n: null}], ts: [0, 0]}); return; }
@@ -711,7 +766,7 @@ function hostTick() {
   // 1. faire avancer les parties en cours
   for (const mid of Object.keys(ms)) {
     const M = ms[mid], g = gameById(M.g);
-    if (M.ph === "chosen" && now - M.at > 4200) { ms[mid] = Object.assign({}, M, {ph: "playing", at: now}); changed = true; continue; }
+    if (M.ph === "chosen" && now - M.at > CHOSEN_MS) { ms[mid] = Object.assign({}, M, {ph: "playing", at: now}); changed = true; continue; }
     if (M.ph === "playing") {
       const hp = peers.find(p => p.peer === M.h);
       const fin = hp && hp.presence.fin;
@@ -792,7 +847,11 @@ G.debug = {launch(gid) { if (!amHost()) return false; forceVote = gid; return tr
   giveXp(n) { profile.xp = Math.max(0, profile.xp + (+n || 0)); saveProfile(); pushPresence(); renderAll(); if (editing) drawEditor(); return profile.xp; },
   giveShakers(n) { profile.sh = Math.max(0, profile.sh + (+n || 0)); saveProfile(); renderAll(); return profile.sh; },
   giveLoot(n) { profile.loot = Math.max(0, profile.loot + (n == null ? 1 : +n || 0)); saveProfile(); renderAll(); return profile.loot; },
-  muscles(mg) { if (Array.isArray(mg) && mg.length === 4) { profile.mg = mg.map(v => Math.max(0, Math.floor(+v || 0))); saveProfile(); pushPresence(); renderAll(); if (editing) drawEditor(); } return profile.mg; },
+  level: () => A.level(profile.xp),
+  dbgMe: () => ({x: me.x, y: me.y, tx: me.tx, ty: me.ty, here: (tileAt(me.x, me.y) || {r: {g: {}}}).r.g.id, tiles: tileEls.map(t => t.r.g.id + ":" + t.r.x.toFixed(2) + "," + t.r.y.toFixed(2))}),
+  // marche jusqu'au centre d'un carré du lieu courant (id de jeu ou "team0"/"team1")
+  walk(id) { const t = tileEls.find(e => e.r.g.id === id); if (!t) return false; floorTap(t.r.x + t.r.w / 2, t.r.y + t.r.h / 2); return true; },
+  place: p => { if (p === "plage" || p === "salle") setPlace(p); return place; },
   give(id) { if (!A.ITEM[id]) return false; if (!profile.own.includes(id)) profile.own.push(id); profile.eq[A.ITEM[id].s] = id; saveProfile(); pushPresence(); renderAll(); return true; },
   pose: p => strikePose(p, true),
   openLoot: () => openLoot(),
@@ -814,7 +873,7 @@ function onRoom() {
   if (myPeer && peers.some(p => p.peer !== myPeer && p.peer < myPeer && p.presence && p.presence.id === profile.id)) { profile.id = rid(); pushPresence(); }
   const h = hostPeer();
   const hp = peers.find(p => p.peer === h);
-  if (hp && hp.presence.st) hostSt = hp.presence.st;
+  if (hp && hp.presence.st) { hostSt = hp.presence.st; if (h !== myPeer) noteHostT(hostSt.t); }
   if (h === myPeer && mySt) hostSt = mySt;
   if (hostSt) applySt(hostSt);
   renderLobby();
@@ -850,14 +909,19 @@ const teamLabel = i => teamName(i) || (i ? "Équipe bleue" : "Équipe rouge");
 const teamPad = i => ({id: "team" + i, name: teamLabel(i), min: 0, max: 99, color: TEAM_COLORS[i], team: i});
 const teamOfPeer = k => { const p = peers.find(q => q.peer === k); return p && p.presence && (p.presence.tm === 0 || p.presence.tm === 1) ? p.presence.tm : null; };
 function tileRects() {
-  const n = GAMES.length, portrait = scene.clientWidth < scene.clientHeight;
-  // 6 jeux : 2×3 / 3×2 ; 14 jeux : 3×5 en portrait, 5×3 en paysage
-  const cols = n <= 6 ? (portrait ? 2 : 3) : n <= 9 ? 3 : portrait ? 3 : Math.ceil(n / 3), rows = Math.ceil(n / cols);
-  const dense = n > 6;
+  // seuls les jeux du lieu où je suis ; les indices de carrés sont donc propres à chaque lieu
+  // (la présence envoie t = id du jeu + pc = lieu, identiques sur tous les écrans)
+  const games = gamesIn(place), n = games.length, portrait = scene.clientWidth < scene.clientHeight;
+  // ~10 jeux : 2 colonnes en portrait, 5 en paysage (dernière rangée centrée)
+  const cols = portrait ? (n <= 12 ? 2 : 3) : n <= 6 ? 3 : n <= 8 ? 4 : n <= 10 ? 5 : Math.ceil(n / 3), rows = Math.ceil(n / cols);
+  const dense = rows > 3;
   // la bande du bas accueille les deux zones d'équipe
-  const padX = dense ? .04 : .06, padTop = dense ? .04 : .06, padBot = dense ? .25 : .3, gapX = dense ? .03 : .05, gapY = dense ? .04 : .07;
+  const padX = .04, padTop = dense ? .03 : .05, padBot = portrait ? .2 : .26, gapX = portrait ? .04 : .03, gapY = dense ? .028 : .06;
   const w = (1 - padX * 2 - gapX * (cols - 1)) / cols, h = (1 - padTop - padBot - gapY * (rows - 1)) / rows;
-  const rects = GAMES.map((g, i) => ({g, x: padX + (i % cols) * (w + gapX), y: padTop + Math.floor(i / cols) * (h + gapY), w, h}));
+  const rects = games.map((g, i) => {
+    const row = Math.floor(i / cols), inRow = Math.min(cols, n - row * cols), off = (cols - inRow) * (w + gapX) / 2;
+    return {g, x: padX + off + (i % cols) * (w + gapX), y: padTop + row * (h + gapY), w, h};
+  });
   const th = portrait ? .11 : .15, ty = 1 - th - .02, tw = .3;
   [0, 1].forEach(i => rects.push({g: teamPad(i), team: i, x: i ? 1 - padX - tw : padX, y: ty, w: tw, h: th}));
   return rects;
@@ -933,7 +997,7 @@ const entEls = new Map();
 function renderEntities() {
   if (s3d) {
     const host = hostPeer(), list = [];
-    for (const p of players()) {
+    for (const p of playersHere()) {
       const pr = p.presence, isMe = p.peer === myPeer;
       const [ox, oy] = isMe ? [me.x, me.y] : posOf(pr); const x = ox, y = oy;
       if (typeof x !== "number" || typeof y !== "number") continue;
@@ -949,7 +1013,7 @@ function renderEntities() {
   scene.style.setProperty("--sw", sw + "px");
   const host = hostPeer();
   const live = new Set();
-  for (const p of players()) {
+  for (const p of playersHere()) {
     const pr = p.presence, isMe = p.peer === myPeer;
     const [ox, oy] = isMe ? [me.x, me.y] : posOf(pr); const x = ox, y = oy;
     if (typeof x !== "number" || typeof y !== "number") continue;
@@ -1006,13 +1070,16 @@ function renderTiles() {
     t.el.querySelector(".votes").innerHTML = info;
     let st = t.el.querySelector(".tstate");
     if (!st) { st = document.createElement("div"); st.className = "tstate"; t.el.firstElementChild.appendChild(st); }
-    st.textContent = live ? `🎮 ${live} partie${live > 1 ? "s" : ""} en cours` : pend ? "Départ imminent !" : voters.length && need > 0 ? `Encore ${need} joueur${need > 1 ? "s" : ""}` : "";
+    st.textContent = live ? `🎮 ${live} partie${live > 1 ? "s" : ""} en cours` : pend ? `Départ dans ${pendLeft(pend)} s !` : voters.length && need > 0 ? `Encore ${need} joueur${need > 1 ? "s" : ""}` : "";
     if (s3d) { const here3 = tileAt(me.x, me.y); s3d.setTileState(t.r.g.id, {mine: !!here3 && here3.r.g.id === t.r.g.id, voters: voters.length, label: st.textContent, off: ps.length >= 2 && t.r.g.min > ps.length}); }
     const here = tileAt(me.x, me.y);
     t.el.classList.toggle("mine", !!here && here.r.g.id === t.r.g.id);
     t.el.classList.toggle("off", ps.length >= 2 && t.r.g.min > ps.length);
   }
 }
+// secondes restantes avant le lancement d'un jeu de groupe en attente (heure de l'hôte)
+const pendLeft = at => Math.max(1, Math.ceil((at + PEND_MS - hostNow()) / 1000));
+setInterval(() => { if (inLobby && !inGame && hostSt && hostSt.pend && Object.keys(hostSt.pend).length) { renderTiles(); renderAction(); } }, 500);
 function renderAction() {
   const ps = players(), voted = ps.filter(p => p.presence.v).length;
   const here = tileAt(me.x, me.y);
@@ -1036,7 +1103,7 @@ function renderAction() {
   const mates = g ? ps.filter(p => p.presence.v === g.id && !matchOf(hostSt, p.peer)).length : 0;
   const pend = g && hostSt && hostSt.pend && hostSt.pend[g.id];
   if (ps.length < 2) msg.innerHTML = `Vous êtes seul pour l'instant. <b>Envoyez le lien</b> à vos amis : il faut au moins 2 joueurs.`;
-  else if (here && me.vote) msg.innerHTML = pend ? `<b>${esc(g.name)}</b> démarre dans quelques secondes avec ${mates} joueurs. D'autres peuvent encore vous rejoindre !` : `Vous attendez sur <b>${esc(g.name)}</b> : ${mates}/${g.min} joueurs prêts. La partie se lance dès qu'il y a assez de monde.`;
+  else if (here && me.vote) msg.innerHTML = pend ? `<b>${esc(g.name)}</b> démarre dans <b class="pendn">${pendLeft(pend)} s</b> avec ${mates} joueurs (jusqu'à ${g.max}). D'autres peuvent encore vous rejoindre !` : `Vous attendez sur <b>${esc(g.name)}</b> : ${mates}/${g.min} joueurs prêts. La partie se lance dès qu'il y a assez de monde.`;
   else if (here) msg.innerHTML = `Vous êtes sur <b>${esc(g.name)}</b> (${g.min === g.max ? g.min : g.min + " à " + g.max} joueurs). Validez pour jouer${mates ? ` : ${mates} joueur${mates > 1 ? "s" : ""} attend${mates > 1 ? "ent" : ""} déjà` : ""}.`;
   else msg.innerHTML = `Marchez jusqu'au carré d'un jeu et validez. Plusieurs parties peuvent tourner en même temps.`;
   const want = here ? (me.vote ? "cancel" : "vote:" + here.r.g.id) : "";
@@ -1069,7 +1136,7 @@ function renderRoster() {
     const pr = p.presence, isMe = p.peer === myPeer, xp = isMe ? profile.xp : pr.xp || 0;
     const g = pr.v && gameById(pr.v), BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
     const look = isMe ? myLook() : pr.lk, rec = !isMe && typeof pr.id === "string" ? profile.h2h[pr.id] : null;
-    return `<li data-peer="${esc(p.peer)}" title="${isMe ? "Mes rivaux" : "Face-à-face"}"><div class="mini">${A.svg(look, xp, {view: "bust"})}</div><div><b>${esc(pr.ps)}${isMe ? " (vous)" : ""}${host === p.peer ? " 👑" : ""}${rec && nemOf(rec) ? ` <span class="nem${nemOf(rec) === "victime" ? " vic" : ""}">${nemOf(rec) === "victime" ? "VICTIME 😇" : "NÉMÉSIS 😈"}</span>` : ""}</b><small>${pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " + esc(teamLabel(pr.tm)) + " · " : ""}${A.skipLegDay(look) ? `<span class="sld-mini">🐔 Skip Leg Day</span>` : esc(A.tier(xp).name)} · ${xp} XP${rec && (rec.w || rec.l) ? ` · ⚔️ ${rec.w}–${rec.l}` : ""}</small></div><span class="st ${g || BM ? "ok" : ""}${BM ? " play" : ""}">${BM ? "🎮 " + esc(bg ? bg.name : "") : pr.ed ? "se prépare" : g ? "✔ " + esc(g.name) : "choisit…"}</span></li>`;
+    return `<li data-peer="${esc(p.peer)}" title="${isMe ? "Mes rivaux" : "Face-à-face"}"><div class="mini">${A.svg(look, xp, {view: "bust"})}</div><div><b>${esc(pr.ps)}${isMe ? " (vous)" : ""}${host === p.peer ? " 👑" : ""}${rec && nemOf(rec) ? ` <span class="nem${nemOf(rec) === "victime" ? " vic" : ""}">${nemOf(rec) === "victime" ? "VICTIME 😇" : "NÉMÉSIS 😈"}</span>` : ""}</b><small><span class="ptag ${placeOf(isMe ? {pc: place === "salle" ? "s" : null} : pr)}">${PLACES[placeOf(isMe ? {pc: place === "salle" ? "s" : null} : pr)].tag}</span> ${pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " + esc(teamLabel(pr.tm)) + " · " : ""}${esc(A.tier(xp).name)} · ${xp} XP${rec && (rec.w || rec.l) ? ` · ⚔️ ${rec.w}–${rec.l}` : ""}</small></div><span class="st ${g || BM ? "ok" : ""}${BM ? " play" : ""}">${BM ? "🎮 " + esc(bg ? bg.name : "") : pr.ed ? "se prépare" : g ? "✔ " + esc(g.name) : "choisit…"}</span></li>`;
   }).join("");
 }
 function renderMe() {
@@ -1079,10 +1146,10 @@ function renderMe() {
   $("me-lvl").textContent = `${titleOf(myLook(), profile.xp)} · ${profile.xp} XP`;
   $("wallet").textContent = `🥤 ${profile.sh}`;
   $("btn-loot").hidden = !(profile.loot > 0); $("loot-n").textContent = profile.loot;
-  const av = ptsAvail();
-  $("btn-edit").innerHTML = `Mon perso${av ? `<span class="badge">+${av}</span>` : ""}`;
   renderPoseBar();
-  $("me-xp").style.width = (t.to ? (profile.xp - t.from) / (t.to - t.from) * 100 : 100) + "%";
+  // barre : progression vers le prochain cran de gonflette (tous les 100 XP)
+  $("me-xp").style.width = (A.level(profile.xp) >= A.MAX_LEVEL ? 100 : (profile.xp % A.LEVEL_XP) / A.LEVEL_XP * 100) + "%";
+  $("me-xp").parentNode.title = A.level(profile.xp) >= A.MAX_LEVEL ? "Taille maximale atteinte !" : `Prochain cran de gonflette dans ${A.LEVEL_XP - profile.xp % A.LEVEL_XP} XP`;
 }
 function renderTeambar() {
   const ps = players(), anyTeam = ps.some(p => p.presence.tm === 0 || p.presence.tm === 1) || (hostSt && hostSt.ts && (hostSt.ts[0] || hostSt.ts[1]));
@@ -1091,14 +1158,37 @@ function renderTeambar() {
   const sc = hostSt && hostSt.ts ? hostSt.ts : [0, 0];
   bar.innerHTML = `<span class="tb t0">${TEAM_EMOJI[0]} ${esc(teamLabel(0))} <b>${sc[0] || 0}</b></span><span>–</span><span class="tb t1"><b>${sc[1] || 0}</b> ${esc(teamLabel(1))} ${TEAM_EMOJI[1]}</span>`;
 }
-function renderLobby() { renderNet(); if (!inLobby || inGame) return; renderTeambar(); renderEntities(); renderTiles(); renderAction(); renderRoster(); }
+function renderPlaces() {
+  const ps = players(), c = {plage: 0, salle: 0};
+  ps.forEach(p => c[p.peer === myPeer ? place : placeOf(p.presence)]++);
+  document.querySelectorAll("[data-pcount]").forEach(b => { const n = c[b.dataset.pcount]; b.textContent = n; b.title = `${n} joueur${n > 1 ? "s" : ""}`; });
+}
+function renderLobby() { renderNet(); if (!inLobby || inGame) return; renderPlaces(); renderTeambar(); renderEntities(); renderTiles(); renderAction(); renderRoster(); }
 function renderAll() { renderMe(); renderLobby(); }
 function enterLobby() {
   inLobby = true; show("scr-lobby"); layoutTiles(); init3D(); renderAll(); pushPresence();
 }
 addEventListener("resize", () => { if (inLobby) { layoutTiles(); renderAll(); } });
 $("rack").innerHTML = Array.from({length: 7}, (_, i) => `<svg viewBox="0 0 60 30"><rect x="8" y="13" width="44" height="4" fill="#9aa3ab"/><rect x="2" y="${4 + i % 3}" width="10" height="${22 - i % 3 * 2}" rx="2" fill="#15181b"/><rect x="48" y="${4 + i % 3}" width="10" height="${22 - i % 3 * 2}" rx="2" fill="#15181b"/></svg>`).join("");
-document.querySelectorAll("[data-theme-btn]").forEach(b => b.addEventListener("click", () => setTheme(b.dataset.themeBtn)));
+// Changer de lieu : petit rideau animé, puis on réapparaît à l'entrée de l'autre lieu (vote annulé, équipe gardée).
+function setPlace(pl, instant) {
+  if ((pl !== "plage" && pl !== "salle") || pl === place || placeBusy) return;
+  const swap = () => {
+    place = pl; setTheme(pl);
+    me.vote = null; me.x = me.tx = spawnX; me.y = me.ty = .9; me.walking = false; me.facing = 1;
+    if (inLobby && !inGame) { layoutTiles(); entEls.forEach(e => e.el.remove()); entEls.clear(); }
+    pushPresence(); renderAll();
+  };
+  if (instant || reduced || !inLobby || inGame) { swap(); return; }
+  placeBusy = true;
+  const P = PLACES[pl], cur = document.createElement("div");
+  cur.className = "place-wipe " + pl; cur.innerHTML = `<div><span class="e">${P.emoji}</span><b>${esc(P.name)}</b><small>${esc(P.go)}</small></div>`;
+  scene.appendChild(cur);
+  setTimeout(swap, 380);
+  setTimeout(() => cur.classList.add("out"), 900);
+  setTimeout(() => { cur.remove(); placeBusy = false; }, 1400);
+}
+document.querySelectorAll("[data-theme-btn]").forEach(b => b.addEventListener("click", () => setPlace(b.dataset.themeBtn)));
 
 /* ---------- overlays ---------- */
 function closeOverlay() { $("overlay").innerHTML = ""; }
@@ -1118,8 +1208,20 @@ function showChosen(M) {
   }
   $("overlay").innerHTML = `<div class="ov"><div class="ov-card"><p>C'est parti pour</p><h2>${esc(g ? g.name : M.g)}</h2>
     <div class="versus">${M.pl.map((k, i) => `${i && M.pl.length === 2 ? `<div class="vs">VS</div>` : ""}<figure style="width:min(${Math.round(70 * A.size(M.ro[k].x))}px,${M.pl.length === 2 ? 42 : 30}vw)">${badge[k] || ""}${rosterAv(M, k, "flex")}<figcaption>${esc(M.ro[k].p)}</figcaption></figure>`).join("")}</div>
-    ${h2h}<div class="count" id="countdown">4</div></div></div>`;
-  let c = 4; const tick = setInterval(() => { c--; const el = $("countdown"); if (!el || c <= 0) { clearInterval(tick); return; } el.textContent = c; }, 1000);
+    ${h2h}<div class="cd" id="countdown" aria-live="assertive"><small>Préparez-vous…</small><b></b></div></div></div>`;
+  // Compte à rebours synchronisé sur l'heure de l'hôte (M.at), borné : au pire, il part de la réception.
+  const elapsed = Math.max(0, Math.min(CHOSEN_MS, hostNow() - M.at)), t0 = Date.now() - elapsed, gname = g ? g.name : "La partie";
+  let shown = null;
+  const tick = () => {
+    const el = $("countdown"); if (!el || myMid !== M.mid) { clearInterval(iv); return; }
+    const e = Date.now() - t0, k = e < CD_START ? "wait" : e >= CD_START + 3000 ? "go" : String(3 - Math.floor((e - CD_START) / 1000));
+    if (k === shown) return;
+    shown = k;
+    el.className = "cd" + (k === "go" ? " go" : k === "wait" ? "" : " n");
+    el.innerHTML = k === "wait" ? `<small>${esc(gname)} dans 3 secondes…</small><b class="sm">Prêts ?</b>` : k === "go" ? `<small>${esc(gname)}</small><b>GO !</b>` : `<small>${esc(gname)} dans</small><b>${k}</b>`;
+    if (k !== "wait") try { navigator.vibrate && navigator.vibrate(k === "go" ? 120 : 30); } catch (er) {}
+  };
+  const iv = setInterval(tick, 50); tick();
 }
 function showResults(M) {
   if (resultsShown === M.mid) return;
@@ -1127,15 +1229,18 @@ function showResults(M) {
   const res = M.res || {winners: [], ranking: [], gains: {}};
   res.gains = res.gains || {}; res.winners = res.winners || []; res.ranking = res.ranking || [];
   const before = profile.xp;
-  let gained = 0, shk = 0, duel = null;
+  let gained = 0, shk = 0, duel = null, iWon = false, lootWon = false;
   if (M.pl.includes(myPeer) && profile.lastMid !== M.mid) {
     gained = res.gains[myPeer] || 0;
-    shk = shakersFor(gained);
+    iWon = res.winners.includes(myPeer);
+    shk = shakersFor(iWon);
     duel = recordH2H(M, res);
     if (duel && duel.revanche) { gained += 50; shk += 20; } // REVANCHE : bonus calculé sur ce téléphone
-    profile.xp += gained; profile.sh += shk; profile.loot += 1; lootPending = M.mid;
+    profile.xp += gained; profile.sh += shk;
+    if (iWon) { profile.loot += 1; lootPending = M.mid; lootWon = true; } // shaker mystère : gagnants seulement
     profile.lastMid = M.mid; saveProfile(); pushPresence();
   }
+  const lvB = A.level(before), lvA = A.level(profile.xp), up = lvA - lvB;
   const tb = A.tier(before), ta = A.tier(profile.xp);
   const order = res.ranking.length ? res.ranking : M.pl;
   const others = M.pl.filter(k => !order.includes(k));
@@ -1144,11 +1249,12 @@ function showResults(M) {
   const title = wTeam !== undefined ? `${esc((M.tn && M.tn[wTeam]) || "L'équipe")} gagne !` : res.winners.length ? (res.winners.length === 1 ? `${esc(M.ro[res.winners[0]].p)} gagne !` : "Victoire partagée !") : "Match nul !";
   $("overlay").innerHTML = `<div class="ov"><div class="ov-card"><p>${esc(g ? g.name : "")}</p><h2>${title}</h2>
     ${res.summary ? `<p>${esc(res.summary)}</p>` : ""}
-    <div class="podium">${order.concat(others).map(k => `<figure class="${res.winners.includes(k) ? "win" : ""}" style="width:min(${Math.round(75 * A.size(M.ro[k].x))}px,${M.pl.length <= 2 ? 44 : 30}vw)">${rosterAv(M, k, res.winners.includes(k) ? "flex" : "idle")}<figcaption><b>${esc(M.ro[k].p)}</b><span class="gain">+${res.gains[k] || 0} XP</span><span class="shk">+${shakersFor(res.gains[k] || 0)} 🥤</span></figcaption></figure>`).join("")}</div>
+    <div class="podium">${order.concat(others).map(k => `<figure class="${res.winners.includes(k) ? "win" : ""}" style="width:min(${Math.round(75 * A.size(M.ro[k].x))}px,${M.pl.length <= 2 ? 44 : 30}vw)">${rosterAv(M, k, res.winners.includes(k) ? "flex" : "idle")}<figcaption><b>${esc(M.ro[k].p)}</b><span class="gain">+${res.gains[k] || 0} XP</span>${res.winners.includes(k) ? `<span class="shk">+${shakersFor(true)} 🥤 🎁</span>` : ""}</figcaption></figure>`).join("")}</div>
     ${duel && duel.revanche ? `<div class="revanche">🔥 REVANCHE ! 🔥<small>Vous avez vengé votre défaite contre ${esc(duel.name)} : +50 XP et +20 🥤</small></div>` : ""}
-    ${gained ? `<p>Vous gagnez <b>+${gained} XP</b> et <b>+${shk} 🥤</b> : ${profile.xp} XP au total, ${profile.sh} shakers.</p>` : ""}
-    ${M.pl.includes(myPeer) ? `<div class="res-actions">${profile.loot > 0 ? `<button class="btn loot" type="button" data-openloot>🎁 Shaker mystère : secouez-le !</button>` : ""}${ptsAvail() > 0 ? `<button class="btn pts" type="button" data-points>💪 +${ptsAvail()} point${ptsAvail() > 1 ? "s" : ""} à placer !</button>` : ""}</div>` : ""}
-    ${gained && ta.index > tb.index ? `<div class="levelup-title">Nouveau palier : ${esc(ta.name)} !</div><div class="levelup"><div style="align-self:end;transform-origin:bottom;transform:scale(${(A.size(before) / A.size(profile.xp)).toFixed(3)})">${A.svg(myLook(), before)}</div><div class="arrow">→</div><div>${A.svg(myLook(), profile.xp, {pose: "flex"})}</div></div>` : ""}
+    ${gained ? (shk ? `<p>Vous gagnez <b>+${gained} XP</b> et <b>+${shk} 🥤</b> : ${profile.xp} XP au total, ${profile.sh} shakers.</p>` : `<p>Vous gagnez <b>+${gained} XP</b> (${profile.xp} XP au total).</p><p class="nowin">Pas de shakers pour les perdants 💀 Gagnez la prochaine pour remplir le vôtre !</p>`) : ""}
+    ${up > 0 ? `<div class="gonfle">+${up} 💪 ça gonfle !<small>Niveau ${lvA}${lvA >= A.MAX_LEVEL ? " (MAX)" : ""} · taille ×${A.size(profile.xp).toFixed(1)}</small></div>` : ""}
+    ${M.pl.includes(myPeer) && profile.loot > 0 ? `<div class="res-actions"><button class="btn loot" type="button" data-openloot>🎁 ${lootWon ? "Shaker mystère gagné : secouez-le !" : `Shakers à ouvrir : ${profile.loot}`}</button></div>` : ""}
+    ${up > 0 ? `${ta.index > tb.index ? `<div class="levelup-title">Nouveau palier : ${esc(ta.name)} !</div>` : ""}<div class="levelup"><div style="align-self:end;transform-origin:bottom;transform:scale(${(A.size(before) / A.size(profile.xp)).toFixed(3)})">${A.svg(myLook(), before)}</div><div class="arrow">→</div><div>${A.svg(myLook(), profile.xp, {pose: "flex"})}</div></div>` : ""}
     <p style="font-size:.95rem">Retour au lobby dans quelques secondes…</p><button class="btn alt" type="button" id="res-close">Revenir au lobby maintenant</button></div></div>`;
   $("res-close").onclick = () => { closeOverlay(); afterResults(); };
   renderMe();
@@ -1160,7 +1266,7 @@ const POSE_SHORT = {flex: "Biceps", most: "Most musc.", kiss: "Bisou", back: "Do
 const POSE_MS = 2600;
 let myPose = null, poseSeq = Math.floor(Math.random() * 1e5), poseHist = [], poseCdUntil = 0;
 const seenPoses = new Map(); // pose des autres : affichée ~2,5 s à partir du moment où CE téléphone la reçoit (horloges différentes)
-const titleOf = (look, xp) => A.skipLegDay(look) ? "🐔 Skip Leg Day" : A.tier(xp).name;
+const titleOf = (look, xp) => A.tier(xp).name;
 function strikePose(p, force) {
   if (!POSE[p]) return false;
   const now = Date.now();
@@ -1195,14 +1301,16 @@ function checkPoses() {
 }
 function renderPoseBar() {
   const bar = $("posebar"); if (!bar) return;
-  const cd = Date.now() < poseCdUntil, skip = A.skipLegDay(myLook());
-  const html = A.POSES.map(([id, name, e]) => `<button type="button" class="pose-btn${id === "leg" && skip ? " chick" : ""}" data-pose="${id}"${cd ? " disabled" : ""} title="${esc(name)}" aria-label="Pose : ${esc(name)}"><span class="e">${id === "leg" && skip ? "🐔" : e}</span>${esc(POSE_SHORT[id] || name)}</button>`).join("");
+  const cd = Date.now() < poseCdUntil;
+  const html = A.POSES.map(([id, name, e]) => `<button type="button" class="pose-btn" data-pose="${id}"${cd ? " disabled" : ""} title="${esc(name)}" aria-label="Pose : ${esc(name)}"><span class="e">${e}</span>${esc(POSE_SHORT[id] || name)}</button>`).join("");
   if (bar.dataset.h !== html) { bar.innerHTML = html; bar.dataset.h = html; }
 }
 $("posebar").addEventListener("click", e => { const b = e.target.closest("[data-pose]"); if (b && !b.disabled) strikePose(b.dataset.pose); });
 
 /* ---------- shakers, objets, rivaux ---------- */
-const shakersFor = g => g >= 100 ? 30 : g >= 40 ? 15 : g > 0 ? 10 : 0;
+// Shakers 🥤 : uniquement pour les gagnants (+ un shaker mystère). Les autres ne gagnent que de l'XP.
+const WIN_SHAKERS = 40;
+const shakersFor = won => won ? WIN_SHAKERS : 0;
 const RAR = r => A.RARITIES[r] || A.RARITIES.commun;
 const slotOf = s => A.SLOTS.find(x => x[0] === s) || ["", "", ""];
 const nemOf = r => !r ? null : (r.l - r.w >= 3 ? "nemesis" : r.w - r.l >= 3 ? "victime" : null);
@@ -1246,18 +1354,19 @@ function rivalsList() {
   if (!rs.length) return `<p class="sub" style="margin:0">Aucun duel pour l'instant. Défiez quelqu'un sur un jeu à 2 !</p>`;
   return `<ul class="rivals">${rs.map(r => { const nm = nemOf(r); return `<li><span>${esc(r.n || "?")} ${nm ? nemBadge(nm) : ""}${r.gw || r.gl ? `<small style="color:var(--dim)"> · en groupe ${r.gw}–${r.gl}</small>` : ""}</span><b>${r.w} – ${r.l}</b></li>`; }).join("")}</ul><small style="color:var(--dim);font-weight:600">Duels : vos victoires – vos défaites (sur ce téléphone).</small>`;
 }
-function musclePanel() {
-  const av = ptsAvail(), tot = ptsTotal(), mx = Math.max(4, ...profile.mg);
-  return `<div class="mg-panel"><h3>💪 Groupes musculaires <span class="pts${av ? "" : " ok"}">${av ? `+${av} point${av > 1 ? "s" : ""} à placer !` : `${tot} point${tot > 1 ? "s" : ""} placé${tot > 1 ? "s" : ""}`}</span></h3>
-    ${A.GROUPS.map(([k, n, e], i) => `<div class="mg-row"><span>${e} ${n}</span><div class="mg-bar"><i style="width:${Math.round(profile.mg[i] / mx * 100)}%"></i></div><b>${profile.mg[i]}</b><button type="button" data-mg="${i}" data-d="-1" aria-label="Retirer un point : ${n}"${profile.mg[i] ? "" : " disabled"}>−</button><button type="button" data-mg="${i}" data-d="1" aria-label="Ajouter un point : ${n}"${av ? "" : " disabled"}>+</button></div>`).join("")}
-    ${A.skipLegDay(myLook()) ? `<div style="text-align:center"><span class="sld">SKIP LEG DAY 🐔</span></div>` : ""}
-    <small>1 point tous les ${A.POINT_XP} XP gagnés (${tot} au total). Un point peut être repris pour être replacé. Négliger les jambes a des conséquences…</small></div>`;
+function growPanel() {
+  const L = A.level(profile.xp), max = L >= A.MAX_LEVEL, into = profile.xp % A.LEVEL_XP;
+  const steps = [Math.max(0, L - 1), L, Math.min(A.MAX_LEVEL, L + 1)].filter((v, i, a) => a.indexOf(v) === i);
+  return `<div class="grow-panel"><h3>💪 Gonflette</h3><div class="lv">Niveau ${L}${max ? " · MAX" : ""} <small style="display:inline;font-size:.55em;color:var(--dim)">/ ${A.MAX_LEVEL}</small></div>
+    <div class="grow-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${A.LEVEL_XP}" aria-valuenow="${max ? A.LEVEL_XP : into}"><i style="width:${max ? 100 : into}%"></i></div>
+    <small>${max ? "Taille maximale : vous êtes un titan démesuré." : `Encore <b style="color:var(--text)">${A.LEVEL_XP - into} XP</b> avant de gonfler d'un cran (taille ×${A.size(profile.xp).toFixed(1)}).`} Tous les ${A.LEVEL_XP} XP, le perso grossit tout seul.</small>
+    <div class="grow-steps">${steps.map(l => `<div style="opacity:${l === L ? 1 : .55}">${A.svg(myLook(), l * A.LEVEL_XP, {pose: l === L ? "flex" : "idle"})}</div>`).join("")}</div></div>`;
 }
 function drawEdExtra() {
   const el = $("ed-extra"); if (!el) return;
   const owned = A.ITEMS.filter(i => profile.own.includes(i.id));
-  el.innerHTML = `${musclePanel()}
-    <div class="ed-box"><h3>🎽 Mon équipement</h3>${owned.length ? `<div class="eq-list">${owned.map(it => `<button type="button" class="opt" style="--rc:${RAR(it.r).color}" data-eq="${it.id}" aria-pressed="${profile.eq[it.s] === it.id}">${slotOf(it.s)[2]} ${esc(it.n)}</button>`).join("")}</div>` : `<p class="sub" style="margin:0">Rien pour l'instant. Gagnez des shakers 🥤 en jouant et passez à la boutique !</p>`}
+  el.innerHTML = `${growPanel()}
+    <div class="ed-box"><h3>🎽 Mon équipement</h3>${owned.length ? `<div class="eq-list">${owned.map(it => `<button type="button" class="opt" style="--rc:${RAR(it.r).color}" data-eq="${it.id}" aria-pressed="${profile.eq[it.s] === it.id}">${slotOf(it.s)[2]} ${esc(it.n)}</button>`).join("")}</div>` : `<p class="sub" style="margin:0">Rien pour l'instant. Gagnez des parties : chaque victoire rapporte des shakers 🥤 à dépenser à la boutique !</p>`}
       <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" type="button" data-shop>🛒 Boutique · 🥤 ${profile.sh}</button>${profile.loot ? `<button class="btn loot" type="button" data-openloot>🎁 Shakers à ouvrir : ${profile.loot}</button>` : ""}</div></div>
     <div class="ed-box"><h3>⚔️ Mes rivaux</h3>${rivalsList()}</div>`;
 }
@@ -1273,9 +1382,9 @@ function equipItem(id, on) {
   saveProfile(); pushPresence(); renderAll();
 }
 const withItem = (look, id) => { const it = A.ITEM[id]; const l = Object.assign({}, look); l.it = (l.it || []).filter(x => A.ITEM[x] && A.ITEM[x].s !== it.s).concat(id); return l; };
-const itemPose = it => it && (it.s === "poignets" || it.s === "peau") ? "flex" : "idle";
+const itemPose = it => it && (it.s === "poignets" || it.s === "peau" || it.s === "main") ? "flex" : "idle";
 
-/* ---------- fenêtres du lobby (boutique, shaker, rivaux, points) ---------- */
+/* ---------- fenêtres du lobby (boutique, shaker, rivaux) ---------- */
 let sheetKind = null, sheetCleanup = null;
 function openSheet(kind, html, narrow) {
   closeSheet();
@@ -1303,20 +1412,11 @@ $("sheet").addEventListener("click", e => {
 addEventListener("keydown", e => { if (e.key === "Escape" && sheetKind) { closeSheet(); renderAll(); } });
 // boutons présents dans plusieurs écrans (résultats, éditeur, fenêtres)
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-openloot],[data-shop],[data-points],[data-mg],[data-eq]");
+  const t = e.target.closest("[data-openloot],[data-shop],[data-eq]");
   if (!t || t.disabled) return;
   if (t.hasAttribute("data-openloot")) openLoot();
   else if (t.hasAttribute("data-shop")) openShop();
-  else if (t.hasAttribute("data-points")) openPoints();
   else if (t.dataset.eq) { const it = A.ITEM[t.dataset.eq]; equipItem(it.id, profile.eq[it.s] !== it.id); if (editing) drawEditor(); }
-  else if (t.dataset.mg) {
-    const i = +t.dataset.mg, d = +t.dataset.d;
-    if (!(i >= 0 && i < 4) || (d > 0 && ptsAvail() <= 0) || (d < 0 && profile.mg[i] <= 0)) return;
-    profile.mg[i] += d > 0 ? 1 : -1; saveProfile(); pushPresence();
-    if (sheetKind === "points") drawPoints();
-    if (editing) drawEditor();
-    renderAll();
-  }
 });
 
 // Boutique
@@ -1333,17 +1433,10 @@ function drawShop() {
     const R2 = RAR(it.r), own = profile.own.includes(it.id), eq = profile.eq[it.s] === it.id, bust = it.s === "tete" || it.s === "visage" || it.s === "cou";
     return `<button type="button" class="item ${it.r}" style="--rc:${R2.color}" data-item="${it.id}" aria-pressed="${shopSel === it.id}">${A.svg(withItem(base, it.id), profile.xp, {view: bust ? "bust" : undefined, pose: itemPose(it)})}<b>${esc(it.n)}</b><span class="rar">${R2.name}</span>${own ? "" : `<span class="price">🥤 ${it.price}</span>`}${own ? `<span class="tagown${eq ? " eq" : ""}">${eq ? "Équipé" : "À vous"}</span>` : ""}</button>`;
   };
-  body.innerHTML = `<h2>Boutique Protéines</h2><p class="sub">Vous avez <b style="color:var(--gold)">🥤 ${profile.sh} shakers</b> · victoire +30, 2e place +15, participation +10.</p>
+  body.innerHTML = `<h2>Boutique Protéines</h2><p class="sub">Vous avez <b style="color:var(--gold)">🥤 ${profile.sh} shakers</b> · seuls les gagnants sont payés : <b>victoire = +${WIN_SHAKERS} 🥤 et un shaker mystère 🎁</b>.</p>
     <div class="shop"><div class="shop-prev">${A.svg(sel ? withItem(base, sel.id) : base, profile.xp, {pose: sel ? itemPose(sel) : "flex"})}<div><div class="nm">${sel ? esc(sel.n) : "Cabine d'essayage"}</div>${sel ? `<span class="rar" style="--rc:${R.color}">${R.name}</span>` : ""}<p class="ds">${sel ? esc(sel.d) : "Touchez un objet pour l'essayer sur votre perso."}</p><div class="acts">${acts}</div></div></div>
     <div><div class="shop-tabs" role="group" aria-label="Emplacements">${A.SLOTS.map(([k, n, e]) => `<button class="chip" type="button" data-tab="${k}" aria-pressed="${k === shopTab}">${e} ${n}</button>`).join("")}</div>
     <div class="shop-grid">${A.ITEMS.filter(i => i.s === shopTab).map(card).join("")}</div></div></div>`;
-}
-
-// Points de muscle (après les résultats)
-function openPoints() { openSheet("points", "", true); drawPoints(); }
-function drawPoints() {
-  const body = sheetBody(); if (!body || sheetKind !== "points") return;
-  body.innerHTML = `<h2>Séance de muscu</h2><p class="sub">Placez vos points : chaque groupe se voit sur votre perso, chez tout le monde.</p><div style="max-width:230px;margin:0 auto">${A.svg(myLook(), profile.xp, {pose: "flex"})}</div>${musclePanel()}<div class="res-actions"><button class="btn" type="button" data-close>C'est bon !</button></div>`;
 }
 
 // Rivaux
@@ -1386,7 +1479,7 @@ function fireworks(bursts, colors) {
   }, b * 360);
 }
 function openLoot() {
-  if (profile.loot <= 0) { toast("Aucun shaker à ouvrir : jouez une partie !"); return; }
+  if (profile.loot <= 0) { toast("Aucun shaker à ouvrir : gagnez une partie !"); return; }
   const body = openSheet("loot", "", true);
   const timers = [];
   let fill = 0, done = false, lastShake = 0, motionOn = false, asked = false;
@@ -1467,6 +1560,7 @@ async function mountGame(M) {
   // Pendant une partie, le lobby (décor 3D compris) est complètement arrêté : toute la puissance va au jeu.
   inGame = true; stop3D(true); $("scr-lobby").classList.add("hidden");
   $("game-title").textContent = def.name;
+  syncFs();
   $("game-who").innerHTML = M.pl.length === 2 ? `<span class="spec" style="background:var(--panel);border:2px solid var(--line)">${esc(M.ro[M.pl[0]].p)} vs ${esc(M.ro[M.pl[1]].p)}</span>` : "";
   const offs = [];
   const players = M.pl.map((k, i) => ({key: k, seat: i, pseudo: M.ro[k].p, look: M.ro[k].l, xp: M.ro[k].x}));
@@ -1505,6 +1599,18 @@ async function mountGame(M) {
   try { instance = def.create(api) || {}; } catch (e) { console.error(e); toast("Erreur au lancement du jeu"); instance = {}; }
   instance._offs = offs;
 }
+// Plein écran (si le navigateur / l'iframe l'autorise) : cache aussi la barre d'adresse sur téléphone.
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+const fsOK = () => !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+function syncFs() { const b = $("game-fs"); b.hidden = !fsOK(); b.textContent = fsEl() ? "🗗" : "⛶"; b.setAttribute("aria-label", fsEl() ? "Quitter le plein écran" : "Plein écran"); b.title = b.getAttribute("aria-label"); }
+$("game-fs").addEventListener("click", () => {
+  const d = document, el = d.documentElement;
+  try {
+    if (fsEl()) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    else { const r = (el.requestFullscreen || el.webkitRequestFullscreen).call(el, {navigationUI: "hide"}); if (r && r.catch) r.catch(() => toast("Plein écran refusé par le navigateur")); }
+  } catch (e) { toast("Plein écran indisponible ici"); }
+});
+document.addEventListener("fullscreenchange", syncFs); document.addEventListener("webkitfullscreenchange", syncFs);
 function unmountGame() {
   if (instance) { try { instance.destroy && instance.destroy(); } catch (e) { console.error(e); } (instance._offs || []).forEach(f => f()); instance = null; }
   if (matchName) { net.leave(matchName); matchName = null; matchRoom = null; }

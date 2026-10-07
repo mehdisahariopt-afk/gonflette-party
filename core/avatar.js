@@ -2,7 +2,7 @@
    GONFLETTE.avatar.svg(look, xp, {pose, view, m}) renvoie une chaîne SVG.
    pose : "idle" | "flex" (double biceps) | "most" (most muscular) | "kiss" (bisou au biceps) | "back" (pose de dos) | "leg" (flex de jambe) | "wave".
    look peut porter (facultatif, rétrocompatible) :
-     look.mg = [bras, pecs, dos, jambes]  points de muscle répartis (absent = équilibré)
+     look.mg = ancien choix de groupes musculaires : ignoré (tout le monde est équilibré)
      look.it = ["bandana", "chaine", ...] objets de la boutique équipés (un par emplacement) */
 (function () {
   "use strict";
@@ -23,32 +23,20 @@
     for (let k = 0; k < TIERS.length; k++) if (xp >= TIERS[k][0]) i = k;
     return {index: i, name: TIERS[i][1], from: TIERS[i][0], to: TIERS[i + 1] ? TIERS[i + 1][0] : null, count: TIERS.length};
   }
-  // 0 = brindille, 1 = très musclé (1500 XP), jusqu'à 1.35 = démesuré (2000 XP).
+  // Croissance par paliers de 100 XP : niveau L = floor(xp / 100), plafonné à 20 (2 000 XP).
+  // Chaque palier fait gonfler le perso (muscles + taille à l'écran) : plus de choix de groupes musculaires.
+  const LEVEL_XP = 100, MAX_LEVEL = 20;
+  const level = xp => Math.max(0, Math.min(MAX_LEVEL, Math.floor(Math.max(0, +xp || 0) / LEVEL_XP)));
+  // 0 = brindille, 1 = très musclé (niveau 15), jusqu'à 1.35 = démesuré (niveau 20).
   function muscle(xp) {
-    xp = Math.max(0, xp || 0);
-    return xp <= 1500 ? xp / 1500 : Math.min(1.35, 1 + (xp - 1500) / 500 * 0.35);
+    const L = level(xp);
+    return L <= 15 ? L / 15 : 1 + (L - 15) / 5 * 0.35;
   }
   const DEFAULT_LOOK = {skin: SKINS[1], hair: "court", hairColor: HAIR_COLORS[0], top: "debardeur", topColor: CLOTH[0], shorts: CLOTH[4], acc: "aucun"};
 
-  /* ---------- groupes musculaires ---------- */
-  const GROUPS = [["b", "Bras", "💪"], ["p", "Pecs", "🍈"], ["d", "Dos", "🦅"], ["j", "Jambes", "🦵"]];
-  const POINT_XP = 100; // 1 point de muscle tous les 100 XP gagnés
-  function mgOf(look) {
-    const a = look && Array.isArray(look.mg) ? look.mg : null;
-    if (!a) return [0, 0, 0, 0];
-    return [0, 1, 2, 3].map(i => Math.max(0, Math.min(999, Math.floor(+a[i] || 0))));
-  }
-  // Facteurs de forme (1 = équilibré). Plus on a placé de points, plus la répartition se voit.
-  function groups(look) {
-    const mg = mgOf(look), tot = mg[0] + mg[1] + mg[2] + mg[3];
-    const up = (mg[0] + mg[1] + mg[2]) / 3;
-    const skip = mg[0] + mg[1] + mg[2] >= 3 && mg[3] < .35 * up;
-    if (!tot) return {b: 1, p: 1, d: 1, j: 1, skip: false, tot: 0, mg};
-    const avg = tot / 4, w = Math.min(1, .35 + tot / 10);
-    const k = v => Math.max(.5, Math.min(2, 1 + w * .6 * (v / avg - 1)));
-    return {b: k(mg[0]), p: k(mg[1]), d: k(mg[2]), j: k(mg[3]), skip, tot, mg};
-  }
-  const skipLegDay = look => groups(look).skip;
+  // Ancien système de groupes musculaires (look.mg) : ignoré, tout le monde est équilibré (rétrocompatible).
+  const groups = () => ({b: 1, p: 1, d: 1, j: 1, skip: false, tot: 0, mg: [0, 0, 0, 0]});
+  const skipLegDay = () => false;
 
   /* ---------- boutique : objets cosmétiques ---------- */
   const RARITIES = {
@@ -57,7 +45,7 @@
     epique: {name: "Épique", color: "#b14dff", p: .10, price: 350, dup: 120},
     legendaire: {name: "Légendaire", color: "#ffb703", p: .02, price: 800, dup: 300}
   };
-  const SLOTS = [["tete", "Tête", "🧢"], ["visage", "Visage", "🕶️"], ["cou", "Cou", "📿"], ["taille", "Taille", "🩲"], ["poignets", "Poignets", "🧽"], ["peau", "Peau", "🖋️"], ["dos", "Dos", "🦸"], ["aura", "Aura", "✨"]];
+  const SLOTS = [["tete", "Tête", "🧢"], ["visage", "Visage", "🕶️"], ["cou", "Cou", "📿"], ["main", "Main", "🏋️"], ["poignets", "Poignets", "🧽"], ["taille", "Taille", "🩲"], ["pieds", "Pieds", "🩴"], ["peau", "Peau", "🖋️"], ["dos", "Dos", "🦸"], ["aura", "Aura", "✨"]];
   const ITEMS = [
     ["bandana", "tete", "Bandana Rambo", "commun", "Pour survivre à n'importe quelle séance de jambes. Ou pas."],
     ["eponge", "tete", "Bandeau éponge", "commun", "Absorbe 2 litres de sueur à l'heure."],
@@ -91,7 +79,39 @@
     ["etoiles", "aura", "Paillettes disco", "rare", "Saturday Night Fever, Monday Leg Day."],
     ["eclairs", "aura", "Aura éclairs", "epique", "Électrisant. Littéralement."],
     ["flammes", "aura", "Aura flammes", "epique", "Ça brûle ? C'est l'acide lactique."],
-    ["fumee", "aura", "Aura fumée dorée", "legendaire", "Entrée de boss final."]
+    ["fumee", "aura", "Aura fumée dorée", "legendaire", "Entrée de boss final."],
+    // --- nouvelle collection « Été 75 »
+    ["bonnetbain", "tete", "Bonnet de bain à fleurs", "commun", "Hydrodynamique. Et très fleuri."],
+    ["laurier", "tete", "Couronne de laurier", "rare", "Vainqueur olympique du curl biceps."],
+    ["disco", "tete", "Perruque disco", "rare", "Volume capillaire proportionnel au volume musculaire."],
+    ["cornes", "tete", "Cornes de diable", "rare", "Le démon de la séance jambes."],
+    ["aureole", "tete", "Auréole", "epique", "Un saint homme. Qui ne prête jamais son banc."],
+    ["plongee", "visage", "Masque de plongée", "commun", "Tuba compris. Pour plonger dans la piscine de protéines."],
+    ["clown", "visage", "Nez de clown", "commun", "Pouet. Le sérieux, c'est pour les haltères."],
+    ["catcheur", "visage", "Masque de catcheur", "epique", "El Gonflador, terreur du ring."],
+    ["lei", "cou", "Collier hawaïen", "commun", "Aloha, les biceps !"],
+    ["papillon", "cou", "Nœud pap' de gala", "commun", "Torse nu mais tenue correcte exigée."],
+    ["requin", "cou", "Collier de dents de requin", "rare", "Le requin, il a perdu au bras de fer."],
+    ["haltere", "main", "Mini-haltère", "commun", "Pour faire des curls même en marchant."],
+    ["glace", "main", "Glace à l'italienne", "commun", "Jour de triche. Trois boules."],
+    ["shakerm", "main", "Shaker XXL", "rare", "5 litres de protéines à la fraise."],
+    ["trophee", "main", "Trophée de Mister Gonflette", "epique", "Gravé à votre nom. Par vous-même."],
+    ["hawai", "taille", "Short à fleurs", "commun", "Le surfeur de Muscle Beach."],
+    ["bouee", "taille", "Bouée canard", "epique", "Coin coin. Même les titans ont peur de l'eau."],
+    ["tongs", "pieds", "Tongs", "commun", "Interdites en salle. Donc obligatoires."],
+    ["palmes", "pieds", "Palmes", "rare", "Leg day aquatique."],
+    ["cowboy", "pieds", "Santiags", "rare", "Yeehaw, cow-boy de la fonte."],
+    ["rollers", "pieds", "Rollers disco", "epique", "Venice Beach, 1978, en marche arrière."],
+    ["coupsoleil", "peau", "Coup de soleil", "commun", "Oublié la crème. Marques de débardeur garanties."],
+    ["fluo", "peau", "Bronzage fluo", "rare", "Autobronzant périmé, effet néon."],
+    ["doree", "peau", "Peau dorée", "legendaire", "Vous êtes littéralement une statue de champion."],
+    ["marbre", "peau", "Statue grecque", "legendaire", "Sculpté par les dieux. En marbre de Carrare."],
+    ["surf", "dos", "Planche de surf", "rare", "La vague ? On la soulève."],
+    ["jetpack", "dos", "Jetpack protéiné", "epique", "Carburant : whey vanille."],
+    ["bulles", "aura", "Bulles de savon", "commun", "Douceur, fraîcheur, gonflette."],
+    ["arcenciel", "aura", "Aura arc-en-ciel", "epique", "Toutes les couleurs de la gonflette."],
+    ["billets", "aura", "Pluie de billets", "epique", "Sponsorisé par la Boutique Protéines."],
+    ["ombre", "aura", "Ombre infernale", "legendaire", "Votre ombre fait plus de pompes que vous."]
   ].map(([id, s, n, r, d]) => ({id, s, n, r, d, price: RARITIES[r].price}));
   const ITEM = {};
   ITEMS.forEach(i => ITEM[i.id] = i);
@@ -120,9 +140,12 @@
     const mc = Math.min(m, 1);
     let pose = opts.pose || "idle";
     const back = pose === "back";
-    const ink = "#1d1420", skin = look.skin, skin2 = shade(skin, .86);
     const cx = 100;
     const gr = groups(look), eq = equipped(look);
+    // peaux de la boutique : remplacent la couleur de peau
+    const SKIN_FX = {doree: "#e9b824", marbre: "#ecebe4", fluo: "#ff8a1f", coupsoleil: "#f4836c"};
+    const ink = "#1d1420", skin = SKIN_FX[eq.peau] || look.skin, skin2 = shade(skin, .86);
+    if (eq.visage === "catcheur" || eq.tete === "bonnetbain" || eq.tete === "disco") look.hair = "chauve"; // cagoule / bonnet / perruque par-dessus
     const kb = gr.b, kp = gr.p, kd = gr.d, kj = gr.j;
     const ramp = Math.min(1, m * 4); // les groupes se voient même chez les petits gabarits
 
@@ -139,7 +162,6 @@
     const FA = Math.min(54, 6 + 19 * m * Math.pow(kb, 1.3) + 8 * (kb - 1) * ramp);   // avant-bras (Popeye !)
     const kj2 = 1 + (kj - 1) * .45;
     let TW = 10 + 25 * m * kj2 + 6 * (kj - 1) * ramp, CW = 7 + 15 * m * kj2 + 5 * (kj - 1) * ramp; // cuisse / mollet
-    if (gr.skip) { TW = 5.5; CW = 4.2; }
     const lat = Math.max(-8, Math.min(28, (17 * m + 5) * (kd - 1) * ramp));         // largeur du dos (V)
     const pd = Math.max(-6, Math.min(22, (17 * m + 5) * (kp - 1) * ramp));           // profondeur des pecs
     const trapTop = yS - 10 - 22 * m * (.65 + .35 * kd);
@@ -181,6 +203,47 @@
       const puff = (x, y, r) => `<g fill="#fff" opacity=".78"><circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}"/><circle cx="${f(x + r * .9)}" cy="${f(y + r * .25)}" r="${f(r * .75)}"/><circle cx="${f(x - r * .85)}" cy="${f(y + r * .3)}" r="${f(r * .7)}"/><circle cx="${f(x + r * .2)}" cy="${f(y - r * .7)}" r="${f(r * .65)}"/></g>`;
       s += puff(cx - ext * .8, 236, 16 + 6 * m) + puff(cx + ext * .8, 240, 14 + 6 * m) + puff(cx - ext * .9, 120, 12) + puff(cx + ext * .9, 100, 13) + puff(cx, 255, 12);
     }
+    if (eq.aura === "arcenciel") {
+      const cols = ["#ff3b3b", "#ff9f1c", "#ffe14d", "#3ccf5e", "#2fa8ff", "#8f5bff"], R0 = Math.min(ext + 22, 150);
+      cols.forEach((c, i) => { const rr = R0 - i * 9; s += `<path d="M${f(cx - rr)} 236A${f(rr)} ${f(rr * 1.2)} 0 0 1 ${f(cx + rr)} 236" stroke="${c}" stroke-width="9.5" fill="none" opacity=".85"/>`; });
+      for (const d of [-1, 1]) s += `<g fill="#fff" opacity=".9"><ellipse cx="${f(cx + d * (R0 - 22))}" cy="240" rx="26" ry="13"/><ellipse cx="${f(cx + d * (R0 - 6))}" cy="246" rx="20" ry="11"/><ellipse cx="${f(cx + d * (R0 - 40))}" cy="248" rx="18" ry="10"/></g>`;
+    }
+    if (eq.aura === "bulles") {
+      for (let i = 0; i < 13; i++) {
+        const a = i * 2.39, rr = .5 + (i % 4) * .16, x = cx + Math.cos(a) * ext * rr * 1.05, y = 128 + Math.sin(a) * 118 * rr, br = 6 + (i % 3) * 4;
+        s += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(br)}" fill="#bfefff" fill-opacity=".35" stroke="#7fd4ff" stroke-width="2"/><path d="M${f(x - br * .5)} ${f(y - br * .1)}a${f(br * .55)} ${f(br * .55)} 0 0 1 ${f(br * .45)} ${f(-br * .45)}" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+      }
+    }
+    if (eq.aura === "billets") {
+      for (let i = 0; i < 12; i++) {
+        const a = i * 2.39, rr = .55 + (i % 4) * .13, x = cx + Math.cos(a) * ext * rr * 1.08, y = 120 + Math.sin(a) * 120 * rr, rot = (i * 47) % 70 - 35;
+        s += `<g transform="translate(${f(x)} ${f(y)}) rotate(${rot})"><rect x="-13" y="-7" width="26" height="14" rx="2" fill="#7ccf7a" stroke="${ink}" stroke-width="2"/><ellipse cx="0" cy="0" rx="5" ry="4.5" fill="#bdf0b5" stroke="#2f7a32" stroke-width="1.2"/><text x="0" y="2.6" font-size="7" font-family="Anton,Impact,sans-serif" text-anchor="middle" fill="#1f5a22">€</text></g>`;
+      }
+    }
+    if (eq.aura === "ombre") {
+      const sw = Math.min(ext + 4, 140), fl = (x, h, w, c, o) => `<path d="M${f(x - w)} 262Q${f(x - w * 1.15)} ${f(262 - h * .5)} ${f(x - w * .2)} ${f(262 - h * .8)}Q${f(x + w * .1)} ${f(262 - h * .9)} ${f(x)} ${f(262 - h)}Q${f(x + w * .35)} ${f(262 - h * .6)} ${f(x + w * .6)} ${f(262 - h * .7)}Q${f(x + w * 1.2)} ${f(262 - h * .35)} ${f(x + w)} 262Z" fill="${c}" opacity="${o}"/>`;
+      s += `<defs><radialGradient id="gfOmbre" cx=".5" cy=".75" r=".7"><stop offset="0" stop-color="#ff3b1f" stop-opacity=".85"/><stop offset=".45" stop-color="#7a0d2e" stop-opacity=".8"/><stop offset="1" stop-color="#12030f" stop-opacity="0"/></radialGradient></defs><ellipse cx="${cx}" cy="150" rx="${f(sw + 10)}" ry="140" fill="url(#gfOmbre)"/>`;
+      [-.95, -.6, -.25, .15, .5, .9].forEach((k, i) => { s += fl(cx + k * sw, 170 + (i % 2) * 60 + 40 * m, 26 + 6 * m, "#16040f", .95); });
+      [-.8, -.4, .3, .72].forEach((k, i) => { s += fl(cx + k * sw, 90 + (i % 2) * 40 + 20 * m, 12 + 4 * m, "#ff3b1f", .9); });
+      for (const d of [-1, 1]) s += `<ellipse cx="${f(cx + d * (sw * .78))}" cy="${f(headY + 4)}" rx="7" ry="3.4" fill="#ffd23f" transform="rotate(${d * 16} ${f(cx + d * sw * .78)} ${f(headY + 4)})"/>`;
+    }
+    // ---- dos : planche de surf / jetpack (derrière le corps, sauf vue de dos : dessinés par-dessus plus bas)
+    const dosItem = () => {
+      let o = "";
+      if (eq.dos === "surf") {
+        const L2 = 128 + 10 * m, w2 = 21 + 5 * m;
+        o += `<g transform="rotate(-24 ${cx} 140)"><ellipse cx="${cx}" cy="140" rx="${f(w2)}" ry="${f(L2)}" fill="#ffd23f" stroke="${ink}" stroke-width="4"/><path d="M${cx} ${f(140 - L2 + 10)}V${f(140 + L2 - 10)}" stroke="#ff6b35" stroke-width="5"/><path d="M${f(cx - w2 + 4)} 60h${f(2 * w2 - 8)}M${f(cx - w2 + 2)} 70h${f(2 * w2 - 4)}" stroke="#2fa8ff" stroke-width="4"/></g>`;
+      }
+      if (eq.dos === "jetpack") {
+        for (const d of [-1, 1]) {
+          const x = cx + d * (SW * .62 + 4), tw = 12 + 5 * m, top = trapTop - 26, bot = 168;
+          o += `<path d="M${f(x - tw * .7)} ${f(bot + 2)}Q${f(x)} ${f(bot + 60 + 10 * m)} ${f(x + tw * .7)} ${f(bot + 2)}Z" fill="#ff7b00" stroke="${ink}" stroke-width="2.5"/><path d="M${f(x - tw * .35)} ${f(bot + 2)}Q${f(x)} ${f(bot + 34)} ${f(x + tw * .35)} ${f(bot + 2)}Z" fill="#ffe14d"/>`;
+          o += `<rect x="${f(x - tw)}" y="${f(top)}" width="${f(tw * 2)}" height="${f(bot - top)}" rx="${f(tw)}" fill="#b9c3cc" stroke="${ink}" stroke-width="4"/><rect x="${f(x - tw * .55)}" y="${f(top + 8)}" width="${f(tw * .35)}" height="${f(bot - top - 22)}" rx="3" fill="#fff" opacity=".6"/><rect x="${f(x - tw)}" y="${f(top + 14)}" width="${f(tw * 2)}" height="8" fill="#e63946" stroke="${ink}" stroke-width="2"/><path d="M${f(x - tw * .5)} ${f(top - 3)}h${f(tw)}" stroke="${ink}" stroke-width="6" stroke-linecap="round"/>`;
+        }
+      }
+      return o;
+    };
+    if (!back) s += dosItem();
     // ---- dos : cape / ailes
     if (eq.dos === "cape") {
       const L = cx - SW * .72, R = cx + SW * .72, bw = Math.min(SW + 40, 132);
@@ -200,7 +263,9 @@
       }
     }
 
-    // ---- coiffure arrière (afro, queue) / mulet
+    // ---- coiffure arrière (afro, queue) / mulet / perruque disco
+    const discoWig = () => { const R = headR + 20 + 4 * m, cy = headY - 8, cols = ["#ff2e88", "#ffd23f", "#3ccf8e", "#2fa8ff", "#b14dff"]; let o = `<circle cx="${cx}" cy="${f(cy)}" r="${f(R)}" fill="${cols[0]}" stroke="${ink}" stroke-width="4"/>`; for (let i = 1; i < 5; i++) o += `<circle cx="${cx}" cy="${f(cy)}" r="${f(R * (1 - i * .16))}" fill="${cols[i]}"/>`; for (let i = 0; i < 9; i++) o += star(cx + Math.cos(i * 2.2) * R * .78, cy + Math.sin(i * 2.2) * R * .78, 4, "#fff"); return o; };
+    if (!back && eq.tete === "disco") s += discoWig();
     if (!back && look.hair === "afro") s += `<circle cx="100" cy="${f(headY - 4)}" r="${f(headR + 13)}" fill="${look.hairColor}" stroke="${ink}" stroke-width="4"/>`;
     if (!back && look.hair === "queue") s += `<path d="M${f(cx + headR * .6)} ${f(headY - headR * .4)} q 26 6 20 46 q -10 -6 -24 -28 z" fill="${look.hairColor}" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
 
@@ -209,7 +274,6 @@
     for (const d of [-1, 1]) {
       let hip = [cx + d * (H - 9 - 3 * m + spread), 172], knee = [cx + d * (H - 7 + 2 * m + spread * 1.1), 212], ank = [cx + d * (H - 9 + spread * .8), 245], toe = false;
       if (pose === "leg" && d === 1) { knee = [hip[0] + 16 + 8 * m + TW * .15, 206]; ank = [knee[0] - 3, 240]; toe = true; }
-      if (gr.skip) { knee = [knee[0] + d * 2, knee[1]]; }
       legs.push({d, hip, knee, ank, toe});
     }
     const calf = L => { const c = lerp(L.knee, L.ank, .32); return [c[0] + L.d * CW * .3, c[1], CW * .42 + 1]; };
@@ -234,12 +298,25 @@
         }
         if (m < .35 && !bigLegs) s += `<circle cx="${f(L.knee[0])}" cy="${f(L.knee[1])}" r="${f(7.5 - 6 * m)}" fill="${skin}" stroke="${ink}" stroke-width="3"/>`;
       }
-      const fy = L.toe ? L.ank[1] + 7 : 251;
-      s += `<ellipse cx="${f(L.ank[0] + L.d * 5)}" cy="${f(fy)}" rx="${f(12 + 4 * m)}" ry="7" fill="#f4f1ea" stroke="${ink}" stroke-width="3.5"${L.toe ? ` transform="rotate(${L.d * 18} ${f(L.ank[0] + L.d * 5)} ${f(fy)})"` : ""}/><path d="M${f(L.ank[0] + L.d * 5 - 10)} ${f(fy + 2)}h${f(20 + 6 * m)}" stroke="#d6337a" stroke-width="2.5"${L.toe ? ` transform="rotate(${L.d * 18} ${f(L.ank[0] + L.d * 5)} ${f(fy)})"` : ""}/>`;
+      const fy = L.toe ? L.ank[1] + 7 : 251, fx = L.ank[0] + L.d * 5, frx = 12 + 4 * m;
+      let shoe = "";
+      if (eq.pieds === "tongs") {
+        shoe = `<ellipse cx="${f(fx)}" cy="${f(fy + 3)}" rx="${f(frx + 2)}" ry="4" fill="#2fa8ff" stroke="${ink}" stroke-width="3"/><ellipse cx="${f(fx)}" cy="${f(fy - 1)}" rx="${f(frx - 1)}" ry="5" fill="${skin}" stroke="${ink}" stroke-width="2.6"/><path d="M${f(fx - frx * .6)} ${f(fy + 1)}L${f(fx + L.d * frx * .35)} ${f(fy - 5)}L${f(fx + frx * .6)} ${f(fy + 1)}" stroke="#ffd23f" stroke-width="3.2" fill="none" stroke-linejoin="round"/>`;
+      } else if (eq.pieds === "palmes") {
+        const tip = fx + L.d * (frx + 30 + 6 * m);
+        shoe = `<path d="M${f(fx - L.d * frx * .6)} ${f(fy - 6)}L${f(tip)} ${f(fy - 10)}Q${f(tip + L.d * 4)} ${f(fy + 2)} ${f(tip)} ${f(fy + 8)}L${f(fx - L.d * frx * .6)} ${f(fy + 6)}Z" fill="#ffd23f" stroke="${ink}" stroke-width="3.2" stroke-linejoin="round"/><path d="M${f(fx + L.d * 8)} ${f(fy - 5)}L${f(tip - L.d * 4)} ${f(fy - 4)}M${f(fx + L.d * 8)} ${f(fy + 4)}L${f(tip - L.d * 4)} ${f(fy + 3)}" stroke="#e0a800" stroke-width="2.4"/><ellipse cx="${f(fx - L.d * 2)}" cy="${f(fy)}" rx="${f(frx * .8)}" ry="7" fill="#2fa8ff" stroke="${ink}" stroke-width="3"/>`;
+      } else if (eq.pieds === "cowboy") {
+        const kx = L.ank[0], top = L.ank[1] - 26 - 4 * m, bw = CW / 2 + 5;
+        shoe = `<path d="M${f(kx - bw)} ${f(top)}L${f(kx + bw)} ${f(top)}L${f(kx + bw - 1)} ${f(fy - 4)}L${f(fx + L.d * (frx + 4))} ${f(fy - 2)}Q${f(fx + L.d * (frx + 8))} ${f(fy + 5)} ${f(fx + L.d * frx)} ${f(fy + 5)}L${f(kx - L.d * bw)} ${f(fy + 5)}L${f(kx - L.d * bw)} ${f(fy + 9)}L${f(kx - L.d * (bw - 7))} ${f(fy + 9)}L${f(kx - bw + 1)} ${f(fy - 2)}Z" fill="#8a4b20" stroke="${ink}" stroke-width="3.2" stroke-linejoin="round"/><path d="M${f(kx - bw + 3)} ${f(top + 8)}q${f(bw - 3)} 8 ${f(2 * bw - 6)} 0" stroke="#f5c518" stroke-width="2.4" fill="none"/>${star(kx - L.d * bw - 2, fy + 3, 4, "#d9dde3")}`;
+      } else if (eq.pieds === "rollers") {
+        shoe = `<path d="M${f(fx - frx)} ${f(fy + 3)}L${f(fx - frx)} ${f(fy - 16)}Q${f(fx)} ${f(fy - 20)} ${f(fx + L.d * 2)} ${f(fy - 12)}L${f(fx + frx + 2)} ${f(fy - 4)}Q${f(fx + frx + 4)} ${f(fy + 3)} ${f(fx + frx)} ${f(fy + 3)}Z" fill="#fff" stroke="${ink}" stroke-width="3.2" stroke-linejoin="round"/><path d="M${f(fx - frx)} ${f(fy - 8)}H${f(fx + 4)}" stroke="#ff2e88" stroke-width="4"/>`;
+        for (let i = 0; i < 3; i++) shoe += `<circle cx="${f(fx - frx * .7 + i * frx * .7)}" cy="${f(fy + 8)}" r="5" fill="#ff2e88" stroke="${ink}" stroke-width="2.4"/><circle cx="${f(fx - frx * .7 + i * frx * .7)}" cy="${f(fy + 8)}" r="1.6" fill="#fff"/>`;
+      } else shoe = `<ellipse cx="${f(fx)}" cy="${f(fy)}" rx="${f(frx)}" ry="7" fill="#f4f1ea" stroke="${ink}" stroke-width="3.5"/><path d="M${f(fx - 10)} ${f(fy + 2)}h${f(20 + 6 * m)}" stroke="#d6337a" stroke-width="2.5"/>`;
+      s += L.toe ? `<g transform="rotate(${L.d * 18} ${f(fx)} ${f(fy)})">${shoe}</g>` : shoe;
     }
     // short (ou slip de la boutique)
     const shortY = 194 + 4 * m;
-    const shortsCol = eq.taille === "leopard" ? "#e9a33b" : eq.taille === "slipor" ? "#f5c518" : look.shorts;
+    const shortsCol = eq.taille === "leopard" ? "#e9a33b" : eq.taille === "slipor" ? "#f5c518" : eq.taille === "hawai" ? "#13a89e" : look.shorts;
     const SX = H + TW * .45 + 3 + spread;
     s += `<path d="M${f(cx - H - 3)} 165 L${f(cx - SX)} ${f(shortY)} L${f(cx - 3)} ${f(shortY)} L${cx} ${f(shortY - 12)} L${f(cx + 3)} ${f(shortY)} L${f(cx + SX)} ${f(shortY)} L${f(cx + H + 3)} 165 Z" fill="${shortsCol}" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
     if (eq.taille === "leopard") {
@@ -250,6 +327,10 @@
         sp += `<ellipse cx="${f(x)}" cy="${f(y)}" rx="4.2" ry="3.2" fill="none" stroke="#3a2210" stroke-width="2.2" stroke-dasharray="5 3"/><circle cx="${f(x)}" cy="${f(y)}" r="1.4" fill="#7a4512"/>`;
       }
       s += sp;
+    }
+    if (eq.taille === "hawai") {
+      const fcol = ["#ff2e88", "#ffd23f", "#fff"];
+      for (let i = 0; i < 9; i++) { const x = cx + Math.cos(i * 2.3) * (H + TW * .3), y = 171 + (i * 9) % 22; if (y > shortY - 4 || Math.abs(x - cx) < 5) continue; const c = fcol[i % 3]; for (let k = 0; k < 5; k++) s += `<circle cx="${f(x + Math.cos(k * 1.257) * 3.2)}" cy="${f(y + Math.sin(k * 1.257) * 3.2)}" r="2.3" fill="${c}"/>`; s += `<circle cx="${f(x)}" cy="${f(y)}" r="1.6" fill="#ff7b00"/>`; }
     }
     if (eq.taille === "slipor") {
       for (let i = 0; i < 10; i++) { const x = cx + Math.cos(i * 2.1) * (H + TW * .25), y = 172 + (i * 7) % 20; if (y < shortY - 3) s += star(x, y, 3.2, "#fffbe0"); }
@@ -321,6 +402,8 @@
       if (look.top === "singlet") s += `<path d="M${f(cx - W - 1)} 160 L${f(cx + W + 1)} 160" stroke="#fff" stroke-width="4" opacity=".7"/>`;
       if (m > 1.05 || (pd > 8 && !back)) s += `<path d="M${f(cx - SW * .3)} ${f(yS + 18)}l6 6-4 5 7 5M${f(cx + SW * .25)} ${f(yS + 40)}l-5 5 5 5" stroke="${ink}" stroke-width="2.4" fill="none"/>`; // tissu qui craque
     }
+    if (eq.peau === "coupsoleil" && look.top === "nu" && !back) s += `<path d="M${f(cx - SW * .42)} ${f(yS - 4)}Q${f(cx - SW * .45)} ${f(yS + 22)} ${f(cx - SW * .62)} ${f(yS + 36)}M${f(cx + SW * .42)} ${f(yS - 4)}Q${f(cx + SW * .45)} ${f(yS + 22)} ${f(cx + SW * .62)} ${f(yS + 36)}" stroke="#fff3e6" stroke-width="${f(6 + 4 * m)}" fill="none" stroke-linecap="round" opacity=".9"/>`;
+    if (eq.peau === "marbre") s += `<path d="M${f(cx - SW * .5)} ${f(yS + 8)}q10 14 4 28t12 30M${f(cx + SW * .35)} ${f(yS + 30)}q-8 10 0 22t-6 26M${f(cx - 6)} ${f(yS + 50)}q8 6 4 18" stroke="#9a9ca3" stroke-width="1.6" fill="none" opacity=".75"/>`;
     if (look.acc === "ceinture") s += `<rect x="${f(cx - W - 5)}" y="148" width="${f(W * 2 + 10)}" height="17" rx="4" fill="#5a3418" stroke="${ink}" stroke-width="3.5"/><rect x="${cx - 7}" y="150" width="14" height="13" rx="2" fill="#e3bb4f" stroke="${ink}" stroke-width="2.5"/>`;
 
     // ---- taille (par-dessus le torse)
@@ -345,6 +428,12 @@
       s += `<rect x="${f(cx - 4)}" y="148" width="${f(18 + 6 * m)}" height="15" rx="7" fill="#39ff7a" stroke="${ink}" stroke-width="3"/><path d="M${f(cx - 1)} 155h${f(12 + 6 * m)}" stroke="#ff2e88" stroke-width="2.4"/>`;
     }
 
+    if (eq.taille === "bouee") {
+      const R = H + 22 + 10 * m, y = 172;
+      s += `<ellipse cx="${cx}" cy="${y}" rx="${f(R)}" ry="17" fill="none" stroke="${ink}" stroke-width="20"/><ellipse cx="${cx}" cy="${y}" rx="${f(R)}" ry="17" fill="none" stroke="#ffd23f" stroke-width="14"/><path d="M${f(cx - R * .6)} ${f(y + 13)}q${f(R * .6)} 8 ${f(R * 1.2)} 0" stroke="#fff6b0" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+      const hx2 = cx + R - 4, hy2 = y - 22;
+      s += `<path d="M${f(hx2 - 8)} ${f(y - 6)}Q${f(hx2 - 10)} ${f(hy2 + 6)} ${f(hx2)} ${f(hy2 + 10)}" stroke="${ink}" stroke-width="13" fill="none"/><path d="M${f(hx2 - 8)} ${f(y - 6)}Q${f(hx2 - 10)} ${f(hy2 + 6)} ${f(hx2)} ${f(hy2 + 10)}" stroke="#ffd23f" stroke-width="8" fill="none"/><circle cx="${f(hx2)}" cy="${f(hy2)}" r="11" fill="#ffd23f" stroke="${ink}" stroke-width="3"/><path d="M${f(hx2 + 8)} ${f(hy2 + 1)}q9 -1 12 3q-5 5 -12 2z" fill="#ff7b00" stroke="${ink}" stroke-width="2.2" stroke-linejoin="round"/><circle cx="${f(hx2 + 3)}" cy="${f(hy2 - 3)}" r="2" fill="${ink}"/>`;
+    }
     // ---- cou
     const chainBot = .5 * (nkTop + 10) + .5 * (yS + 38 + 4 * m);
     if (!back && eq.cou === "chaine") {
@@ -365,6 +454,20 @@
     if (eq.cou === "serviette") {
       const x0 = cx - neckH - 2, x1 = cx - SW + 6;
       s += `<path d="M${f(x0 + 6)} ${f(nkTop + 2)}Q${f((x0 + x1) / 2)} ${f(trapTop - 4)} ${f(x1 - 6)} ${f(yS + 2)}L${f(x1 + 4)} ${f(yS + 40)}L${f(x1 + 22)} ${f(yS + 38)}L${f(x1 + 14)} ${f(yS + 8)}Q${f((x0 + x1) / 2 + 4)} ${f(trapTop + 10)} ${f(x0 + 10)} ${f(nkTop + 14)}Z" fill="#f4f4f8" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/><path d="M${f(x1 + 5)} ${f(yS + 30)}l16 -2M${f(x1 + 4)} ${f(yS + 25)}l16 -2" stroke="#3a86ff" stroke-width="2.4"/>`;
+    }
+    const neckCurve = t => { const a = [cx - neckH - 2, nkTop + 10], c = [cx, yS + 38 + 4 * m], b = [cx + neckH + 2, nkTop + 10]; return [(1 - t) * (1 - t) * a[0] + 2 * (1 - t) * t * c[0] + t * t * b[0], (1 - t) * (1 - t) * a[1] + 2 * (1 - t) * t * c[1] + t * t * b[1]]; };
+    if (!back && eq.cou === "lei") {
+      const cols = ["#ff2e88", "#ffd23f", "#ff7b00", "#b14dff", "#fff"];
+      for (let i = 0; i <= 12; i++) { const q = neckCurve(i / 12), c = cols[i % 5]; s += `<circle cx="${f(q[0])}" cy="${f(q[1])}" r="6.5" fill="${c}" stroke="${ink}" stroke-width="1.8"/><circle cx="${f(q[0])}" cy="${f(q[1])}" r="2" fill="#ffe14d"/>`; }
+    }
+    if (!back && eq.cou === "requin") {
+      const cp = `M${f(cx - neckH - 2)} ${f(nkTop + 10)}Q${cx} ${f(yS + 38 + 4 * m)} ${f(cx + neckH + 2)} ${f(nkTop + 10)}`;
+      s += `<path d="${cp}" stroke="#6b3b1f" stroke-width="2.6" fill="none"/>`;
+      for (let i = 1; i < 10; i++) { const q = neckCurve(i / 10), big = i === 5 ? 1.6 : 1; s += `<path d="M${f(q[0] - 3.5 * big)} ${f(q[1])}L${f(q[0])} ${f(q[1] + 10 * big)}L${f(q[0] + 3.5 * big)} ${f(q[1])}Z" fill="#fffdf2" stroke="${ink}" stroke-width="1.8" stroke-linejoin="round"/>`; }
+    }
+    if (!back && eq.cou === "papillon") {
+      const y = nkTop + 12, x = cx;
+      s += `<path d="M${x} ${f(y)}L${f(x - 15)} ${f(y - 8)}L${f(x - 15)} ${f(y + 8)}ZM${x} ${f(y)}L${f(x + 15)} ${f(y - 8)}L${f(x + 15)} ${f(y + 8)}Z" fill="#111" stroke="${ink}" stroke-width="2.6" stroke-linejoin="round"/><rect x="${f(x - 4)}" y="${f(y - 5)}" width="8" height="10" rx="2" fill="#e63946" stroke="${ink}" stroke-width="2"/>`;
     }
     // ---- bras
     const arms = [];
@@ -433,12 +536,48 @@
       }
       if (eq.peau === "huile") s += `<ellipse cx="${f(b[0] - b[2] * .3)}" cy="${f(b[1] - b[2] * .35)}" rx="${f(b[2] * .32)}" ry="${f(b[2] * .16)}" fill="#fff" opacity=".75" transform="rotate(-30 ${f(b[0] - b[2] * .3)} ${f(b[1] - b[2] * .35)})"/><circle cx="${f(A.J[0])}" cy="${f(A.J[1] - UA * .2)}" r="${f(2 + UA * .08)}" fill="#fff" opacity=".8"/>`;
     }
+    // ---- objet tenu dans la main droite (côté d = 1)
+    if (eq.main) {
+      const A2 = arms[1], [hx3, hy3] = A2.Hd, k = handR / 12;
+      let it = "";
+      if (eq.main === "haltere") {
+        const bl = handR + 16;
+        it = `<path d="M${f(hx3 - bl)} ${f(hy3)}H${f(hx3 + bl)}" stroke="${ink}" stroke-width="7" stroke-linecap="round"/><path d="M${f(hx3 - bl)} ${f(hy3)}H${f(hx3 + bl)}" stroke="#c9d1d8" stroke-width="3.4"/>`;
+        for (const d of [-1, 1]) it += `<rect x="${f(hx3 + d * (bl - 4) - 6)}" y="${f(hy3 - 11 - 2 * k)}" width="12" height="${f(22 + 4 * k)}" rx="3" fill="#2b2b33" stroke="${ink}" stroke-width="2.6"/><rect x="${f(hx3 + d * (bl + 5) - 3.5)}" y="${f(hy3 - 7 - k)}" width="7" height="${f(14 + 2 * k)}" rx="2" fill="#e63946" stroke="${ink}" stroke-width="2.2"/>`;
+      } else if (eq.main === "glace") {
+        it = `<path d="M${f(hx3 - 9 * k)} ${f(hy3 - handR * .4)}L${f(hx3)} ${f(hy3 + handR + 10)}L${f(hx3 + 9 * k)} ${f(hy3 - handR * .4)}Z" fill="#e3a857" stroke="${ink}" stroke-width="2.6" stroke-linejoin="round"/><path d="M${f(hx3 - 6 * k)} ${f(hy3 - handR * .1)}l${f(10 * k)} ${f(8 * k)}M${f(hx3 + 6 * k)} ${f(hy3 - handR * .1)}l${f(-10 * k)} ${f(8 * k)}" stroke="#b07a35" stroke-width="1.6"/>`;
+        [["#ff8fc8", 0], ["#fff3d6", 1], ["#7a4a22", 2]].forEach(([c, i]) => { it += `<circle cx="${f(hx3 + (i % 2 ? 2 : -1))}" cy="${f(hy3 - handR * .5 - 8 * k - i * 11 * k)}" r="${f(9 * k + 1)}" fill="${c}" stroke="${ink}" stroke-width="2.6"/>`; });
+        it += `<circle cx="${f(hx3 + 2)}" cy="${f(hy3 - handR * .5 - 38 * k)}" r="3.2" fill="#e63946" stroke="${ink}" stroke-width="1.6"/>`;
+      } else if (eq.main === "shakerm") {
+        const sw2 = 11 * k + 4, top = hy3 - handR - 46 * k;
+        it = `<path d="M${f(hx3 - sw2)} ${f(top + 12)}H${f(hx3 + sw2)}L${f(hx3 + sw2 * .85)} ${f(hy3 + handR * .6)}H${f(hx3 - sw2 * .85)}Z" fill="#ff8fc8" stroke="${ink}" stroke-width="2.8" stroke-linejoin="round"/><rect x="${f(hx3 - sw2 - 2)}" y="${f(top)}" width="${f(sw2 * 2 + 4)}" height="13" rx="4" fill="#2b2b33" stroke="${ink}" stroke-width="2.6"/><rect x="${f(hx3 - 3)}" y="${f(top - 8)}" width="6" height="9" rx="2" fill="#2b2b33" stroke="${ink}" stroke-width="2"/><text x="${f(hx3)}" y="${f(top + 30 * k)}" font-size="${f(7 * k + 2)}" font-family="Anton,Impact,sans-serif" text-anchor="middle" fill="${ink}">XXL</text>`;
+      } else if (eq.main === "trophee") {
+        const cw = 13 * k + 4, top = hy3 - handR - 40 * k;
+        it = `<path d="M${f(hx3 - 3)} ${f(top + 26 * k)}V${f(hy3 + handR)}M${f(hx3 + 3)} ${f(top + 26 * k)}V${f(hy3 + handR)}" stroke="${ink}" stroke-width="3"/><rect x="${f(hx3 - 3)}" y="${f(top + 24 * k)}" width="6" height="${f(hy3 + handR - top - 24 * k)}" fill="#f5c518"/>`;
+        it += `<path d="M${f(hx3 - cw)} ${f(top)}H${f(hx3 + cw)}Q${f(hx3 + cw)} ${f(top + 28 * k)} ${f(hx3)} ${f(top + 28 * k)}Q${f(hx3 - cw)} ${f(top + 28 * k)} ${f(hx3 - cw)} ${f(top)}Z" fill="#f5c518" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/><path d="M${f(hx3 - cw)} ${f(top + 4)}q${f(-9 * k)} 2 ${f(-6 * k)} ${f(12 * k)}q2 4 ${f(7 * k)} 3M${f(hx3 + cw)} ${f(top + 4)}q${f(9 * k)} 2 ${f(6 * k)} ${f(12 * k)}q-2 4 ${f(-7 * k)} 3" stroke="${ink}" stroke-width="2.6" fill="none"/>${star(hx3 - cw * .3, top + 9 * k, 3.5, "#fff8c2")}<text x="${f(hx3 + 1)}" y="${f(top + 15 * k)}" font-size="${f(9 * k)}" font-family="Anton,Impact,sans-serif" text-anchor="middle" fill="#8a6200">1</text>`;
+      }
+      s += it;
+      // le poing par-dessus (sauf gants de boxe, déjà par-dessus)
+      if (eq.poignets === "gants") s += `<circle cx="${f(hx3)}" cy="${f(hy3)}" r="${f(handR + 6)}" fill="#d62828" stroke="${ink}" stroke-width="3.5"/>`;
+      else s += `<circle cx="${f(hx3)}" cy="${f(hy3)}" r="${f(handR - .5)}" fill="${skin}" stroke="${ink}" stroke-width="3"/>`;
+    }
+    if (eq.peau === "marbre") for (const A of arms) { const c = lerp(A.J, A.E, .45); s += `<path d="M${f(c[0] - 4)} ${f(c[1] - UA * .3)}q6 6 1 12t5 12" stroke="#9a9ca3" stroke-width="1.5" fill="none" opacity=".75"/>`; }
+    if (eq.peau === "doree") for (const A of arms) { const c = lerp(A.J, A.E, .5); s += star(c[0] - UA * .15, c[1] - UA * .2, 4 + UA * .08, "#fff8c2"); }
+    if (back) s += dosItem();
     if (eq.peau === "huile" && !back) s += `<ellipse cx="${f(cx - SW * .32)}" cy="${f(yS + 20 + pd * .4)}" rx="${f(4 + SW * .1)}" ry="3" fill="#fff" opacity=".6"/><ellipse cx="${f(cx + SW * .32)}" cy="${f(yS + 20 + pd * .4)}" rx="${f(4 + SW * .1)}" ry="3" fill="#fff" opacity=".6"/>`;
 
     // ---- tête
     const hx = cx, hy = headY, r = headR;
     s += `<circle cx="${f(hx - r + 1)}" cy="${f(hy + 3)}" r="5.5" fill="${skin}" stroke="${ink}" stroke-width="3.5"/><circle cx="${f(hx + r - 1)}" cy="${f(hy + 3)}" r="5.5" fill="${skin}" stroke="${ink}" stroke-width="3.5"/>`;
     s += `<circle cx="${hx}" cy="${f(hy)}" r="${f(r)}" fill="${skin}" stroke="${ink}" stroke-width="4.5"/>`;
+    if (eq.visage === "catcheur") {
+      s += `<path d="M${f(hx - r - 1)} ${f(hy + r * .35)}A${f(r + 1)} ${f(r + 1)} 0 1 1 ${f(hx + r + 1)} ${f(hy + r * .35)}Q${hx} ${f(hy + r * .15)} ${f(hx - r - 1)} ${f(hy + r * .35)}Z" fill="#8338ec" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
+      if (back) s += `<path d="M${hx} ${f(hy - r * .7)}V${f(hy + r * .3)}" stroke="#ffd23f" stroke-width="3" stroke-dasharray="4 3"/>`;
+      else {
+        s += `<path d="M${hx} ${f(hy - r)}L${f(hx - 5)} ${f(hy - r * .55)}H${f(hx + 5)}Z" fill="#ffd23f" stroke="${ink}" stroke-width="2"/>`;
+        for (const d of [-1, 1]) s += `<path d="M${f(hx + d * 2)} ${f(hy - r * .2)}Q${f(hx + d * r * .75)} ${f(hy - r * .55)} ${f(hx + d * r * .78)} ${f(hy + r * .05)}Q${f(hx + d * r * .4)} ${f(hy + r * .22)} ${f(hx + d * 2)} ${f(hy - r * .2)}Z" fill="#fff" stroke="#ffd23f" stroke-width="2.6" stroke-linejoin="round"/>`;
+      }
+    }
     const hc = look.hairColor;
     if (back) {
       // vue de dos : cheveux à l'arrière du crâne, pas de visage
@@ -485,6 +624,11 @@
       else s += `<path d="M${f(hx - 8)} ${f(my - 1)}q8 8 16 0" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
       if (look.acc === "moustache" && eq.visage !== "moust70") s += `<path d="M${f(hx - 12)} ${f(my - 2)}q6 -8 12 -3q6 -5 12 3q-6 4 -12 0q-6 4 -12 0z" fill="${hc}" stroke="${ink}" stroke-width="2.5"/>`;
       if (eq.visage === "moust70") s += `<path d="M${hx} ${f(my - 7)}q-9 -4 -14 2q-2 3 -2 14q0 4 3 4q2 0 2 -6q0 -7 4 -9q4 -2 7 -1q3 -1 7 1q4 2 4 9q0 6 2 6q3 0 3 -4q0 -11 -2 -14q-5 -6 -14 -2z" fill="${hc}" stroke="${ink}" stroke-width="2.4" stroke-linejoin="round"/>`;
+      if (eq.visage === "clown") s += `<circle cx="${hx}" cy="${f(hy + r * .2)}" r="${f(r * .24 + 1)}" fill="#ff1f3d" stroke="${ink}" stroke-width="2.6"/><circle cx="${f(hx - r * .07)}" cy="${f(hy + r * .13)}" r="${f(r * .07)}" fill="#fff" opacity=".8"/>`;
+      if (eq.visage === "plongee") {
+        s += `<path d="M${f(hx - r - 1)} ${f(ey - 2)}H${f(hx + r + 1)}" stroke="#111" stroke-width="5"/><rect x="${f(hx - r * .8)}" y="${f(ey - r * .38)}" width="${f(r * 1.6)}" height="${f(r * .66)}" rx="${f(r * .3)}" fill="#8fe3ff" fill-opacity=".45" stroke="#ff7b00" stroke-width="4"/><path d="M${f(hx - r * .55)} ${f(ey - r * .22)}l${f(r * .2)} ${f(r * .3)}" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>`;
+        s += `<path d="M${f(hx + r * .55)} ${f(my + 2)}H${f(hx + r + 6)}V${f(hy - r - 14)}" stroke="${ink}" stroke-width="8" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="M${f(hx + r * .55)} ${f(my + 2)}H${f(hx + r + 6)}V${f(hy - r - 14)}" stroke="#ffd23f" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`;
+      }
       if (m < .15) s += `<path d="M${f(hx + r * .85)} ${f(hy - r * .5)}q5 8 0 11q-5 -3 0 -11z" fill="#8fd3ff" stroke="${ink}" stroke-width="1.8"/>`; // goutte de sueur
       if (pose === "most") s += `<path d="M${f(hx - r * .45)} ${f(hy - r * .72)}q4 3 2 7q4 -2 6 2" stroke="#6d8fd0" stroke-width="2.4" fill="none" stroke-linecap="round"/>`; // veine du front
 
@@ -514,28 +658,37 @@
       s += `<path d="M${f(hx - w)} ${f(y0)}L${f(hx - w - 3)} ${f(y0 - 16)}L${f(hx - w * .5)} ${f(y0 - 7)}L${hx} ${f(y0 - 19)}L${f(hx + w * .5)} ${f(y0 - 7)}L${f(hx + w + 3)} ${f(y0 - 16)}L${f(hx + w)} ${f(y0)}Z" fill="#f5c518" stroke="${ink}" stroke-width="3.5" stroke-linejoin="round"/><circle cx="${hx}" cy="${f(y0 - 5)}" r="3.4" fill="#e63946" stroke="${ink}" stroke-width="1.5"/><circle cx="${f(hx - w * .55)}" cy="${f(y0 - 3)}" r="2.4" fill="#3a86ff"/><circle cx="${f(hx + w * .55)}" cy="${f(y0 - 3)}" r="2.4" fill="#2ec27e"/>${star(hx + w + 4, y0 - 20, 4, "#fffbe0")}`;
     }
 
+    if (eq.tete === "disco" && back) s += discoWig();
+    if (eq.tete === "bonnetbain") {
+      s += `<path d="M${f(hx - r - 2)} ${f(hy + 2)}Q${f(hx - r - 2)} ${f(hy - r - 8)} ${hx} ${f(hy - r - 6)}Q${f(hx + r + 2)} ${f(hy - r - 8)} ${f(hx + r + 2)} ${f(hy + 2)}Q${hx} ${f(hy - r * .5)} ${f(hx - r - 2)} ${f(hy + 2)}Z" fill="#fff" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
+      [[-.45, -.55, "#ff2e88"], [.2, -.8, "#ffd23f"], [.55, -.35, "#2fa8ff"], [-.1, -.3, "#3ccf8e"]].forEach(([a, b, c]) => { const x = hx + a * r, y = hy + b * r; for (let k = 0; k < 5; k++) s += `<circle cx="${f(x + Math.cos(k * 1.257) * 4)}" cy="${f(y + Math.sin(k * 1.257) * 4)}" r="3.4" fill="${c}" stroke="${ink}" stroke-width="1.2"/>`; s += `<circle cx="${f(x)}" cy="${f(y)}" r="2.4" fill="#ffe14d"/>`; });
+    }
+    if (eq.tete === "laurier") {
+      for (const d of [-1, 1]) for (let i = 0; i < 6; i++) {
+        const a = Math.PI * (.95 - i * .085), x = hx + d * Math.cos(a) * -(r + 2), y = hy - r * .25 - Math.sin(a) * r * .1 - i * r * .13;
+        s += `<ellipse cx="${f(x)}" cy="${f(y)}" rx="6.5" ry="3.2" fill="${i % 2 ? "#5cb85c" : "#3f9b3f"}" stroke="${ink}" stroke-width="1.6" transform="rotate(${f(d * (-30 - i * 12))} ${f(x)} ${f(y)})"/>`;
+      }
+      s += `<circle cx="${hx}" cy="${f(hy - r * .98)}" r="3" fill="#f5c518" stroke="${ink}" stroke-width="1.4"/>`;
+    }
+    if (eq.tete === "cornes") for (const d of [-1, 1]) s += `<path d="M${f(hx + d * r * .35)} ${f(hy - r * .88)}Q${f(hx + d * r * .55)} ${f(hy - r - 16)} ${f(hx + d * r * .9)} ${f(hy - r - 22)}Q${f(hx + d * r * .8)} ${f(hy - r - 6)} ${f(hx + d * r * .75)} ${f(hy - r * .62)}Z" fill="#d62828" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/>`;
+    if (eq.tete === "aureole") {
+      const ay = hy - r - 14;
+      s += `<ellipse cx="${hx}" cy="${f(ay)}" rx="${f(r * .95)}" ry="${f(r * .28)}" fill="none" stroke="#fff3a0" stroke-width="12" opacity=".35"/><ellipse cx="${hx}" cy="${f(ay)}" rx="${f(r * .9)}" ry="${f(r * .25)}" fill="none" stroke="${ink}" stroke-width="7"/><ellipse cx="${hx}" cy="${f(ay)}" rx="${f(r * .9)}" ry="${f(r * .25)}" fill="none" stroke="#ffd23f" stroke-width="4"/>`;
+    }
+    if (eq.peau === "doree") s += star(hx - r * .45, hy - r * .55, 4, "#fff8c2") + star(cx + SW * .3, yS + 22, 5, "#fff8c2");
     // ---- extras de pose
     if (pose === "kiss") {
       const A = arms[1], b = bulge(A);
       s += `<path transform="translate(${f(b[0] + 6)} ${f(b[1] - b[2] - 12)}) scale(1.1)" d="M0 7C-12 -1 -10 -10 -4 -10Q0 -10 0 -5Q0 -10 4 -10C10 -10 12 -1 0 7Z" fill="#ff2e63" stroke="${ink}" stroke-width="2.2"/>`;
       s += `<path transform="translate(${f(b[0] - 2)} ${f(b[1] - 2)}) rotate(-15)" d="M-5 0q2.5 -3 5 0q2.5 -3 5 0q-2.5 4 -5 1q-2.5 3 -5 -1z" fill="#ff5d8a" opacity=".85"/>`;
     }
-    if (pose === "leg" && gr.skip) s += `<path d="M${f(legs[1].knee[0] + 14)} ${f(legs[1].knee[1] - 16)}q5 8 0 11q-5 -3 0 -11zM${f(legs[0].knee[0] - 14)} ${f(legs[0].knee[1] - 10)}q5 8 0 11q-5 -3 0 -11z" fill="#8fd3ff" stroke="${ink}" stroke-width="1.6"/>`;
     s += `</svg>`;
     return s;
   }
 
-  // Plus il est musclé, plus le perso prend de place à l'écran :
-  // ×1 Crevette (0 XP) → ×2 Costaud (700) → ×4 Montagne (1 500) → ×8 Titan démesuré (2 000 XP et plus).
-  const SIZE_STEPS = [[0, 1], [700, 2], [1500, 4], [2000, 8]];
-  function size(xp) {
-    xp = Math.max(0, xp || 0);
-    for (let i = 1; i < SIZE_STEPS.length; i++) {
-      const [x0, s0] = SIZE_STEPS[i - 1], [x1, s1] = SIZE_STEPS[i];
-      if (xp <= x1) return s0 * Math.pow(s1 / s0, (xp - x0) / (x1 - x0)); // progression géométrique entre paliers
-    }
-    return SIZE_STEPS[SIZE_STEPS.length - 1][1];
-  }
+  // Plus il est musclé, plus le perso prend de place à l'écran : ×1 (0 XP) → ×8 (2 000 XP et plus).
+  // Un cran tous les 100 XP, progression géométrique : ×8^(L/20), soit ≈ +11 % par palier, ×8 au niveau 20.
+  const size = xp => Math.pow(8, level(xp) / MAX_LEVEL);
   G.avatar = {svg, tier, muscle, size, SKINS, HAIR_COLORS, HAIR_STYLES, CLOTH, TOPS, ACCS, TIERS, DEFAULT_LOOK,
-    GROUPS, POINT_XP, groups, skipLegDay, mgOf, RARITIES, SLOTS, ITEMS, ITEM, equipped, POSES};
+    LEVEL_XP, MAX_LEVEL, level, groups, skipLegDay, RARITIES, SLOTS, ITEMS, ITEM, equipped, POSES};
 })();
