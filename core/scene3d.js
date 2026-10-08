@@ -105,7 +105,8 @@
     scene.add(world, tilesG, entG, fxG);
 
     let W = 16, D = 11, portrait = false, vpW = 0, vpH = 0;
-    let themeName = opts.theme === "salle" ? "salle" : "plage";
+    const THEMES = ["plage", "salle", "ring"];
+    let themeName = THEMES.includes(opts.theme) ? opts.theme : "plage";
     let theme = null;                                // objet du décor courant
     let tilesData = (opts.tiles || []).slice();
     const tileState = new Map();
@@ -735,10 +736,265 @@
       return {group: g, gold: "#00e5ff", glow: "#00e5ff", glowAdd: true, anim, onFit, fitPoints, lights: L, tileStyle: "mat"};
     }
 
+    // ================= THÈME RING : Gala du Muscle =================
+    // Le tapis du ring est à y = 0 (comme le sable ou le sol de la salle) : le ring est surélevé
+    // par rapport au sol de l'arène (y = -DROP). Projecteurs, foule, flashs : tout est factice et léger.
+    function buildRing() {
+      const g = new THREE.Group(), R = rng(1987), anim = [];
+      const DROP = .95, mx = W / 2 + .8, mzB = D / 2 + .8, mzF = D / 2 + 1.15;   // demi-côtés du ring
+      const ringW = mx * 2, ringD = mzB + mzF, ringZ = (mzF - mzB) / 2;
+      scene.background = new THREE.Color("#0b0712");
+      scene.fog = new THREE.Fog("#0b0712", 24, 58);
+      const L = setupLights(g, {sky: "#d9d2ff", ground: "#2a1a3a", hemiI: .66, sunColor: "#fff2dc", sunI: .8, sunPos: [2.5, 15, 7], ambient: ["#8a7ad8", .14]});
+
+      // ---- tapis (toile) avec le grand logo GONFLETTE
+      const cw = 1024, chh = Math.min(1024, Math.round(1024 * ringD / ringW)), mc = mkCanvas(cw, chh), m = mc.getContext("2d");
+      const mg = m.createRadialGradient(cw / 2, chh * .45, 20, cw / 2, chh / 2, cw * .7);
+      mg.addColorStop(0, "#eef1f6"); mg.addColorStop(.7, "#cdd4df"); mg.addColorStop(1, "#aeb7c7");
+      m.fillStyle = mg; m.fillRect(0, 0, cw, chh);
+      for (let i = 0; i < 2600; i++) { m.fillStyle = R() < .5 ? "rgba(30,40,80,.05)" : "rgba(255,255,255,.18)"; m.fillRect(R() * cw, R() * chh, 2, 2); }
+      const bd = cw * .035;                                   // bande bleue du bord + filet doré
+      m.strokeStyle = "#1b2a5c"; m.lineWidth = bd * 2; m.strokeRect(0, 0, cw, chh);
+      m.strokeStyle = "#ffc83d"; m.lineWidth = 6; m.strokeRect(bd + 4, bd + 4, cw - bd * 2 - 8, chh - bd * 2 - 8);
+      // coins rouge (avant gauche) et bleu (avant droit)
+      for (const [x0, col] of [[bd, "#d62828"], [cw - bd, "#2f6fdc"]]) { m.fillStyle = col; m.globalAlpha = .55; m.beginPath(); m.moveTo(x0, chh - bd); m.lineTo(x0 + (x0 < cw / 2 ? 1 : -1) * cw * .12, chh - bd); m.lineTo(x0, chh - bd - cw * .12); m.closePath(); m.fill(); m.globalAlpha = 1; }
+      m.save(); m.translate(cw / 2, chh / 2); m.rotate(-.06);
+      m.strokeStyle = "rgba(27,42,92,.22)"; m.lineWidth = 16; m.beginPath(); m.ellipse(0, 0, cw * .42, chh * .36, 0, 0, 7); m.stroke();
+      m.lineWidth = 5; m.beginPath(); m.ellipse(0, 0, cw * .38, chh * .31, 0, 0, 7); m.stroke();
+      m.textAlign = "center"; m.textBaseline = "middle";
+      const ls = fitFont(m, "GONFLETTE", FONT_D, "400", Math.min(220, chh * .3), cw * .66);
+      m.fillStyle = "rgba(27,42,92,.26)"; m.fillText("GONFLETTE", 0, -chh * .02);
+      m.font = `400 ${Math.round(ls * .26)}px ${FONT_D}`; m.fillStyle = "rgba(214,40,40,.32)";
+      m.fillText("★  GALA DU MUSCLE  ★", 0, ls * .52);
+      m.restore();
+      const matTex = canvasTex(mc);
+      const mat = mesh(g, new THREE.PlaneGeometry(ringW, ringD).rotateX(-Math.PI / 2), lam("#e2e6ee", {map: matTex}), 0, 0, ringZ, {recv: true});
+      mat.renderOrder = -10;
+
+      // ---- tablier (jupe bleue « GONFLETTE ») + socle
+      const ac = mkCanvas(1024, 128), ax = ac.getContext("2d");
+      ax.fillStyle = "#16234d"; ax.fillRect(0, 0, 1024, 128);
+      ax.fillStyle = "#ffc83d"; ax.fillRect(0, 0, 1024, 10); ax.fillStyle = "#d62828"; ax.fillRect(0, 10, 1024, 6);
+      ax.textAlign = "center"; ax.textBaseline = "middle"; ax.font = `400 64px ${FONT_D}`;
+      fitFont(ax, "GALA DU MUSCLE", FONT_D, "400", 64, 360); ax.fillStyle = "#ffffff"; ax.fillText("GONFLETTE", 256, 74); ax.fillText("GALA DU MUSCLE", 768, 74); ax.fillStyle = "#ffc83d"; ax.fillText("★", 512, 74);
+      ax.fillStyle = "#ffc83d"; ax.fillText("★", 0, 74); ax.fillText("★", 1024, 74);
+      const apronMat = lam("#ffffff", {map: canvasTex(ac, {repeat: [Math.max(1, Math.round(ringW / 7)), 1]})});
+      const apronSideMat = lam("#ffffff", {map: canvasTex(ac, {repeat: [Math.max(1, Math.round(ringD / 7)), 1]})});
+      mesh(g, new THREE.BoxGeometry(ringW - .02, DROP, ringD - .02), lam("#101830"), 0, -DROP / 2 - .005, ringZ);
+      mesh(g, new THREE.PlaneGeometry(ringW, DROP), apronMat, 0, -DROP / 2, mzF + .005);
+      mesh(g, new THREE.PlaneGeometry(ringD, DROP), apronSideMat, -mx - .005, -DROP / 2, ringZ, {ry: -Math.PI / 2});
+      mesh(g, new THREE.PlaneGeometry(ringD, DROP), apronSideMat, mx + .005, -DROP / 2, ringZ, {ry: Math.PI / 2});
+      // boudin rembourré du bord du tapis
+      const edgeMat = lam("#1b2a5c");
+      mesh(g, new THREE.BoxGeometry(ringW + .1, .07, .12), edgeMat, 0, .02, mzF, {cast: true});
+      mesh(g, new THREE.BoxGeometry(ringW + .1, .07, .12), edgeMat, 0, .02, -mzB);
+      for (const sx of [-1, 1]) mesh(g, new THREE.BoxGeometry(.12, .07, ringD + .1), edgeMat, sx * mx, .02, ringZ);
+
+      // ---- sol de l'arène
+      const fc = mkCanvas(128, 128), fx = fc.getContext("2d");
+      fx.fillStyle = "#16101f"; fx.fillRect(0, 0, 128, 128);
+      for (let i = 0; i < 500; i++) { fx.fillStyle = R() < .5 ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.25)"; fx.fillRect(R() * 128, R() * 128, 2, 2); }
+      mesh(g, new THREE.PlaneGeometry(90, 70).rotateX(-Math.PI / 2), lam("#ffffff", {map: canvasTex(fc, {repeat: [30, 24]})}), 0, -DROP, -10, {recv: true});
+
+      // ---- poteaux + protections de coin + cordes rouge / blanche / bleue
+      const steel = phong("#d6dbe2", {shininess: 120, specular: "#ffffff"});
+      const padMats = {fl: lam("#d62828"), fr: lam("#2f6fdc"), b: lam("#f1f1f1")};
+      const postH = 1.6, postGeo = new THREE.CylinderGeometry(.075, .085, postH + DROP, 10), padGeo = new THREE.BoxGeometry(.26, 1.2, .26);
+      const corners = [[-mx, -mzB, "b"], [mx, -mzB, "b"], [-mx, mzF, "fl"], [mx, mzF, "fr"]];
+      for (const [x, z, k] of corners) {
+        mesh(g, postGeo, steel, x, (postH - DROP) / 2, z, {cast: true});
+        mesh(g, padGeo, padMats[k], x, .82, z, {ry: Math.PI / 4, cast: true});
+        mesh(g, new THREE.SphereGeometry(.09, 8, 6), steel, x, postH, z);
+      }
+      const ropeCols = [lam("#2f6fdc"), lam("#f4f4f4"), lam("#d62828")], ropeYs = [.42, .82, 1.22];
+      const ropeX = new THREE.CylinderGeometry(.04, .04, ringW, 8).rotateZ(Math.PI / 2), ropeZ = new THREE.CylinderGeometry(.04, .04, ringD, 8).rotateX(Math.PI / 2);
+      ropeYs.forEach((y, i) => {
+        mesh(g, ropeX, ropeCols[i], 0, y, -mzB, {cast: true});
+        mesh(g, ropeX, ropeCols[i], 0, y, mzF, {cast: true});
+        for (const sx of [-1, 1]) mesh(g, ropeZ, ropeCols[i], sx * mx, y, ringZ, {cast: true});
+      });
+
+      // ---- foule en gradins (silhouettes sur panneaux découpés)
+      function crowdCanvas(seed, light) {
+        const r = rng(seed), c = mkCanvas(1024, 200), x = c.getContext("2d");
+        const cols = ["#160f22", "#1d1430", "#231839", "#130c1d", "#2a1d42"];
+        for (let i = 0; i < 30; i++) {
+          const px = 17 + i * 34 + r() * 8, h = 120 + r() * 50, w = 40 + r() * 14, col = cols[Math.floor(r() * cols.length)], hr = 14 + r() * 4, hy = 200 - h;
+          x.fillStyle = col;
+          if (r() < .22) { const sd = r() < .5 ? -1 : 1, ay = hy - 26 - r() * 14; x.strokeStyle = col; x.lineWidth = 10; x.lineCap = "round"; x.beginPath(); x.moveTo(px + sd * w * .35, hy + hr + 16); x.lineTo(px + sd * (w * .45 + 8), ay); x.stroke(); x.beginPath(); x.arc(px + sd * (w * .45 + 8), ay - 4, 8, 0, 7); x.fill(); x.strokeStyle = light; x.lineWidth = 2.5; x.beginPath(); x.arc(px + sd * (w * .45 + 8), ay - 4, 7, Math.PI * 1.1, Math.PI * 1.9); x.stroke(); }
+          rrect(x, px - w / 2, hy + hr + 2, w, 200, 18); x.fill();
+          x.beginPath(); x.arc(px, hy, hr, 0, 7); x.fill();
+          x.strokeStyle = light; x.lineWidth = 3; x.beginPath(); x.arc(px, hy, hr - 1, Math.PI * 1.08, Math.PI * 1.92); x.stroke();
+          if (r() < .12) { x.fillStyle = "#cfefff"; x.shadowColor = "#7fd4ff"; x.shadowBlur = 10; x.fillRect(px + 8, hy + 10, 11, 17); x.shadowBlur = 0; }
+          else if (r() < .07) { x.fillStyle = "#fff6e0"; x.fillRect(px - 30, hy - 52, 60, 34); x.fillStyle = "#d62828"; x.font = `400 22px ${FONT_D}`; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(r() < .5 ? "GO !" : "WOW !", px, hy - 35); }
+        }
+        return c;
+      }
+      const tiers = lowPower ? 3 : 4, crowdW = ringW + 24, TZ = 1.7, TY = 1.05;
+      const tierStep = new THREE.BoxGeometry(crowdW, 1, TZ);
+      for (let i = 0; i < tiers; i++) {
+        const z = -mzB - 2.8 - i * TZ, y0 = -DROP + .5 + i * TY;
+        mesh(g, tierStep, lam(i % 2 ? "#1a1226" : "#150f20"), 0, y0 - .5, z - .3);
+        const tex = canvasTex(crowdCanvas(11 + i * 7, i % 2 ? "rgba(255,150,210,.55)" : "rgba(180,140,255,.6)"), {repeat: [Math.round(crowdW / 10), 1]});
+        const row = mesh(g, new THREE.PlaneGeometry(crowdW, 1.75), new THREE.MeshBasicMaterial({map: tex, alphaTest: .5, color: new THREE.Color(1, 1, 1).multiplyScalar(1 - i * .1)}), 0, y0 + .8, z + .3);
+        row.userData.keep = true;
+      }
+
+      // fond de salle : halo violet derrière les gradins (les silhouettes s'y découpent)
+      const hc = mkCanvas(8, 256), hx2 = hc.getContext("2d"), hg = hx2.createLinearGradient(0, 0, 0, 256);
+      hg.addColorStop(0, "#0b0712"); hg.addColorStop(.45, "#2a1745"); hg.addColorStop(.8, "#4a2370"); hg.addColorStop(1, "#1a0f2a");
+      hx2.fillStyle = hg; hx2.fillRect(0, 0, 8, 256);
+      const backZ = -mzB - 2.8 - tiers * TZ - .4;
+      const backdrop = mesh(g, new THREE.PlaneGeometry(crowdW + 30, 12), new THREE.MeshBasicMaterial({map: canvasTex(hc, {mip: false}), fog: false, depthWrite: false}), 0, -DROP + 6 - 1.2, backZ);
+      backdrop.renderOrder = -20; backdrop.userData.keep = true;
+      // ---- panneau LED « GALA DU MUSCLE » (barrière entre le ring et le public)
+      const lc = mkCanvas(1024, 64), lx = lc.getContext("2d");
+      lx.fillStyle = "#07050a"; lx.fillRect(0, 0, 1024, 64);
+      lx.textAlign = "center"; lx.textBaseline = "middle"; lx.font = `400 44px ${FONT_D}`;
+      lx.shadowColor = "#ff7a1a"; lx.shadowBlur = 12; lx.fillStyle = "#ffb627";
+      fitFont(lx, "★ GALA DU MUSCLE ★ GONFLETTE PARTY ★ DUELS AU SOMMET ", FONT_D, "400", 44, 1000);
+      lx.fillText("★ GALA DU MUSCLE ★ GONFLETTE PARTY ★ DUELS AU SOMMET ", 512, 35);
+      lx.shadowBlur = 0; lx.fillStyle = "rgba(7,5,10,.85)";
+      for (let i = 0; i < 1024; i += 4) lx.fillRect(i, 0, 1.4, 64);
+      for (let i = 0; i < 64; i += 4) lx.fillRect(0, i, 1024, 1.4);
+      const ledTex = canvasTex(lc, {repeat: [Math.max(1, Math.round((ringW + 6) / 11)), 1]});
+      const ledZ = -mzB - 1.55, ledW = ringW + 6;
+      mesh(g, new THREE.BoxGeometry(ledW, .62 + DROP, .14), lam("#0b0812"), 0, (.62 - DROP) / 2, ledZ - .08);
+      const led = mesh(g, new THREE.PlaneGeometry(ledW, .46), new THREE.MeshBasicMaterial({map: ledTex, fog: false}), 0, .34, ledZ);
+      led.userData.keep = true;
+      anim.push((t) => { ledTex.offset.x = (t * .035) % 1; });
+
+      // ---- table des commentateurs (micro, écran, cloche) à l'arrière gauche
+      const desk = new THREE.Group(); desk.position.set(-mx + 2.6, 0, -mzB - .85); g.add(desk);
+      const dc = mkCanvas(256, 64), dx = dc.getContext("2d");
+      dx.fillStyle = "#1b2a5c"; dx.fillRect(0, 0, 256, 64); dx.fillStyle = "#d62828"; dx.fillRect(0, 6, 256, 7);
+      dx.fillStyle = "#fff"; dx.font = `400 34px ${FONT_D}`; dx.textAlign = "center"; dx.textBaseline = "middle"; dx.fillText("GONFLETTE TV", 128, 40);
+      mesh(desk, new THREE.BoxGeometry(2.6, DROP + .3, .9), lam("#1b2a5c"), 0, (.3 - DROP) / 2, 0, {cast: true});
+      mesh(desk, new THREE.PlaneGeometry(2.6, .62), lam("#ffffff", {map: canvasTex(dc)}), 0, -.06, .452);
+      mesh(desk, new THREE.BoxGeometry(2.8, .07, 1.05), lam("#2a2433"), 0, .33, 0, {cast: true});
+      // commentateur en silhouette (nœud papillon doré)
+      const ann = new THREE.Group(); ann.position.set(.15, .36, -.55); desk.add(ann);
+      mesh(ann, new THREE.SphereGeometry(.2, 12, 10), lam("#1a1226"), 0, .62, 0, {cast: true});
+      mesh(ann, new THREE.CylinderGeometry(.2, .34, .5, 10), lam("#1a1226"), 0, .25, 0, {cast: true});
+      mesh(ann, new THREE.BoxGeometry(.16, .07, .04), lam("#ffc83d"), 0, .43, .2);
+      // micro sur pied
+      mesh(desk, new THREE.CylinderGeometry(.018, .018, .45, 6), steel, .45, .58, .1, {rz: -.25});
+      mesh(desk, new THREE.SphereGeometry(.07, 10, 8), lam("#d62828"), .51, .82, .1, {s: [1, 1.35, 1], rz: -.25});
+      // écran de contrôle (lumineux)
+      const mon = new THREE.Group(); mon.position.set(-.75, .52, .05); mon.rotation.x = -.3; desk.add(mon);
+      mesh(mon, new THREE.BoxGeometry(.62, .38, .05), lam("#0d0d12"), 0, 0, 0, {cast: true});
+      const scrMat = new THREE.MeshBasicMaterial({color: "#33d6ff"});
+      const scr = mesh(mon, new THREE.PlaneGeometry(.54, .3), scrMat, 0, 0, .027); scr.userData.keep = true;
+      anim.push((t) => { scrMat.color.setHSL(.53 + .04 * Math.sin(t * 1.7), .9, .55 + .08 * Math.sin(t * 5.3)); });
+      // cloche du ring
+      const gold = phong("#f5c518", {shininess: 100, specular: "#fff3b0"});
+      mesh(desk, new THREE.SphereGeometry(.13, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), gold, 1.05, .37, .15, {cast: true});
+      mesh(desk, new THREE.CylinderGeometry(.16, .16, .03, 12), lam("#6b4a00"), 1.05, .37, .15);
+
+      // ---- la ceinture de champion suspendue au-dessus du ring
+      const bc = mkCanvas(512, 200), b = bc.getContext("2d");
+      const gg = b.createLinearGradient(0, 20, 0, 190); gg.addColorStop(0, "#fff3a0"); gg.addColorStop(.45, "#f5c518"); gg.addColorStop(1, "#b8860b");
+      b.fillStyle = "#17151c"; rrect(b, 8, 62, 496, 80, 28); b.fill(); b.lineWidth = 6; b.strokeStyle = "#050407"; b.stroke();
+      b.setLineDash([9, 7]); b.lineWidth = 3; b.strokeStyle = "#6a6275"; rrect(b, 20, 74, 472, 56, 18); b.stroke(); b.setLineDash([]);
+      b.fillStyle = gg; b.strokeStyle = "#6b4a00"; b.lineWidth = 5;
+      for (const x0 of [38, 400]) { rrect(b, x0, 66, 74, 72, 14); b.fill(); b.stroke(); }
+      b.beginPath(); b.ellipse(256, 102, 136, 94, 0, 0, 7); b.fill(); b.stroke();
+      b.fillStyle = "#ffe680"; b.lineWidth = 4; b.strokeStyle = "#8a6200"; b.beginPath(); b.ellipse(256, 104, 108, 70, 0, 0, 7); b.fill(); b.stroke();
+      for (const [x0, col] of [[75, "#d62828"], [437, "#2f6fdc"]]) { b.fillStyle = col; b.beginPath(); b.arc(x0, 102, 14, 0, 7); b.fill(); b.lineWidth = 3; b.strokeStyle = "#6b4a00"; b.stroke(); }
+      b.fillStyle = "#d62828"; b.beginPath(); b.arc(256, 44, 12, 0, 7); b.fill(); b.stroke();
+      b.textAlign = "center"; b.textBaseline = "middle";
+      fitFont(b, "GONFLETTE", FONT_D, "400", 46, 190); b.fillStyle = "#8a1b1b"; b.fillText("GONFLETTE", 256, 104);
+      b.font = `400 20px ${FONT_D}`; b.fillStyle = "#6b4a00"; b.fillText("C H A M P I O N", 256, 142);
+      for (const [x0, y0] of [[170, 80], [342, 80], [190, 150], [322, 150]]) { b.fillStyle = "#fffbe0"; b.beginPath(); for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5 - Math.PI / 2, rr = k % 2 ? 4 : 10; b.lineTo(x0 + Math.cos(a) * rr, y0 + Math.sin(a) * rr); } b.fill(); }
+      const belt = new THREE.Group(); belt.userData.keep = true; g.add(belt);
+      const beltMat = new THREE.MeshBasicMaterial({map: canvasTex(bc), transparent: true, alphaTest: .05, side: THREE.DoubleSide, fog: false});
+      const beltM = mesh(belt, new THREE.PlaneGeometry(1, 200 / 512), beltMat, 0, 0, 0);
+      const cableMat = lam("#8a93a0"), cables = [-1, 1].map(sx => mesh(belt, new THREE.CylinderGeometry(.012, .012, 1, 4).translate(0, .5, 0), cableMat, 0, 0, -.01));
+      // reflet doré qui passe sur la ceinture
+      const glC = mkCanvas(64, 64), glx = glC.getContext("2d"), glg = glx.createRadialGradient(32, 32, 1, 32, 32, 32);
+      glg.addColorStop(0, "rgba(255,255,240,1)"); glg.addColorStop(.25, "rgba(255,240,180,.5)"); glg.addColorStop(1, "rgba(255,220,120,0)"); glx.fillStyle = glg; glx.fillRect(0, 0, 64, 64);
+      const glowTx = canvasTex(glC, {mip: false});
+      const glint = new THREE.Sprite(new THREE.SpriteMaterial({map: glowTx, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false}));
+      belt.add(glint);
+      let beltW = 4;
+      anim.push((t) => {
+        belt.rotation.z = Math.sin(t * .7) * .025; belt.rotation.y = Math.sin(t * .45) * .12;
+        const k = (t * .25) % 1.6; glint.position.set((k - .55) * beltW * .9, beltW * .06, .02); glint.material.opacity = k < 1.1 ? Math.sin(k / 1.1 * Math.PI) : 0;
+      });
+
+      // ---- projecteurs : cônes de lumière qui balaient lentement le ring (faux éclairage, additif)
+      const coneC = mkCanvas(4, 128), cx2 = coneC.getContext("2d"), cg = cx2.createLinearGradient(0, 0, 0, 128);
+      cg.addColorStop(0, "rgba(255,255,255,.95)"); cg.addColorStop(.6, "rgba(255,255,255,.28)"); cg.addColorStop(1, "rgba(255,255,255,.05)");
+      cx2.fillStyle = cg; cx2.fillRect(0, 0, 4, 128);
+      const coneTex = canvasTex(coneC, {mip: false});
+      const poolC = mkCanvas(128, 128), px2 = poolC.getContext("2d"), pg = px2.createRadialGradient(64, 64, 2, 64, 64, 64);
+      pg.addColorStop(0, "rgba(255,255,255,.75)"); pg.addColorStop(.55, "rgba(255,255,255,.3)"); pg.addColorStop(1, "rgba(255,255,255,0)");
+      px2.fillStyle = pg; px2.fillRect(0, 0, 128, 128);
+      const poolTex = canvasTex(poolC, {mip: false});
+      const coneGeo = new THREE.ConeGeometry(1, 1, 24, 1, true).translate(0, -.5, 0);
+      const spotDefs = [[-W * .42, 10, -D * .1, "#fff1d0", .2, .17, 0], [W * .05, 11, -D * .6, "#ffc2e8", .26, .13, 2], [W * .42, 10, -D * .05, "#cfe3ff", .15, .21, 4]].slice(0, lowPower ? 2 : 3);
+      const spots = spotDefs.map(([sx, sy, sz, col, a, bb, ph]) => {
+        const cone = new THREE.Mesh(coneGeo, new THREE.MeshBasicMaterial({color: col, map: coneTex, transparent: true, opacity: .15, depthWrite: false, blending: THREE.AdditiveBlending, side: lowPower || coarse ? THREE.FrontSide : THREE.DoubleSide, fog: false}));
+        cone.position.set(sx, sy, sz); cone.renderOrder = 6; cone.userData.keep = true; g.add(cone);
+        const pool = new THREE.Mesh(shared.flat, new THREE.MeshBasicMaterial({color: col, map: poolTex, transparent: true, opacity: .55, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending}));
+        pool.renderOrder = 2; pool.userData.keep = true; g.add(pool);
+        return {cone, pool, src: new THREE.Vector3(sx, sy, sz), a, b: bb, ph};
+      });
+      const dirV = new THREE.Vector3(), downV = new THREE.Vector3(0, -1, 0), tgt = new THREE.Vector3();
+      anim.push((t) => {
+        for (const s of spots) {
+          tgt.set(Math.sin(t * s.a + s.ph) * W * .36, .1, ringZ + Math.cos(t * s.b + s.ph * 1.7) * D * .3);
+          dirV.subVectors(tgt, s.src); const len = dirV.length(); dirV.divideScalar(len);
+          s.cone.quaternion.setFromUnitVectors(downV, dirV);
+          const rr = len * .075; s.cone.scale.set(rr, len, rr);
+          s.pool.position.set(tgt.x, .12, tgt.z); s.pool.scale.set(rr * 2.3, 1, rr * 2.3 / Math.max(.4, -dirV.y));
+        }
+      });
+
+      // ---- flashs d'appareils photo dans le public
+      const flC = mkCanvas(64, 64), flx = flC.getContext("2d"), flg = flx.createRadialGradient(32, 32, 1, 32, 32, 30);
+      flg.addColorStop(0, "rgba(255,255,255,1)"); flg.addColorStop(.2, "rgba(255,255,255,.7)"); flg.addColorStop(1, "rgba(200,220,255,0)");
+      flx.fillStyle = flg; flx.fillRect(0, 0, 64, 64);
+      flx.strokeStyle = "rgba(255,255,255,.9)"; flx.lineWidth = 2; flx.beginPath(); flx.moveTo(4, 32); flx.lineTo(60, 32); flx.moveTo(32, 4); flx.lineTo(32, 60); flx.stroke();
+      const flashTex = canvasTex(flC, {mip: false});
+      const flashes = [];
+      for (let i = 0; i < (lowPower ? 5 : 9); i++) {
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: flashTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0, fog: false}));
+        sp.userData.keep = true; g.add(sp); flashes.push({sp, next: R() * 4, life: 0});
+      }
+      anim.push((t, dt) => {
+        for (const f of flashes) {
+          if (f.life > 0) { f.life -= dt; const k = Math.max(0, f.life / .22); f.sp.material.opacity = k; f.sp.scale.setScalar(.35 + .75 * k); continue; }
+          f.sp.material.opacity = 0; f.next -= dt;
+          if (f.next <= 0) {
+            const row = Math.floor(R() * tiers);
+            f.sp.position.set((R() - .5) * (crowdW - 2), -DROP + 1.5 + row * TY + R() * .4, -mzB - 2.4 - row * TZ);
+            f.life = .22; f.next = .6 + R() * 3.5;
+          }
+        }
+      });
+
+      const beltZ = -mzB - .4;
+      function onFit() {
+        // la ceinture : en haut de l'image, au-dessus du fond du ring
+        const pl = new THREE.Plane(new THREE.Vector3(0, 0, 1), -beltZ);
+        const top = hitPlane(0, 1, pl), side = hitPlane(1, .7, pl);
+        const vis = top ? top.y : 4, half = side ? Math.abs(side.x) : W / 2;
+        beltW = clamp(Math.min(half * .62, W * .34), 2.4, 5.2);
+        const bh = beltW * 200 / 512, by = Math.max(1.75 + bh / 2, vis - bh * .62);
+        belt.position.set(0, by, beltZ); beltM.scale.set(beltW, beltW, 1);
+        cables.forEach((c, i) => { c.position.set((i ? 1 : -1) * beltW * .2, bh * .35, -.01); c.scale.set(1, 14, 1); });
+        glint.scale.set(beltW * .35, beltW * .35, 1);
+      }
+      function fitPoints() { return [new THREE.Vector3(-W * .3, portrait ? 3.1 : 3.6, beltZ), new THREE.Vector3(W * .3, portrait ? 3.1 : 3.6, beltZ)]; }
+      batchStatic(g);
+      return {group: g, gold: "#ffc83d", glow: "#ffc83d", glowAdd: true, anim, onFit, fitPoints, lights: L, tileStyle: "stage"};
+    }
+
     // ---------- construction du monde ----------
     function buildWorld() {
       if (theme) { world.remove(theme.group); disposeTree(theme.group); }
-      theme = themeName === "salle" ? buildSalle() : buildPlage();
+      theme = themeName === "salle" ? buildSalle() : themeName === "ring" ? buildRing() : buildPlage();
       world.add(theme.group);
       for (const p of pings) p.m.material.color.set(theme.gold);
       buildTiles();
@@ -751,7 +1007,7 @@
       const Lw = 512, Lh = Lw * o.wd / o.ww, sy = cvs2.height / Lh;
       ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cvs2.width, cvs2.height);
       ctx.setTransform(1, 0, 0, sy, 0, 0);
-      const col = t.color || "#e63946", towel = theme.tileStyle === "towel";
+      const col = t.color || "#e63946", towel = theme.tileStyle === "towel", stage = theme.tileStyle === "stage";
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       const nameS = Math.min(74, Lh * .26), subS = Math.min(36, Lh * .13), stS = Math.min(30, Lh * .115), dotR = Math.min(13, Lh * .05);
       const hasDots = (st.voters || 0) > 0, hasLbl = !!st.label;
@@ -773,6 +1029,20 @@
         ctx.fillStyle = "rgba(107,59,31,.35)"; rrect(ctx, Lw / 2 - nw / 2 + 5, y - 8 + 6, nw, blockH + 16, 14); ctx.fill();
         ctx.fillStyle = "#fff8e7"; rrect(ctx, Lw / 2 - nw / 2, y - 8, nw, blockH + 16, 14); ctx.fill();
         ctx.strokeStyle = "#6b3b1f"; ctx.lineWidth = 4; ctx.stroke();
+      } else if (stage) {
+        // tapis de scène du ring : panneau coloré, cadre doré, étoiles aux coins
+        ctx.fillStyle = "#0b0812"; rrect(ctx, 4, 4, Lw - 8, Lh - 8, 20); ctx.fill();
+        ctx.fillStyle = col; rrect(ctx, 16, 16, Lw - 32, Lh - 32, 12); ctx.fill();
+        ctx.save(); rrect(ctx, 16, 16, Lw - 32, Lh - 32, 12); ctx.clip();
+        const gr = ctx.createLinearGradient(0, 0, Lw, Lh); gr.addColorStop(0, "rgba(255,255,255,.3)"); gr.addColorStop(.45, "rgba(255,255,255,0)"); gr.addColorStop(1, "rgba(0,0,0,.32)"); ctx.fillStyle = gr; ctx.fillRect(0, 0, Lw, Lh);
+        ctx.restore();
+        ctx.strokeStyle = "#ffc83d"; ctx.lineWidth = 9; rrect(ctx, 16, 16, Lw - 32, Lh - 32, 12); ctx.stroke();
+        ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 3; rrect(ctx, 30, 30, Lw - 60, Lh - 60, 8); ctx.stroke();
+        const sr = Math.min(16, Lh * .07);
+        for (const [sx2, sy2] of [[44, 44], [Lw - 44, 44], [44, Lh - 44], [Lw - 44, Lh - 44]]) {
+          ctx.beginPath(); for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5 - Math.PI / 2, rr = k % 2 ? sr * .42 : sr; ctx.lineTo(sx2 + Math.cos(a) * rr, sy2 + Math.sin(a) * rr); }
+          ctx.closePath(); ctx.fillStyle = "#ffc83d"; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = "#0b0812"; ctx.stroke();
+        }
       } else {
         // tapis caoutchouc
         ctx.fillStyle = col; rrect(ctx, 6, 6, Lw - 12, Lh - 12, 30); ctx.fill();
@@ -827,7 +1097,7 @@
         grp.position.set(wx(t.x + t.w / 2), 0, wz(t.y + t.h / 2));
         const ch = (512 * wd / ww) > 384 ? 512 : 256;
         const canvas = mkCanvas(512, ch), tex = canvasTex(canvas);
-        const side = new THREE.MeshLambertMaterial({color: towel ? "#fff1d6" : shade(t.color || "#3a86ff", .55)});
+        const side = new THREE.MeshLambertMaterial({color: towel ? "#fff1d6" : theme.tileStyle === "stage" ? "#1a1424" : shade(t.color || "#3a86ff", .55)});
         const thick = towel ? .03 : TILE_T;
         const box = new THREE.Mesh(new THREE.BoxGeometry(ww * .985, thick, wd * .985), side);
         box.position.y = thick / 2; box.receiveShadow = true; box.castShadow = !towel; grp.add(box);
@@ -935,8 +1205,8 @@
         en.me = !!d.me; en.walking = !!d.walking; en.busy = !!d.busy;
         en.k = typeof d.scale === "number" && d.scale > 0 ? d.scale : 1;
         en.facing = d.facing === -1 ? -1 : 1;
-        const pz = d.pose || null;                         // pose en cours : petit « pop » + anneau doré
-        if (pz !== (en.pose || null)) { en.pose = pz; if (pz) en.popT = 0; }
+        const pz = d.pose || null, pk = d.poseKey || pz;   // pose en cours : petit « pop » + anneau doré (+ effet d'arme)
+        if (pk !== (en.poseKey || null)) { en.pose = pz; en.poseKey = pk; if (pz) { en.popT = 0; en.pendingFx = d.fx || null; } else en.pendingFx = null; }
         if (en.me) { en.x = d.x; en.y = d.y; }
         if (d.svg !== en.svg) {
           const old = en.svg;
@@ -954,6 +1224,80 @@
       if (en.tagTex) en.tagTex.dispose();
       if (en.svg) releaseSvg(en.svg);
       ents.delete(k);
+    }
+
+    // ---------- effets d'arme pendant une pose (onomatopée, confettis, roquette + fumée) ----------
+    const fxs = [], wordTexCache = new Map();
+    function wordTex(word, color) {
+      const key = word + "|" + color;
+      if (wordTexCache.has(key)) return wordTexCache.get(key);
+      const c0 = mkCanvas(4, 4).getContext("2d"); c0.font = `400 96px ${FONT_D}`;
+      const tw = Math.ceil(c0.measureText(word).width) + 60, c = mkCanvas(tw, 150), x = c.getContext("2d");
+      x.translate(tw / 2, 78); x.rotate(-.12); x.textAlign = "center"; x.textBaseline = "middle"; x.font = `400 96px ${FONT_D}`; x.lineJoin = "round";
+      x.lineWidth = 16; x.strokeStyle = "#1d1420"; x.strokeText(word, 4, 5); x.strokeText(word, 0, 0); x.fillStyle = color; x.fillText(word, 0, 0);
+      const t = {tex: canvasTex(c, {mip: false}), aspect: tw / 150};
+      wordTexCache.set(key, t);
+      return t;
+    }
+    const rocketTex = (() => {
+      const c = mkCanvas(160, 64), x = c.getContext("2d"); x.translate(80, 32); x.lineJoin = "round"; x.lineWidth = 5; x.strokeStyle = "#1d1420";
+      x.fillStyle = "#ffd23f"; x.beginPath(); x.moveTo(-58, 0); x.lineTo(-74, -12); x.quadraticCurveTo(-56, -6, -50, 0); x.quadraticCurveTo(-56, 6, -74, 12); x.closePath(); x.fill();
+      x.fillStyle = "#2f6fdc"; for (const d of [-1, 1]) { x.beginPath(); x.moveTo(-44, d * 14); x.lineTo(-62, d * 30); x.lineTo(-40, d * 30); x.lineTo(-26, d * 14); x.closePath(); x.fill(); x.stroke(); }
+      x.fillStyle = "#e63946"; x.beginPath(); x.moveTo(-48, -15); x.lineTo(30, -15); x.quadraticCurveTo(66, -15, 74, 0); x.quadraticCurveTo(66, 15, 30, 15); x.lineTo(-48, 15); x.closePath(); x.fill(); x.stroke();
+      x.fillStyle = "#fff"; x.fillRect(26, -14, 9, 28); x.fillStyle = "#bfefff"; x.beginPath(); x.arc(-6, 0, 7, 0, 7); x.fill(); x.stroke();
+      return canvasTex(c, {mip: false});
+    })();
+    const puffTex = (() => { const c = mkCanvas(64, 64), x = c.getContext("2d"), g2 = x.createRadialGradient(28, 26, 2, 32, 32, 31); g2.addColorStop(0, "rgba(255,255,255,1)"); g2.addColorStop(.6, "rgba(215,218,228,.9)"); g2.addColorStop(1, "rgba(200,204,216,0)"); x.fillStyle = g2; x.fillRect(0, 0, 64, 64); return canvasTex(c, {mip: false}); })();
+    const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3();
+    function fxSprite(map, rot) {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({map, transparent: true, depthTest: false, depthWrite: false, rotation: rot || 0}));
+      sp.renderOrder = 6000; fxG.add(sp); return sp;
+    }
+    function spawnWeaponFx(en, fx) {
+      if (reduced || !fx) return;
+      en.mesh.updateMatrixWorld();
+      const local = v => v.applyMatrix4(en.mesh.matrixWorld);
+      const u = (fx.x - VB.x) / VB.w - .5, v = 1 - (OFFY + (fx.y - VB.y) * KPX) / TEX;
+      const tip = local(new THREE.Vector3(u, v, 0)), a = (fx.ang || 0) * Math.PI / 180;
+      const dir = local(new THREE.Vector3(u + Math.cos(a) * .05, v - Math.sin(a) * .05, 0)).sub(tip).normalize();
+      const k = en.k || 1, wt = wordTex(fx.word || "!", fx.color || "#ffd23f"), ww = .9 + .22 * Math.min(4, k);
+      const word = fxSprite(wt.tex);
+      fxs.push({sp: word, kind: "word", t: 0, life: 1.7, base: tip.clone().addScaledVector(camUp, .25 * Math.min(3, k)), w: ww, h: ww / wt.aspect});
+      if (fx.kind === "rocket") {
+        tmpA.copy(tip).project(camera); tmpB.copy(tip).add(dir).project(camera);
+        const rot = Math.atan2((tmpB.y - tmpA.y) * vpH, (tmpB.x - tmpA.x) * vpW);
+        const rk = fxSprite(rocketTex, rot), rs = .55 + .12 * Math.min(4, k);
+        fxs.push({sp: rk, kind: "rocket", t: 0, life: 1.8, base: tip.clone(), dir, w: rs, h: rs * .4, puff: 0});
+      } else if (/gun|confetti|spark|tshirt|fire|splash/.test(fx.kind)) {
+        const cols = fx.kind === "splash" ? ["#7fd4ff", "#bfefff"] : ["#ff2e88", "#ffd23f", "#3ccf8e", "#2fa8ff", "#b14dff", "#ff7b00"];
+        for (let i = 0; i < 12; i++) {
+          const sp = new THREE.Sprite(new THREE.SpriteMaterial({color: cols[i % cols.length], depthTest: false, depthWrite: false, transparent: true, rotation: i}));
+          sp.renderOrder = 5990; fxG.add(sp);
+          const vel = dir.clone().multiplyScalar(2.2 + (i % 4) * .6).add(new THREE.Vector3((Math.random() - .5) * 2, Math.random() * 1.8, (Math.random() - .5) * 1.2));
+          fxs.push({sp, kind: "conf", t: 0, life: 1.1, pos: tip.clone(), vel, w: .07 + .02 * Math.min(3, k), h: .045});
+        }
+      }
+    }
+    function updateWeaponFx(dt) {
+      for (let i = fxs.length - 1; i >= 0; i--) {
+        const f = fxs[i]; f.t += dt;
+        const k = f.t / f.life, m = f.sp.material;
+        if (f.kind === "word") {
+          const pop = f.t < .25 ? .2 + 1.05 * Math.sin(f.t / .25 * Math.PI / 2) : 1.25 - Math.min(.25, (f.t - .25) * .8);
+          f.sp.scale.set(f.w * pop, f.h * pop, 1); f.sp.position.copy(f.base).addScaledVector(camUp, f.t * .45);
+          m.opacity = k < .75 ? 1 : Math.max(0, 1 - (k - .75) / .25);
+        } else if (f.kind === "rocket") {
+          const d = 1.2 * f.t + 9 * f.t * f.t;
+          f.sp.position.copy(f.base).addScaledVector(f.dir, d); f.sp.scale.set(f.w, f.h, 1);
+          f.puff -= dt;
+          if (f.puff <= 0 && f.t < 1.2) { f.puff = .05; const p = fxSprite(puffTex); p.renderOrder = 5980; fxs.push({sp: p, kind: "puff", t: 0, life: .9, pos: f.sp.position.clone().addScaledVector(f.dir, -f.w * .45), w: .22}); }
+        } else if (f.kind === "puff") {
+          const s2 = f.w * (1 + k * 2.2); f.sp.position.copy(f.pos); f.sp.scale.set(s2, s2, 1); m.opacity = .85 * (1 - k);
+        } else if (f.kind === "conf") {
+          f.vel.y -= 6 * dt; f.pos.addScaledVector(f.vel, dt); f.sp.position.copy(f.pos); f.sp.scale.set(f.w, f.h, 1); m.rotation += dt * 8; m.opacity = k < .7 ? 1 : 1 - (k - .7) / .3;
+        }
+        if (f.t >= f.life) { fxG.remove(f.sp); m.dispose(); fxs.splice(i, 1); }
+      }
     }
 
     // ---------- interactions ----------
@@ -1049,7 +1393,9 @@
         en.tag.scale.set((en.tagW || 60) * sc, (en.tagH || 20) * sc, 1);
         en.tag.renderOrder = 5000 + Math.round(en.y * 1000);
         en.tagMat.opacity = en.fade * (en.busy ? .75 : 1);
+        if (en.pendingFx && ready && en.svg && en.cache === svgCache.get(en.svg)) { spawnWeaponFx(en, en.pendingFx); en.pendingFx = null; }
       }
+      updateWeaponFx(dt);
       // pings
       for (let i = pings.length - 1; i >= 0; i--) {
         const p = pings[i]; p.t += dt;
@@ -1100,7 +1446,7 @@
       get renderer() { return renderer; },
       get _scene() { return scene; },
       setTheme(name) {
-        name = name === "salle" ? "salle" : "plage";
+        name = THEMES.includes(name) ? name : "plage";
         if (name === themeName && theme) return;
         themeName = name; buildWorld();
       },
@@ -1129,6 +1475,8 @@
         for (const e of svgCache.values()) if (e.tex) e.tex.dispose();
         svgCache.clear();
         for (const k in glowTexCache) glowTexCache[k].dispose();
+        for (const w of wordTexCache.values()) w.tex.dispose();
+        rocketTex.dispose(); puffTex.dispose();
         disposeTree(scene);
         blobTex.dispose();
         for (const k in shared) shared[k].dispose();
