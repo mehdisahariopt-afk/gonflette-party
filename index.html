@@ -511,6 +511,10 @@ GONFLETTE.registerGame = def => { GONFLETTE.games.push(def); };
 <script src="games/relais.js"></script>
 <script src="games/quiadit.js"></script>
 <script src="games/spotteur.js"></script>
+<script src="games/dames.js"></script>
+<script src="games/airhockey.js"></script>
+<script src="games/tron.js"></script>
+<script src="games/pfc.js"></script>
 <script>
 (() => {
 "use strict";
@@ -525,8 +529,8 @@ const gameById = id => GAMES.find(g => g.id === id);
    Muscle Beach = plein air, jeux de plage et de société ; Salle de muscu = force, duels, vestiaire.
    Un jeu absent de cette table (nouveau jeu) va à la plage par défaut. */
 const PLACE_OF = {
-  pong: "plage", puissance4: "plage", bataille: "plage", morpion: "plage", flip7: "plage", petitbac: "plage", dessine: "plage", tiracorde: "plage", relais: "plage",
-  brasdefer: "salle", developpe: "salle", spotteur: "salle", reflexes: "salle", uno: "salle", quiestce: "salle", motinterdit: "salle", undercover: "salle", quiadit: "salle", pictionary: "salle"
+  pong: "plage", puissance4: "plage", bataille: "plage", morpion: "plage", flip7: "plage", petitbac: "plage", dessine: "plage", tiracorde: "plage", relais: "plage", dames: "plage", airhockey: "plage",
+  brasdefer: "salle", developpe: "salle", spotteur: "salle", reflexes: "salle", uno: "salle", quiestce: "salle", motinterdit: "salle", undercover: "salle", quiadit: "salle", pictionary: "salle", tron: "salle", pfc: "salle"
 };
 const PLACES = {plage: {emoji: "🏖️", name: "Muscle Beach", short: "Beach", tag: "🏖️ Plage", go: "Direction la plage !"}, salle: {emoji: "🏋️", name: "Salle de muscu", short: "Salle", tag: "🏋️ Salle", go: "Direction la salle !"}};
 const placeOfGame = g => PLACE_OF[g.id] === "salle" ? "salle" : "plage";
