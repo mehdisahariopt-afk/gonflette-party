@@ -157,7 +157,7 @@ GONFLETTE.registerGame({
 .qec-pol::after{content:"";position:absolute;top:-6px;left:28%;width:44%;height:11px;background:rgba(243,195,60,.8);transform:rotate(4deg)}
 .qec-pic{aspect-ratio:3/3.6;background:repeating-linear-gradient(to bottom,transparent 0 7px,rgba(0,0,0,.12) 7px 8px),#c9c3b4;display:grid;place-items:center;overflow:hidden}
 .qec-pic svg{width:100%;height:100%;display:block}
-.qec-pol .qec-cap{position:absolute;left:0;right:0;bottom:1px;text-align:center;font-family:var(--ft);font-size:.56rem;color:#4b4238;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.qec-pol .qec-cap{position:absolute;left:0;right:0;bottom:1px;text-align:center;font-family:var(--ft);font-size:.7rem;color:#4b4238;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
 .qec-pol.masked .qec-pic{background:repeating-linear-gradient(45deg,#7d2a22 0 7px,#93342b 7px 14px)}
 .qec-pol.masked .qec-pic svg{visibility:hidden}
 .qec-pol .qec-q{display:none;font-family:var(--fh);font-size:1.6rem;color:#f3d9c9;grid-area:1/1}
@@ -382,6 +382,8 @@ GONFLETTE.registerGame({
         accPick = id; render(s); return;
       }
       if (down.has(id)) down.delete(id); else down.add(id);
+      if (api.sfx) api.sfx(down.has(id) ? "whoosh" : "tap"); // kit partagé : suspect baissé / relevé
+      if (api.haptic) api.haptic("light");
       publish();
       render(s);
     }

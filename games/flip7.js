@@ -73,7 +73,7 @@ GONFLETTE.registerGame({
       .f7-mid{min-width:0;display:grid;gap:4px}
       .f7-nm{display:flex;align-items:baseline;gap:6px;min-width:0;font-size:1.02rem}
       .f7-nm b{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .f7-tag{flex:none;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:1px 6px;border-radius:999px;background:rgba(255,255,255,.1);color:var(--dim)}
+      .f7-tag{flex:none;font-size:.75rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:1px 6px;border-radius:999px;background:rgba(255,255,255,.1);color:var(--dim)}
       .f7-tag.you{background:var(--gold);color:var(--ink)}
       .f7-row{--cw:24px;display:flex;flex-wrap:wrap;gap:3px;min-height:calc(var(--cw)*1.38)}
       .f7-none{font-size:.82rem;color:var(--dim);align-self:center}

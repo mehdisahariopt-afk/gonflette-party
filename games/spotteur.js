@@ -153,7 +153,8 @@ GONFLETTE.registerGame({
       .sp-goal b{color:var(--gold);font-family:Anton,Impact,sans-serif;font-weight:400;font-size:1.05rem;letter-spacing:.02em}
       .sp-clock{font-family:Anton,Impact,sans-serif;font-size:1.25rem;min-width:2.2em;text-align:right;color:var(--gold);font-variant-numeric:tabular-nums}
       .sp-clock.low{color:var(--r)}
-      .sp-mute{border:2px solid #ffffff30;background:none;color:inherit;opacity:.75;font:inherit;font-weight:800;font-size:.68rem;letter-spacing:.04em;cursor:pointer;padding:1px 5px;border-radius:8px;flex:none}
+      .sp-mute{position:relative;border:2px solid #ffffff30;background:none;color:inherit;opacity:.75;font:inherit;font-weight:800;font-size:.75rem;letter-spacing:.04em;cursor:pointer;padding:1px 5px;border-radius:8px;flex:none}
+      .sp-mute::before{content:"";position:absolute;inset:-12px -2px} /* zone tactile ≥ 44 px (kit) */
       .sp-mute.off{text-decoration:line-through}
       .sp-board{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:5px;flex:none}
       .sp-chip{min-width:0;border-radius:10px;padding:3px 7px;background:#231b2b;border:2px solid color-mix(in srgb,var(--c) 60%,transparent);display:flex;flex-direction:column;line-height:1.05;cursor:pointer;font:inherit;color:inherit;text-align:left}

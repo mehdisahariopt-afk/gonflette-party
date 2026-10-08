@@ -127,8 +127,9 @@ GONFLETTE.registerGame({
       .ah-clock.ah-hurry{background:#FF6B35;color:#fff;animation:ah-pulse .5s ease-in-out infinite alternate}
       .ah-clock.ah-gold{background:linear-gradient(90deg,#FFD23F,#FFF3A0,#FFD23F);animation:ah-pulse .4s ease-in-out infinite alternate}
       @keyframes ah-pulse{to{transform:scale(1.1)}}
-      .ah-btn{width:36px;height:36px;display:grid;place-items:center;padding:0;border:2px solid ${INK};border-radius:11px;background:#FFD23F;box-shadow:0 2px 0 ${INK};cursor:pointer}
+      .ah-btn{position:relative;width:36px;height:36px;display:grid;place-items:center;padding:0;border:2px solid ${INK};border-radius:11px;background:#FFD23F;box-shadow:0 2px 0 ${INK};cursor:pointer}
       .ah-btn:active{transform:translateY(2px);box-shadow:none}
+      .ah-btn::before{content:"";position:absolute;inset:-6px} /* zone tactile ≥ 44 px (kit) */
       .ah-btn svg{width:18px;height:18px}
       .ah-btn:focus-visible{outline:3px solid #fff;outline-offset:2px}
       .ah-stage{position:relative;z-index:1;flex:1;min-height:0}

@@ -62,6 +62,7 @@
     name: "Morpion géant",
     min: 2,
     max: 2,
+    resumable: true,                              // l'hôte rechargé repart de api.resume
     rules: RULES,
     create(api) {
       const [P1, P2] = api.players;               // P1 = X (commence), P2 = O
@@ -265,8 +266,9 @@
         finishTimer = later(() => api.finish(res), 2500);
       }
       if (api.isHost) {
-        hs = newGame();
+        hs = api.resume || newGame();                  // hôte rechargé : on repart du dernier état publié
         api.setState(hs);
+        if (hs.o) hostEnd();
         api.onInputs(inputs => {
           if (!hs || hs.o) return;
           const turnKey = P[hs.t].key;

@@ -157,7 +157,8 @@ GONFLETTE.registerGame({
       .bf-r .bf-dots i.on{background:var(--bf-blue);border-color:#fff;transform:scale(1.15)}
       .bf-mid{display:flex;flex-direction:column;align-items:center;gap:2px}
       .bf-rnd{font-family:Anton,Impact,sans-serif;font-size:1rem;letter-spacing:.06em;background:#ffffff14;border:2px solid #ffffff2a;border-radius:999px;padding:1px 10px;white-space:nowrap}
-      .bf-mute{border:0;background:none;color:#f3ece0;opacity:.7;font-weight:800;font-size:.75rem;letter-spacing:.08em;cursor:pointer;padding:2px 6px}
+      .bf-mute{position:relative;border:0;background:none;color:#f3ece0;opacity:.7;font-weight:800;font-size:.75rem;letter-spacing:.08em;cursor:pointer;padding:2px 6px}
+      .bf-mute::before{content:"";position:absolute;inset:-12px -4px} /* zone tactile ≥ 44 px */
       .bf-stage{position:relative;width:100%;aspect-ratio:400/330;flex:none;border-radius:16px;overflow:hidden;border:3px solid var(--bf-ink);box-shadow:0 8px 24px rgba(0,0,0,.5);background:#1a0f26}
       .bf-shake{position:absolute;inset:0;will-change:transform}
       .bf-bg,.bf-fg{position:absolute;inset:0;width:100%;height:100%;display:block}

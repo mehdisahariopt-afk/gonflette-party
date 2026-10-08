@@ -594,6 +594,11 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
 <script src="core/avatar.js"></script>
 <script src="core/scene3d.js"></script>
 <script src="core/net.js"></script>
+<script src="core/kit.js"></script>
+<script src="core/rules.js"></script>
+<script src="core/ambiance.js"></script>
+<script src="core/announcer.js"></script>
+<script src="core/soiree.js"></script>
 <script>
 window.GONFLETTE = window.GONFLETTE || {};
 GONFLETTE.games = GONFLETTE.games || [];
@@ -654,6 +659,10 @@ const gamesIn = pl => GAMES.filter(g => placeOfGame(g) === pl);
 // presence.pc : "s" = salle, "r" = ring ; absent (anciens clients) ou inconnu = plage
 const placeOf = pr => (pr && pr.pc && PLACE_IDS.find(k => PLACES[k].pc === pr.pc)) || "plage";
 const pcOf = pl => (PLACES[pl] && PLACES[pl].pc) || null;
+/* Pont vers les modules core/kit.js, rules.js, ambiance.js, announcer.js (événements + lecture de l'état du lobby). */
+const emit = (ev, d) => { if (G.kit) G.kit.emit(ev, d); };
+G.lobby = {profile: () => profile, saveProfile: () => saveProfile(), pushPresence: () => pushPresence(), hostNow: () => hostNow(), myPeer: () => myPeer, peers: () => peers, place: () => place,
+  game: id => { const g = gameById(id); return g ? {id: g.id, name: g.name, min: g.min, max: g.max, teams: !!g.teams, place: placeOfGame(g), emoji: PLACES[placeOfGame(g)].emoji} : null; }};
 
 /* ---------- profil (sur cet appareil) ---------- */
 // ?prof=xxx : un profil séparé par onglet (tests en mode ?mock, où tous les onglets partagent le même stockage)
@@ -690,7 +699,7 @@ function myLook() {
 }
 // Le lieu où je suis (= le décor affiché). Tout le monde arrive à la plage.
 let theme = "plage";
-function setTheme(t) { theme = t; if (window.__s3d) window.__s3d.setTheme(t); document.body.dataset.theme = t; document.querySelectorAll("[data-theme-btn]").forEach(b => b.setAttribute("aria-pressed", b.dataset.themeBtn === t)); }
+function setTheme(t) { theme = t; if (window.__s3d) window.__s3d.setTheme(t); document.body.dataset.theme = t; emit("place", t); document.querySelectorAll("[data-theme-btn]").forEach(b => b.setAttribute("aria-pressed", b.dataset.themeBtn === t)); }
 setTheme(theme);
 let place = theme, placeBusy = false;
 
@@ -750,7 +759,7 @@ $("ed-rename").addEventListener("click", () => { editing = false; show("scr-name
 $("btn-edit").addEventListener("click", openEditor);
 
 /* ---------- réseau ---------- */
-let net = null, lobby = null, myPeer = null;
+let net = null, lobby = null, myPeer = null, bootAt = 0;
 const spawnX = .42 + Math.random() * .16; // entre les deux zones d'équipe
 const me = {team: null, teamName: null, x: spawnX, y: .9, tx: spawnX, ty: .9, vote: null, ja: Date.now(), facing: 1, walking: false};
 let peers = [];
@@ -797,7 +806,8 @@ async function boot() {
   if (net.offline) { netState = "offline"; lastNetError = {timeout: "pas de réponse après 20 s", error: "erreur", unavailable: "accès refusé ou non disponible", p2p: "serveur de mise en relation injoignable"}[net.reason] || net.reason; renderNet(); return; }
   netState = net.mock ? "local" : "live";
   lobby = net.lobby;
-  lobby.onPeers(ch => { peers = ch.peers; if (!myPeer) myPeer = net.myPeer(); onRoom(); renderNet(); }, e => { netState = "offline"; lastNetError = e.code; renderNet(); });
+  bootAt = Date.now();
+  lobby.onPeers(ch => { peers = ch.peers; myPeer = net.myPeer() || myPeer; onRoom(); renderNet(); }, e => { netState = "offline"; lastNetError = e.code; renderNet(); });
   if (lobby.onConnection && !net.mock) lobby.onConnection(c => { if (netState !== "offline") { netState = c ? "live" : "reconnecting"; renderNet(); } }, e => { netState = "offline"; lastNetError = e.code; renderNet(); });
   setInterval(hostTick, 400);
   renderNet();
@@ -817,6 +827,10 @@ function presenceObj() {
   o.tn = me.teamName || null;
   o.st = mySt || null;
   o.fin = myFin || null;
+  if (SO) Object.assign(o, SO.presence());            // mode soirée : mj (demande de micro), sc (commande du MJ), sw (spectateur), cs (champion)
+  if (G.rules) { o.rs = G.rules.mask(); o.rd = G.rules.readyMid(); } // règles déjà vues (masque) / prêt pour le match rd
+  o.hd = document.hidden ? 1 : null;                  // onglet caché (écran éteint…) : un autre téléphone devient hôte du lobby
+  if (sess.tm !== o.tm || JSON.stringify(sess.tn || null) !== JSON.stringify(o.tn)) saveSess({tm: o.tm, tn: o.tn}); // équipe retrouvée après rechargement
   return o;
 }
 function pushPresence() {
@@ -845,7 +859,9 @@ function posOf(pr) {
   return [x, y];
 }
 function hostPeer() {
-  const ps = players().slice().sort((a, b) => (a.presence.ja - b.presence.ja) || (a.peer < b.peer ? -1 : 1));
+  // le plus ancien arrivé parmi les onglets visibles (un onglet caché est ralenti ou gelé : il ne doit pas bloquer les parties)
+  const all = players(), vis = all.filter(p => !p.presence.hd);
+  const ps = (vis.length ? vis : all).slice().sort((a, b) => (a.presence.ja - b.presence.ja) || (a.peer < b.peer ? -1 : 1));
   return ps[0] ? ps[0].peer : null;
 }
 const amHost = () => myPeer && hostPeer() === myPeer;
@@ -871,7 +887,31 @@ function noteHostT(t) {
 }
 const hostNow = () => amHost() || !skewS.length ? Date.now() : Date.now() - Math.min(...skewS.map(x => x[1]));
 // Absence dans une partie : retenue seulement si elle dure plus de `ms`.
-const FORFEIT_GRACE_MS = 12000, goneSince = {};
+/* Reconnexion : un joueur qui perd le réseau, recharge la page ou dont l'onglet est tué (écran éteint) revient
+   avec la même clé (core/net.js) et retrouve sa partie. Pendant DISC_GRACE_MS, les jeux le voient encore
+   « connecté » (api.connected) et les autres voient « on l'attend » ; ensuite le jeu (ou, en secours, l'hôte
+   du lobby à FORFEIT_GRACE_MS) déclare le forfait. */
+const DISC_GRACE_MS = 30000, FORFEIT_GRACE_MS = DISC_GRACE_MS + 4000, goneSince = {};
+// Mémoire de l'onglet (sessionStorage, survit au rechargement) : lobby rejoint, équipe, parties montées, état du jeu hébergé.
+const SESS_KEY = "gonflette-sess";
+let sess = {};
+try { sess = JSON.parse(sessionStorage.getItem(SESS_KEY) || "{}") || {}; } catch (e) { sess = {}; }
+function saveSess(patch) { Object.assign(sess, patch); try { sessionStorage.setItem(SESS_KEY, JSON.stringify(sess)); } catch (e) {} }
+/* Points d'équipe du lobby, d'après l'équipe du lobby de chaque GAGNANT au moment où la partie a été créée (M.te),
+   et non d'après les équipes du jeu (rééquilibrées, ou formées avec des joueurs sans équipe) :
+   - jeu classique : +1 à chaque équipe du lobby qui compte au moins un gagnant ;
+   - jeu d'équipe : 3 points partagés selon la part des gagnants venant de chaque équipe du lobby (plus grand reste ;
+     la part des gagnants sans équipe n'est pas attribuée ; à égalité, le point restant n'est pas attribué).
+   Ex. : 3 gagnants rouges → rouge +3 ; 2 rouges + 1 bleu → +2 / +1 ; 1 rouge + 1 bleu → +1 / +1. */
+function lobbyTeamPoints(M, winners, teamGame) {
+  const w = [0, 1].map(i => winners.filter(k => M.te && M.te[k] === i).length);
+  if (!teamGame) return w.map(n => n ? 1 : 0);
+  if (!winners.length) return [0, 0];
+  const raw = w.map(n => 3 * n / winners.length), pts = raw.map(Math.floor);
+  const left = Math.round(raw[0] + raw[1]) - pts[0] - pts[1], fr = raw.map((r, i) => r - pts[i]);
+  if (left > 0 && Math.abs(fr[0] - fr[1]) > 1e-9) pts[fr[0] > fr[1] ? 0 : 1] += left;
+  return pts;
+}
 function lacking(mid, missing, here, ms) {
   if (!missing) { delete goneSince[mid]; return false; }
   const now = Date.now();
@@ -880,7 +920,13 @@ function lacking(mid, missing, here, ms) {
 }
 function hostTick() {
   if (!amHost()) { if (mySt) { mySt = null; pushPresence(); } return; }
-  if (!mySt) { const prev = hostSt; setSt(prev && prev.ms ? prev : {n: 0, ms: {}, pend: {}, teams: [{n: null}, {n: null}], ts: [0, 0]}); return; }
+  if (!mySt) {
+    // Je deviens hôte (arrivée, départ ou mise en veille du précédent) : on attend d'avoir reçu la présence des autres,
+    // puis on reprend l'état le plus récent publié par un hôte (n le plus grand), pour ne jamais effacer les parties en cours.
+    if (Date.now() - bootAt < 1500) return;
+    const prev = peers.map(p => p.presence && p.presence.st).concat([hostSt]).filter(s => s && s.ms).sort((a, b) => (b.n - a.n) || (b.t - a.t))[0];
+    setSt(prev ? Object.assign({}, prev) : {n: 0, ms: {}, pend: {}, teams: [{n: null}, {n: null}], ts: [0, 0]}); return;
+  }
   const now = Date.now(), here = new Set(peers.map(p => p.peer));
   const ms = Object.assign({}, mySt.ms), pend = Object.assign({}, mySt.pend || {});
   let changed = false;
@@ -896,15 +942,17 @@ function hostTick() {
   // 1. faire avancer les parties en cours
   for (const mid of Object.keys(ms)) {
     const M = ms[mid], g = gameById(M.g);
-    if (M.ph === "chosen" && now - M.at > CHOSEN_MS) { ms[mid] = Object.assign({}, M, {ph: "playing", at: now}); changed = true; continue; }
+    // règles en 10 s : tant que M.rw existe, on attend que les nouveaux venus aient lu la carte (core/rules.js)
+    if (M.ph === "chosen" && M.rw && G.rules) { const nx = G.rules.hostStep(M, now, peers); if (nx) { ms[mid] = nx; changed = true; } }
+    if (M.ph === "chosen" && !M.rw && now - M.at > CHOSEN_MS) { ms[mid] = Object.assign({}, M, {ph: "playing", at: now}); changed = true; continue; }
     if (M.ph === "playing") {
       const hp = peers.find(p => p.peer === M.h);
       const fin = hp && hp.presence.fin;
       if (fin && fin.mid === mid) {
         const res = gainsFor(M, fin.res || {});
-        // points d'équipe : +3 pour un jeu d'équipe gagné, +1 par victoire dans un jeu classique
-        const gdef = gameById(M.g);
-        [0, 1].forEach(i => { const inTeam = k => (M.tm ? M.tm[i].includes(k) : (M.te && M.te[k] === i)); if (res.winners.some(inTeam)) ts[i] += gdef && gdef.teams ? 3 : 1; });
+        // points d'équipe du lobby : voir lobbyTeamPoints (d'après l'équipe du lobby de chaque gagnant)
+        const gdef = gameById(M.g), add = lobbyTeamPoints(M, res.winners, !!(gdef && gdef.teams));
+        ts = ts.map((v, i) => v + add[i]);
         ms[mid] = Object.assign({}, M, {ph: "results", at: now, res}); changed = true; continue;
       }
       const stay = M.pl.filter(k => here.has(k));
@@ -912,7 +960,9 @@ function hostTick() {
       if (!lacking(mid, !here.has(M.h) || stay.length < (g ? g.min : 2), here, FORFEIT_GRACE_MS)) continue;
       {
         // Un joueur est parti : ceux qui restent gagnent par forfait (s'il en reste), sinon la partie est annulée.
-        if (stay.length) { ms[mid] = Object.assign({}, M, {ph: "results", at: now, res: gainsFor(M, {winners: stay, ranking: stay, summary: "Victoire par forfait : l'adversaire a quitté la partie."})}); }
+        // Si c'est le téléphone qui faisait tourner le jeu et qu'il reste plusieurs joueurs : partie interrompue (pas de faux forfait).
+        if (!here.has(M.h) && stay.length >= 2) { ms[mid] = Object.assign({}, M, {ph: "results", at: now, res: gainsFor(M, {int: 1, summary: `${(M.ro[M.h] && M.ro[M.h].p) || "Le téléphone hôte"} ne revient pas : partie interrompue.`})}); }
+        else if (stay.length) { ms[mid] = Object.assign({}, M, {ph: "results", at: now, res: gainsFor(M, {winners: stay, ranking: stay, summary: "Victoire par forfait : l'adversaire a quitté la partie."})}); }
         else delete ms[mid];
         changed = true; continue;
       }
@@ -920,10 +970,13 @@ function hostTick() {
     if (M.ph === "chosen" && lacking(mid, M.pl.filter(k => here.has(k)).length < (g ? g.min : 2), here, 5000)) { delete ms[mid]; changed = true; continue; }
     if (M.ph === "results" && now - M.at > 11000) { delete ms[mid]; changed = true; }
   }
+  // 1 bis. mode soirée (core/soiree.js) : l'hôte fait avancer la soirée et lance ses parties ; ses participants ne votent pas
+  const soX = SO ? SO.hostTick(ms, now, mySt.so) : null;
+  if (soX && soX.changed) changed = true;
   // 2. former de nouvelles parties avec les joueurs libres qui ont validé
   const busy = new Set();
   Object.values(ms).forEach(M => M.pl.forEach(k => busy.add(k)));
-  const free = players().filter(p => !busy.has(p.peer) && !p.presence.ed);
+  const free = players().filter(p => !busy.has(p.peer) && !p.presence.ed && !p.presence.hd && !(soX && soX.hold.has(p.peer))); // hd : onglet caché, pas de nouvelle partie
   const voteOf = p => forceVote || p.presence.v;
   const byGame = {};
   free.forEach(p => { const v = voteOf(p); if (v && gameById(v)) (byGame[v] = byGame[v] || []).push(p); });
@@ -943,7 +996,7 @@ function hostTick() {
     }
   }
   if (forceVote) forceVote = null;
-  if (changed) setSt({n: mySt.n + 1, ms, pend, teams, ts});
+  if (changed) setSt({n: mySt.n + 1, ms, pend, teams, ts, so: soX ? soX.so : mySt.so});
 }
 let midCounter = 0;
 function newMatch(gid, grp, now) {
@@ -963,6 +1016,7 @@ function newMatch(gid, grp, now) {
     while (Math.abs(tm[0].length - tm[1].length) > 1) { const big = tm[0].length > tm[1].length ? 0 : 1; tm[1 - big].push(tm[big].pop()); }
     M.tm = tm; M.tn = [teamLabel(0), teamLabel(1)];
   }
+  if (G.rules) G.rules.onNewMatch(M, grp, !!forceVote); // M.rw : joueurs qui n'ont jamais vu la carte des règles (pas pour debug.launch)
   return M;
 }
 function gainsFor(M, res) {
@@ -970,12 +1024,15 @@ function gainsFor(M, res) {
   const winners = (res.winners || []).filter(k => M.pl.includes(k));
   const ranking = (res.ranking || []).filter(k => M.pl.includes(k));
   const gains = {};
+  // Partie interrompue (res.int) : personne ne gagne ni ne perd, chacun garde la participation (+25 XP).
+  if (res.int) { M.pl.forEach(k => { gains[k] = 25; }); return {winners: [], ranking: [], summary: String(res.summary || "Partie interrompue.").slice(0, 160), gains, int: 1}; }
   M.pl.forEach(k => { gains[k] = winners.includes(k) ? 100 : (n >= 3 && winners.length && ranking[winners.length] === k ? 40 : 25); });
   return {winners, ranking, summary: String(res.summary || "").slice(0, 160), gains};
 }
 // Outils de test : l'hôte peut lancer un jeu avec tous les joueurs libres.
 let forceVote = null;
 G.debug = {launch(gid) { if (!amHost()) return false; forceVote = gid; return true; }, state: () => hostSt, me: () => myPeer, profile: () => profile,
+  net: () => ({host: hostPeer(), fin: myFin, peers: peers.map(p => ({k: p.peer, ps: p.presence && p.presence.ps, ja: p.presence && p.presence.ja, hd: p.presence && p.presence.hd, fin: p.presence && p.presence.fin, n: p.presence && p.presence.st && p.presence.st.n}))}),
   giveXp(n) { profile.xp = Math.max(0, profile.xp + (+n || 0)); saveProfile(); pushPresence(); renderAll(); if (editing) drawEditor(); return profile.xp; },
   giveShakers(n) { profile.sh = Math.max(0, profile.sh + (+n || 0)); saveProfile(); renderAll(); return profile.sh; },
   giveLoot(n) { profile.loot = Math.max(0, profile.loot + (n == null ? 1 : +n || 0)); saveProfile(); renderAll(); return profile.loot; },
@@ -1008,12 +1065,13 @@ function onRoom() {
   if (hp && hp.presence.st) { hostSt = hp.presence.st; if (h !== myPeer) noteHostT(hostSt.t); }
   if (h === myPeer && mySt) hostSt = mySt;
   if (hostSt) applySt(hostSt);
+  if (SO) SO.update();
   renderLobby();
 }
 const matchOf = (st, k) => st && st.ms ? Object.values(st.ms).find(M => M.pl.includes(k)) : null;
 function applySt(st) {
   const M = matchOf(st, myPeer);
-  const key = M ? M.mid + ":" + M.ph : "none";
+  const key = M ? M.mid + ":" + M.ph + (M.rw ? ":r" : "") : "none";
   if (key === seenKey) return;
   seenKey = key;
   if (!M) {
@@ -1154,8 +1212,8 @@ function renderEntities() {
       const xp = isMe ? profile.xp : pr.xp || 0, BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
       const look = isMe ? myLook() : pr.lk, pz = BM ? null : poseOf(p.peer), pd = pz && POSE[pz];
       const sf = cachedSvgFx(look, xp, pz);
-      list.push({key: p.peer, x, y, svg: sf.svg, fx: pz ? sf.fx : null, poseKey: pz ? pz + ":" + (isMe ? myPose.seq : (seenPoses.get(p.peer) || {}).k) : null, name: pr.ps, sub: (pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " : "") + (BM ? "🎮 " + (bg ? bg.name : "en partie") : pd ? pd[2] + " " + pd[1] + " !" : titleOf(look, xp)),
-        me: isMe, scale: A.size(xp) * .55, pose: pz, walking: !!(isMe ? me.walking : pr.w), facing: (isMe ? me.facing : pr.f) === -1 ? -1 : 1, busy: !!BM && !isMe, crown: host === p.peer, voted: !!pr.v && !BM});
+      list.push({key: p.peer, x, y, svg: sf.svg, fx: pz ? sf.fx : null, poseKey: pz ? pz + ":" + (isMe ? myPose.seq : (seenPoses.get(p.peer) || {}).k) : null, name: pr.ps + (SO ? SO.badge(p, true) : ""), sub:(pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " : "") + (BM ? "🎮 " + (bg ? bg.name : "en partie") : pd ? pd[2] + " " + pd[1] + " !" : titleOf(look, xp)),
+        me: isMe, scale: A.size(xp) * .55 * (1 + .4 * (1 - A.level(xp) / A.MAX_LEVEL)), pose: pz, /* 3D : petits gabarits encore un peu agrandis (la caméra est loin), taille max inchangée */ walking: !!(isMe ? me.walking : pr.w), facing: (isMe ? me.facing : pr.f) === -1 ? -1 : 1, busy: !!BM && !isMe, crown: host === p.peer, voted: !!pr.v && !BM});
     }
     s3d.setEntities(list);
     return;
@@ -1174,11 +1232,12 @@ function renderEntities() {
     const BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
     const pz = BM ? null : poseOf(p.peer), pd = pz && POSE[pz];
     const fc = (isMe ? me.facing : pr.f) === -1 ? -1 : 1;
-    const key = JSON.stringify([pr.lk, pr.xp, pr.ps, pr.v, host === p.peer, isMe ? myLook() : 0, isMe ? profile.xp : 0, BM ? BM.g : 0, pz ? pz + (isMe ? myPose.seq : (seenPoses.get(p.peer) || {}).k) + fc : 0]);
+    const sob = SO ? SO.badge(p, true) : "";
+    const key = JSON.stringify([pr.lk, pr.xp, pr.ps, sob, pr.v, host === p.peer,isMe ? myLook() : 0, isMe ? profile.xp : 0, BM ? BM.g : 0, pz ? pz + (isMe ? myPose.seq : (seenPoses.get(p.peer) || {}).k) + fc : 0]);
     if (key !== e.key) {
       e.key = key;
       const look = isMe ? myLook() : pr.lk, xp = isMe ? profile.xp : pr.xp || 0, sf = cachedSvgFx(look, xp, pz);
-      e.el.innerHTML = `<div class="body">${sf.svg}${pd ? weaponFxHtml(sf.fx, fc) : ""}${pr.v && !BM ? `<span class="voted" title="A validé">✔</span>` : ""}${host === p.peer ? `<span class="crown" title="Hôte">👑</span>` : ""}${pd ? `<span class="poseflash"></span><span class="posefx">${pd[2]}</span>` : ""}</div><div class="tag">${esc(pr.ps)}${BM ? `<small>🎮 ${esc(bg ? bg.name : "en partie")}</small>` : pd ? `<small class="pz">${pd[2]} ${esc(pd[1])} !</small>` : `<small>${esc(titleOf(look, xp))}</small>`}</div>`;
+      e.el.innerHTML = `<div class="body">${sf.svg}${pd ? weaponFxHtml(sf.fx, fc) : ""}${pr.v && !BM ? `<span class="voted" title="A validé">✔</span>` : ""}${host === p.peer ? `<span class="crown" title="Hôte">👑</span>` : ""}${pd ? `<span class="poseflash"></span><span class="posefx">${pd[2]}</span>` : ""}</div><div class="tag">${esc(pr.ps + sob)}${BM ?`<small>🎮 ${esc(bg ? bg.name : "en partie")}</small>` : pd ? `<small class="pz">${pd[2]} ${esc(pd[1])} !</small>` : `<small>${esc(titleOf(look, xp))}</small>`}</div>`;
       e.el.classList.toggle("posing", !!pd);
     }
     e.el.classList.toggle("busy", !!BM && !isMe);
@@ -1251,6 +1310,7 @@ function renderAction() {
     }
     return;
   }
+  if (SO && SO.action(msg, btns)) return; // soirée en cours : c'est le maître du jeu qui choisit les jeux
   const g = here && here.r.g;
   const mates = g ? ps.filter(p => p.presence.v === g.id && !matchOf(hostSt, p.peer)).length : 0;
   const pend = g && hostSt && hostSt.pend && hostSt.pend[g.id];
@@ -1288,7 +1348,7 @@ function renderRoster() {
     const pr = p.presence, isMe = p.peer === myPeer, xp = isMe ? profile.xp : pr.xp || 0;
     const g = pr.v && gameById(pr.v), BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
     const look = isMe ? myLook() : pr.lk, rec = !isMe && typeof pr.id === "string" ? profile.h2h[pr.id] : null;
-    return `<li data-peer="${esc(p.peer)}" title="${isMe ? "Mes rivaux" : "Face-à-face"}"><div class="mini">${A.svg(look, xp, {view: "bust"})}</div><div><b>${esc(pr.ps)}${isMe ? " (vous)" : ""}${host === p.peer ? " 👑" : ""}${rec && nemOf(rec) ? ` <span class="nem${nemOf(rec) === "victime" ? " vic" : ""}">${nemOf(rec) === "victime" ? "VICTIME 😇" : "NÉMÉSIS 😈"}</span>` : ""}</b><small><span class="ptag ${isMe ? place : placeOf(pr)}">${PLACES[isMe ? place : placeOf(pr)].tag}</span> ${pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " + esc(teamLabel(pr.tm)) + " · " : ""}${esc(A.tier(xp).name)} · ${xp} XP${rec && (rec.w || rec.l) ? ` · ⚔️ ${rec.w}–${rec.l}` : ""}</small></div><span class="st ${g || BM ? "ok" : ""}${BM ? " play" : ""}">${BM ? "🎮 " + esc(bg ? bg.name : "") : pr.ed ? "se prépare" : g ? "✔ " + esc(g.name) : "choisit…"}</span></li>`;
+    return `<li data-peer="${esc(p.peer)}" title="${isMe ? "Mes rivaux" : "Face-à-face"}"><div class="mini">${A.svg(look, xp, {view: "bust"})}</div><div><b>${esc(pr.ps)}${isMe ? " (vous)" : ""}${host === p.peer ? " 👑" : ""}${SO ? SO.badge(p) : ""}${rec && nemOf(rec) ? ` <span class="nem${nemOf(rec) === "victime" ? " vic" : ""}">${nemOf(rec) === "victime" ? "VICTIME 😇" : "NÉMÉSIS 😈"}</span>` : ""}</b><small><span class="ptag ${isMe ? place : placeOf(pr)}">${PLACES[isMe ? place : placeOf(pr)].tag}</span> ${pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " + esc(teamLabel(pr.tm)) + " · " : ""}${esc(A.tier(xp).name)} · ${xp} XP${rec && (rec.w || rec.l) ? ` · ⚔️ ${rec.w}–${rec.l}` : ""}</small></div><span class="st ${g || BM ? "ok" : ""}${BM ? " play" : ""}">${BM ? "🎮 " + esc(bg ? bg.name : "") : pr.ed ? "se prépare" : g ? "✔ " + esc(g.name) : "choisit…"}</span></li>`;
   }).join("");
 }
 function renderMe() {
@@ -1319,6 +1379,7 @@ function renderPlaces() {
 function renderLobby() { renderNet(); if (!inLobby || inGame) return; renderPlaces(); renderTeambar(); renderEntities(); renderTiles(); renderAction(); renderRoster(); }
 function renderAll() { renderMe(); renderLobby(); }
 function enterLobby() {
+  saveSess({lob: 1, r: roomCode || null}); keepAwake();
   inLobby = true; show("scr-lobby"); layoutTiles(); init3D(); renderAll(); pushPresence();
 }
 addEventListener("resize", () => { if (inLobby) { layoutTiles(); renderAll(); } });
@@ -1345,7 +1406,8 @@ document.querySelectorAll("[data-theme-btn]").forEach(b => b.addEventListener("c
 
 /* ---------- overlays ---------- */
 function closeOverlay() { $("overlay").innerHTML = ""; }
-function rosterAv(M, k, pose, view) { const r = M.ro[k]; return r ? A.svg(r.l, r.x, {pose, view}) : ""; }
+function rosterAv(M, k, pose, view, mood) { const r = M.ro[k]; return r ? A.svg(r.l, r.x, {pose, view, mood}) : ""; }
+let chosenSeen = null;
 function showChosen(M) {
   const g = gameById(M.g);
   // Duel : bilan des face-à-face (vu depuis ce téléphone) et étiquette NÉMÉSIS si quelqu'un mène de 3 victoires
@@ -1359,10 +1421,12 @@ function showChosen(M) {
         <p class="h2h-note">${rec.last === "l" ? "🔥 Revanche en jeu : une victoire vaut +50 XP et +20 🥤 !" : !rec.w && !rec.l ? "Premier face-à-face !" : nm === "nemesis" ? "😈 Votre pire cauchemar est de retour." : nm === "victime" ? "😇 Votre victime préférée…" : ""}</p>`;
     }
   }
-  $("overlay").innerHTML = `<div class="ov"><div class="ov-card"><p>C'est parti pour</p><h2>${esc(g ? g.name : M.g)}</h2>
-    <div class="versus">${M.pl.map((k, i) => `${i && M.pl.length === 2 ? `<div class="vs">VS</div>` : ""}<figure style="width:min(${Math.round(70 * A.size(M.ro[k].x))}px,${M.pl.length === 2 ? 42 : 30}vw)">${badge[k] || ""}${rosterAv(M, k, "flex")}<figcaption>${esc(M.ro[k].p)}</figcaption></figure>`).join("")}</div>
+  $("overlay").innerHTML = `<div class="ov"><div class="ov-card"><p>${SO ? SO.chosenTag(M) : ""}C'est parti pour</p><h2>${esc(g ? g.name : M.g)}</h2>
+    <div class="versus">${M.pl.map((k, i) => `${i && M.pl.length === 2 ? `<div class="vs">VS</div>` : ""}<figure style="width:min(${Math.round(70 * A.size(M.ro[k].x))}px,${M.pl.length === 2 ? 42 : 30}vw)">${badge[k] || ""}${rosterAv(M, k, "flex", undefined, "fight")}<figcaption>${esc(M.ro[k].p)}</figcaption></figure>`).join("")}</div>
     ${g && placeOfGame(g) === "ring" ? announceHtml(M) : ""}${h2h}<div class="cd" id="countdown" aria-live="assertive"><small>Préparez-vous…</small><b></b></div></div></div>`;
   // Compte à rebours synchronisé sur l'heure de l'hôte (M.at), borné : au pire, il part de la réception.
+  emit("chosen", {M, game: g ? G.lobby.game(g.id) : null, place: g ? placeOfGame(g) : place, first: chosenSeen !== M.mid}); chosenSeen = M.mid;
+  if (G.rules && G.rules.wait(M, $("countdown"))) return; // règles en 10 s : la carte remplace le compte à rebours
   const elapsed = Math.max(0, Math.min(CHOSEN_MS, hostNow() - M.at)), t0 = Date.now() - elapsed, gname = g ? g.name : "La partie";
   let shown = null;
   const tick = () => {
@@ -1373,6 +1437,7 @@ function showChosen(M) {
     el.className = "cd" + (k === "go" ? " go" : k === "wait" ? "" : " n");
     el.innerHTML = k === "wait" ? `<small>${esc(gname)} dans 3 secondes…</small><b class="sm">Prêts ?</b>` : k === "go" ? `<small>${esc(gname)}</small><b>GO !</b>` : `<small>${esc(gname)} dans</small><b>${k}</b>`;
     if (k !== "wait") try { navigator.vibrate && navigator.vibrate(k === "go" ? 120 : 30); } catch (er) {}
+    if (k !== "wait") emit("count", k);
   };
   const iv = setInterval(tick, 50); tick();
 }
@@ -1395,7 +1460,7 @@ function showResults(M) {
     gained = res.gains[myPeer] || 0;
     iWon = res.winners.includes(myPeer);
     shk = shakersFor(iWon);
-    duel = recordH2H(M, res);
+    duel = res.int ? null : recordH2H(M, res); // partie interrompue : rien n'est compté dans les face-à-face
     if (duel && duel.revanche) { gained += 50; shk += 20; } // REVANCHE : bonus calculé sur ce téléphone
     profile.xp += gained; profile.sh += shk;
     if (iWon) { profile.loot += 1; lootPending = M.mid; lootWon = true; } // shaker mystère : gagnants seulement
@@ -1407,17 +1472,19 @@ function showResults(M) {
   const others = M.pl.filter(k => !order.includes(k));
   const g = gameById(M.g);
   const wTeam = M.tm && res.winners.length ? [0, 1].find(i => res.winners.every(k => M.tm[i].includes(k))) : undefined;
-  const title = wTeam !== undefined ? `${esc((M.tn && M.tn[wTeam]) || "L'équipe")} gagne !` : res.winners.length ? (res.winners.length === 1 ? `${esc(M.ro[res.winners[0]].p)} gagne !` : "Victoire partagée !") : "Match nul !";
+  const title = res.int ? "Partie interrompue" : wTeam !== undefined ? `${esc((M.tn && M.tn[wTeam]) || "L'équipe")} gagne !` : res.winners.length ? (res.winners.length === 1 ? `${esc(M.ro[res.winners[0]].p)} gagne !` : "Victoire partagée !") : "Match nul !";
   $("overlay").innerHTML = `<div class="ov"><div class="ov-card"><p>${esc(g ? g.name : "")}</p><h2>${title}</h2>
     ${res.summary ? `<p>${esc(res.summary)}</p>` : ""}
-    <div class="podium">${order.concat(others).map(k => `<figure class="${res.winners.includes(k) ? "win" : ""}" style="width:min(${Math.round(75 * A.size(M.ro[k].x))}px,${M.pl.length <= 2 ? 44 : 30}vw)">${rosterAv(M, k, res.winners.includes(k) ? "flex" : "idle")}<figcaption><b>${esc(M.ro[k].p)}</b><span class="gain">+${res.gains[k] || 0} XP</span>${res.winners.includes(k) ? `<span class="shk">+${shakersFor(true)} 🥤 🎁</span>` : ""}</figcaption></figure>`).join("")}</div>
+    <div class="podium">${order.concat(others).map(k => `<figure class="${res.winners.includes(k) ? "win" : ""}" style="width:min(${Math.round(75 * A.size(M.ro[k].x))}px,${M.pl.length <= 2 ? 44 : 30}vw)">${rosterAv(M, k, res.winners.includes(k) ? "flex" : "idle", undefined, res.winners.length ? (res.winners.includes(k) ? "win" : "lose") : undefined)}<figcaption><b>${esc(M.ro[k].p)}</b><span class="gain">+${res.gains[k] || 0} XP</span>${res.winners.includes(k) ? `<span class="shk">+${shakersFor(true)} 🥤 🎁</span>` : ""}</figcaption></figure>`).join("")}</div>
     ${duel && duel.revanche ? `<div class="revanche">🔥 REVANCHE ! 🔥<small>Vous avez vengé votre défaite contre ${esc(duel.name)} : +50 XP et +20 🥤</small></div>` : ""}
-    ${gained ? (shk ? `<p>Vous gagnez <b>+${gained} XP</b> et <b>+${shk} 🥤</b> : ${profile.xp} XP au total, ${profile.sh} shakers.</p>` : `<p>Vous gagnez <b>+${gained} XP</b> (${profile.xp} XP au total).</p><p class="nowin">Pas de shakers pour les perdants 💀 Gagnez la prochaine pour remplir le vôtre !</p>`) : ""}
-    ${up > 0 ? `<div class="gonfle">+${up} 💪 ça gonfle !<small>Niveau ${lvA}${lvA >= A.MAX_LEVEL ? " (MAX)" : ""} · taille ×${A.size(profile.xp).toFixed(1)}</small></div>` : ""}
+    ${gained ? (shk ? `<p>Vous gagnez <b>+${gained} XP</b> et <b>+${shk} 🥤</b> : ${profile.xp} XP au total, ${profile.sh} shakers.</p>` : `<p>Vous gagnez <b>+${gained} XP</b> (${profile.xp} XP au total).</p>${res.int ? "" : `<p class="nowin">Pas de shakers pour les perdants 💀 Gagnez la prochaine pour remplir le vôtre !</p>`}`) : ""}
+    ${up > 0 ? `<div class="gonfle">+${up} 💪 ça gonfle !<small>Niveau ${lvA}${lvA >= A.MAX_LEVEL ? " (MAX)" : ""} · taille ×${(A.growth || A.size)(profile.xp).toFixed(1)}</small></div>` : ""}
     ${M.pl.includes(myPeer) && profile.loot > 0 ? `<div class="res-actions"><button class="btn loot" type="button" data-openloot>🎁 ${lootWon ? "Shaker mystère gagné : secouez-le !" : `Shakers à ouvrir : ${profile.loot}`}</button></div>` : ""}
     ${up > 0 ? `${ta.index > tb.index ? `<div class="levelup-title">Nouveau palier : ${esc(ta.name)} !</div>` : ""}<div class="levelup"><div style="align-self:end;transform-origin:bottom;transform:scale(${(A.size(before) / A.size(profile.xp)).toFixed(3)})">${A.svg(myLook(), before)}</div><div class="arrow">→</div><div>${A.svg(myLook(), profile.xp, {pose: "flex"})}</div></div>` : ""}
-    <p style="font-size:.95rem">Retour au lobby dans quelques secondes…</p><button class="btn alt" type="button" id="res-close">Revenir au lobby maintenant</button></div></div>`;
+    ${SO ? SO.resultsHtml(M) : ""}<p style="font-size:.95rem">Retour au lobby dans quelques secondes…</p><button class="btn alt" type="button" id="res-close">Revenir au lobby maintenant</button></div></div>`;
   $("res-close").onclick = () => { closeOverlay(); afterResults(); };
+  emit("results", {M, mine: M.pl.includes(myPeer), won: res.winners.includes(myPeer), draw: !res.winners.length, int: !!res.int, winners: res.winners.map(k => M.ro[k] ? M.ro[k].p : "?"),
+    team: wTeam !== undefined ? (M.tn && M.tn[wTeam]) || null : null, up, level: lvA, tierUp: ta.index > tb.index ? ta.name : null});
   renderMe();
 }
 
@@ -1520,7 +1587,7 @@ function growPanel() {
   const steps = [Math.max(0, L - 1), L, Math.min(A.MAX_LEVEL, L + 1)].filter((v, i, a) => a.indexOf(v) === i);
   return `<div class="grow-panel"><h3>💪 Gonflette</h3><div class="lv">Niveau ${L}${max ? " · MAX" : ""} <small style="display:inline;font-size:.55em;color:var(--dim)">/ ${A.MAX_LEVEL}</small></div>
     <div class="grow-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${A.LEVEL_XP}" aria-valuenow="${max ? A.LEVEL_XP : into}"><i style="width:${max ? 100 : into}%"></i></div>
-    <small>${max ? "Taille maximale : vous êtes un titan démesuré." : `Encore <b style="color:var(--text)">${A.LEVEL_XP - into} XP</b> avant de gonfler d'un cran (taille ×${A.size(profile.xp).toFixed(1)}).`} Tous les ${A.LEVEL_XP} XP, le perso grossit tout seul.</small>
+    <small>${max ? "Taille maximale : vous êtes un titan démesuré." : `Encore <b style="color:var(--text)">${A.LEVEL_XP - into} XP</b> avant de gonfler d'un cran (taille ×${(A.growth || A.size)(profile.xp).toFixed(1)}).`} Tous les ${A.LEVEL_XP} XP, le perso grossit tout seul.</small>
     <div class="grow-steps">${steps.map(l => `<div style="opacity:${l === L ? 1 : .55}">${A.svg(myLook(), l * A.LEVEL_XP, {pose: l === L ? "flex" : "idle"})}</div>`).join("")}</div></div>`;
 }
 function drawEdExtra() {
@@ -1724,21 +1791,79 @@ async function mountGame(M) {
   syncFs();
   $("game-who").innerHTML = M.pl.length === 2 ? `<span class="spec" style="background:var(--panel);border:2px solid var(--line)">${esc(M.ro[M.pl[0]].p)} vs ${esc(M.ro[M.pl[1]].p)}</span>` : "";
   const offs = [];
+  keepAwake();
+  /* Retour dans une partie déjà commencée (rechargement, onglet restauré…) : pour un joueur, le jeu repart de l'état
+     courant (onState). Pour le téléphone qui fait tourner le jeu (M.h), sa logique en mémoire est perdue : un jeu
+     `resumable` repart du dernier état publié (api.resume, gardé dans sessionStorage) ; sinon la partie est
+     interrompue proprement (pas de nouvelle partie qui écraserait l'ancienne, pas de faux forfait). */
+  const isHost = M.h === myPeer, again = (sess.mm || []).includes(M.mid);
+  if (!again) saveSess({mm: (sess.mm || []).concat(M.mid).slice(-8)});
+  else if (M.pl.includes(myPeer) && !isHost) toast("De retour dans la partie !");
+  if (again && isHost && !myFin && sess.fin && sess.fin.mid === M.mid) { myFin = sess.fin; pushPresence(); } // fin déjà annoncée avant le rechargement
+  const saved = again && isHost && def.resumable && sess.gs && sess.gs.mid === M.mid ? sess.gs : null;
+  if (again && isHost && !saved) {
+    if (!(myFin && myFin.mid === M.mid)) { myFin = {mid: M.mid, res: {int: 1, summary: `${M.ro[myPeer] ? M.ro[myPeer].p : "L'hôte"} a rechargé la page : partie interrompue.`}}; saveSess({fin: myFin}); pushPresence(); }
+    root.innerHTML = `<p style="padding:40px 16px;text-align:center;font-weight:800;font-size:1.2rem">Partie interrompue : retour au lobby…</p>`;
+    instance = {_offs: offs};
+    return;
+  }
+  // Présence dans la partie : un joueur absent depuis moins de DISC_GRACE_MS compte encore comme connecté pour le jeu.
+  const lastSeen = {}, inpJ = {}, base = saved ? Object.assign({}, saved.inp || {}) : null;
+  const seqOff = again && sess.sq && sess.sq.mid === M.mid ? +sess.sq.n || 0 : 0;
+  M.pl.forEach(k => { lastSeen[k] = Date.now(); });
+  const hereNow = () => { const now = Date.now(), set = new Set(room.peers().map(p => p.peer)); M.pl.forEach(k => { if (set.has(k)) lastSeen[k] = now; }); return set; };
+  if (isHost && def.resumable) offs.push(room.onPeers(ch => { for (const p of ch.peers) if (M.pl.includes(p.peer) && p.presence && p.presence.i !== undefined) inpJ[p.peer] = JSON.stringify(p.presence.i); }));
+  if (saved) room.presence({s: saved.s}).catch(() => {});
+  // « ⏳ Mehdi s'est déconnecté… on l'attend (25 s) »
+  const wait = document.createElement("div");
+  wait.setAttribute("role", "status"); wait.hidden = true;
+  wait.style.cssText = "position:absolute;left:50%;top:calc(54px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:20;width:max-content;max-width:calc(100% - 32px);padding:6px 14px;border-radius:999px;background:rgba(12,12,24,.88);color:#fff;font-weight:800;font-size:.95rem;line-height:1.25;text-align:center;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.4)";
+  layer.appendChild(wait);
+  const waitIv = setInterval(() => {
+    const set = hereNow(), now = Date.now();
+    let txt = "";
+    if (lobby && lobby.connected && !lobby.connected()) txt = "📡 Connexion perdue… reconnexion en cours";
+    else {
+      const gone = M.pl.filter(k => k !== myPeer && !set.has(k) && now - lastSeen[k] > 1500);
+      if (gone.length) {
+        const left = Math.max(0, Math.ceil((DISC_GRACE_MS - (now - lastSeen[gone[0]])) / 1000));
+        txt = `⏳ ${M.ro[gone[0]] ? M.ro[gone[0]].p : "?"}${gone.length > 1 ? ` (+${gone.length - 1})` : ""} s'est déconnecté… ${left ? `on l'attend (${left} s)` : "il ne revient pas"}`;
+      }
+    }
+    if (wait.textContent !== txt) wait.textContent = txt;
+    wait.hidden = !txt;
+  }, 500);
+  offs.push(() => { clearInterval(waitIv); wait.remove(); });
   const players = M.pl.map((k, i) => ({key: k, seat: i, pseudo: M.ro[k].p, look: M.ro[k].l, xp: M.ro[k].x}));
   const api = {
-    el: root, players, me: myPeer, isPlayer: M.pl.includes(myPeer), isHost: M.h === myPeer, seed: M.seed, gameId: M.g, mid: M.mid,
+    el: root, players, me: myPeer, isPlayer: M.pl.includes(myPeer), isHost, seed: M.seed, gameId: M.g, mid: M.mid,
+    resume: saved ? saved.s : null, // (jeux `resumable`, hôte rechargé) dernier état publié : repartir de là au lieu d'un état neuf
     rng: rngFrom(M.seed),
     name: k => (M.ro[k] ? M.ro[k].p : "?"),
     avatar: (k, opts) => rosterAv(M, k, opts && opts.pose, opts && opts.view),
-    setInput(obj) { return room.presence({i: obj}).catch(() => {}); },
+    setInput(obj) {
+      // Après un rechargement, le jeu recompte ses `seq` à partir de 1 : on les décale après le dernier envoyé avant,
+      // sinon l'hôte (qui ignore un seq déjà vu) pourrait jeter la première action.
+      if (obj && typeof obj.seq === "number") { if (seqOff) obj = Object.assign({}, obj, {seq: obj.seq + seqOff}); saveSess({sq: {mid: M.mid, n: obj.seq}}); }
+      return room.presence({i: obj}).catch(() => {});
+    },
     setState(s) {
       const txt = JSON.stringify(s);
       if (txt.length > 3600) console.warn("Gonflette : état de jeu trop gros", txt.length);
+      if (isHost && def.resumable) saveSess({gs: {mid: M.mid, s, inp: Object.assign({}, inpJ)}});
       return room.presence({s}).catch(e => console.warn(e));
     },
     onInputs(fn) {
       let last = "";
-      const run = list => { const map = {}; for (const p of list) if (M.pl.includes(p.peer) && p.presence && p.presence.i !== undefined) map[p.peer] = p.presence.i; const j = JSON.stringify(map); if (j !== last) { last = j; fn(map); } };
+      const run = list => {
+        const map = {};
+        for (const p of list) if (M.pl.includes(p.peer) && p.presence && p.presence.i !== undefined) {
+          // reprise : une entrée déjà traitée avant le rechargement (identique à celle sauvegardée) n'est pas rejouée
+          if (base && base[p.peer] !== undefined) { if (JSON.stringify(p.presence.i) === base[p.peer]) continue; delete base[p.peer]; }
+          map[p.peer] = p.presence.i;
+        }
+        const j = JSON.stringify(map); if (j !== last) { last = j; fn(map); }
+      };
       const off = room.onPeers(ch => run(ch.peers)); offs.push(off); setTimeout(() => run(room.peers()), 0); return off;
     },
     onState(fn) {
@@ -1746,17 +1871,18 @@ async function mountGame(M) {
       const run = list => { const h = list.find(p => p.peer === M.h); const s = h && h.presence ? h.presence.s : undefined; if (s === undefined) return; const j = JSON.stringify(s); if (j !== last) { last = j; fn(s); } };
       const off = room.onPeers(ch => run(ch.peers)); offs.push(off); setTimeout(() => run(room.peers()), 0); return off;
     },
-    connected() { const set = new Set(room.peers().map(p => p.peer)); return M.pl.filter(k => set.has(k)); },
+    connected() { const set = hereNow(), now = Date.now(); return M.pl.filter(k => set.has(k) || k === myPeer || now - lastSeen[k] < DISC_GRACE_MS); },
     // Jeux d'équipe : [{name, color, keys}] ×2 ; null pour les autres jeux.
     teams: M.tm ? M.tm.map((keys, i) => ({index: i, name: (M.tn && M.tn[i]) || (i ? "Équipe bleue" : "Équipe rouge"), color: TEAM_COLORS[i], keys: keys.slice()})) : null,
     teamOf(k) { return M.tm ? (M.tm[0].includes(k) ? 0 : M.tm[1].includes(k) ? 1 : null) : null; },
     finish(res) {
       if (M.h !== myPeer || (myFin && myFin.mid === M.mid)) return;
       myFin = {mid: M.mid, res: {winners: res.winners || [], ranking: res.ranking || [], summary: String(res.summary || "").slice(0, 160)}};
-      pushPresence();
+      saveSess({fin: myFin}); pushPresence();
     },
     toast
   };
+  if (G.kit) G.kit.extendApi(api, def, M); // api.sfx / api.haptic / api.rules + bandeau commun (core/kit.js)
   try { instance = def.create(api) || {}; } catch (e) { console.error(e); toast("Erreur au lancement du jeu"); instance = {}; }
   instance._offs = offs;
 }
@@ -1773,7 +1899,7 @@ $("game-fs").addEventListener("click", () => {
 });
 document.addEventListener("fullscreenchange", syncFs); document.addEventListener("webkitfullscreenchange", syncFs);
 function unmountGame() {
-  if (instance) { try { instance.destroy && instance.destroy(); } catch (e) { console.error(e); } (instance._offs || []).forEach(f => f()); instance = null; }
+  if (instance) { try { instance.destroy && instance.destroy(); } catch (e) { console.error(e); } (instance._offs || []).forEach(f => f()); instance = null; emit("game:end"); }
   if (matchName) { net.leave(matchName); matchName = null; matchRoom = null; }
   mounted = null;
   $("game-layer").classList.add("hidden");
@@ -1781,11 +1907,40 @@ function unmountGame() {
   if (inGame) { inGame = false; if (inLobby) { $("scr-lobby").classList.remove("hidden"); layoutTiles(); init3D(); renderAll(); } }
 }
 
+// Mode soirée (core/soiree.js) : playlist de jeux menée par un maître du jeu 🎤, classement, cérémonie, photo souvenir.
+var SO = G.soiree ? G.soiree.init({players, peers: () => peers, me: () => myPeer, hostSt: () => hostSt, hostNow, matchOf, gameById, games: () => GAMES, placeOfGame, PLACES,
+  place: () => place, profile: () => profile, saveProfile, pushPresence, renderAll, toast, newMatch, gainsFor, teamLabel, myLook, openRival, inLobby: () => inLobby}) : null;
 requestAnimationFrame(frame);
 if (MODE !== "p2p") boot();
 if (profile.pseudo) { $("pseudo").value = profile.pseudo; }
 show("scr-name");
 $("pseudo").focus();
+/* ---------- écran allumé, onglet caché ---------- */
+// Wake Lock : l'écran reste allumé dans le lobby et en jeu (surtout le téléphone hôte, qui organise les parties).
+// Non pris en charge ou refusé (iframe, vieux navigateur) : on continue sans, l'hôte passe la main s'il est caché.
+let wakeLock = null, wakeAsk = false, wasHidden = false;
+async function keepAwake() {
+  if ((!inLobby && !inGame) || document.hidden || wakeAsk || (wakeLock && !wakeLock.released)) return;
+  if (!navigator.wakeLock || typeof navigator.wakeLock.request !== "function") return;
+  wakeAsk = true;
+  try { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => { wakeLock = null; }); } catch (e) { wakeLock = null; }
+  wakeAsk = false;
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) wasHidden = true;
+  // de retour : on se range derrière les autres pour le rôle d'hôte (il a été passé à un autre : pas de va-et-vient)
+  else { if (wasHidden) { wasHidden = false; me.ja = Date.now(); } keepAwake(); }
+  pushPresence();
+});
+addEventListener("pointerdown", () => keepAwake(), {passive: true}); // certains navigateurs ne l'accordent qu'après un geste
+
+// Rechargement (ou onglet tué puis restauré) alors qu'on était dans le lobby : on y retourne directement,
+// avec la même clé (core/net.js), donc dans sa partie si elle continue.
+if (sess.lob && profile.pseudo) {
+  if (sess.tm === 0 || sess.tm === 1) { me.team = sess.tm; me.teamName = sess.tn || null; }
+  const code = MODE === "p2p" ? ((location.hash || "").replace("#", "").toUpperCase().replace(/[^A-Z0-9]/g, "") || sess.r || "") : "";
+  if (MODE !== "p2p" || code.length >= 3) { if (MODE === "p2p") { roomCode = code; if (!booted) boot(); } enterLobby(); }
+}
 })();
 </script>
 </body>

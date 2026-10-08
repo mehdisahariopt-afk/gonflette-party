@@ -5,6 +5,7 @@ GONFLETTE.registerGame({
   name: "Puissance 4",
   min: 2,
   max: 2,
+  resumable: true,                           // l'hôte rechargé repart de api.resume (l'état publié contient toute la partie)
   create(api) {
     const ROWS = 6, COLS = 7;
     const [P1, P2] = api.players;            // P1 = soleil (commence), P2 = lune
@@ -66,9 +67,16 @@ GONFLETTE.registerGame({
     }
     let state = null;
     const seen = {};
+    function hostEnd() {
+      const winner = state.win ? (state.t === 1 ? P1 : P2) : null;
+      setTimeout(() => api.finish(winner
+        ? {winners: [winner.key], ranking: [winner.key, winner === P1 ? P2.key : P1.key], summary: `${winner.pseudo} aligne quatre astres.`}
+        : {winners: [], ranking: [P1.key, P2.key], summary: "Plateau plein : éclipse totale."}), 2600);
+    }
     if (api.isHost) {
-      state = {b: "0".repeat(ROWS * COLS), t: 1, last: -1, win: null, over: 0, n: 0};
+      state = api.resume || {b: "0".repeat(ROWS * COLS), t: 1, last: -1, win: null, over: 0, n: 0};
       api.setState(state);
+      if (state.over) hostEnd();
       api.onInputs(inputs => {
         if (state.over) return;
         const who = state.t === 1 ? P1.key : P2.key;
@@ -86,12 +94,7 @@ GONFLETTE.registerGame({
         const full = b.every(v => v);
         state = {b: b.join(""), t: line || full ? state.t : 3 - state.t, last: r * COLS + c, win: line, over: line || full ? 1 : 0, n: state.n + 1};
         api.setState(state);
-        if (state.over) {
-          const winner = line ? (state.t === 1 ? P1 : P2) : null;
-          setTimeout(() => api.finish(winner
-            ? {winners: [winner.key], ranking: [winner.key, winner === P1 ? P2.key : P1.key], summary: `${winner.pseudo} aligne quatre astres.`}
-            : {winners: [], ranking: [P1.key, P2.key], summary: "Plateau plein : éclipse totale."}), 2600);
-        }
+        if (state.over) hostEnd();
       });
     }
 
@@ -103,6 +106,9 @@ GONFLETTE.registerGame({
       holes.forEach((h, i) => {
         h.className = "p4-hole" + (b[i] === "1" ? " s1" : b[i] === "2" ? " s2" : "") + (i === s.last && s.n !== lastN ? " new" : "") + (s.win && s.win.includes(i) ? " win" : "");
       });
+      // kit partagé (GAMES-API.md) : « toc » quand un jeton tombe, petite vibration quand c'est à moi
+      if (s.n !== lastN && lastN >= 0 && s.last >= 0 && api.sfx) api.sfx("tap");
+      if (api.haptic && !s.over && mySide === s.t && s.n !== lastN && lastN >= 0) api.haptic("light");
       lastN = s.n;
       el.querySelector("#p4-a").classList.toggle("on", !s.over && s.t === 1);
       el.querySelector("#p4-b").classList.toggle("on", !s.over && s.t === 2);

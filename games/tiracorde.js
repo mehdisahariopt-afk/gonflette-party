@@ -182,7 +182,8 @@ GONFLETTE.registerGame({
       .tc-rnd{font-family:Anton,Impact,sans-serif;font-size:.95rem;letter-spacing:.05em;background:#ffffff18;border:2px solid #ffffff30;border-radius:999px;padding:0 9px;white-space:nowrap}
       .tc-time{font-family:Anton,Impact,sans-serif;font-size:1.35rem;line-height:1.05;color:var(--tc-gold);font-variant-numeric:tabular-nums}
       .tc-time.low{color:#ff6b5e}
-      .tc-mute{border:0;background:none;color:inherit;opacity:.7;font:inherit;font-weight:800;font-size:.7rem;letter-spacing:.08em;cursor:pointer;padding:0 4px}
+      .tc-mute{position:relative;border:0;background:none;color:inherit;opacity:.7;font:inherit;font-weight:800;font-size:.75rem;letter-spacing:.08em;cursor:pointer;padding:0 4px}
+      .tc-mute::before{content:"";position:absolute;inset:-14px -4px} /* zone tactile ≥ 44 px (kit) */
       .tc-stage{position:relative;width:100%;aspect-ratio:400/250;flex:none;border-radius:16px;overflow:hidden;border:3px solid var(--tc-ink);box-shadow:0 8px 22px rgba(0,0,0,.5);background:#a8e3f7}
       .tc-bg{position:absolute;inset:0;width:100%;height:100%;display:block}
       .tc-rig{position:absolute;inset:0;will-change:transform}

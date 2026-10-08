@@ -889,7 +889,9 @@
       if (look.acc === "barbe") s += `<path d="M${f(hx - r + 3)} ${f(hy + 2)}Q${f(hx - r + 4)} ${f(hy + r + 8)} ${hx} ${f(hy + r + 10)}Q${f(hx + r - 4)} ${f(hy + r + 8)} ${f(hx + r - 3)} ${f(hy + 2)}Q${hx} ${f(hy + r * .6)} ${f(hx - r + 3)} ${f(hy + 2)}Z" fill="${hc}" stroke="${ink}" stroke-width="3.5"/>`;
       // visage
       const ey = hy - r * .05, ex = r * .38;
-      const flush = m > 1.05 || pose === "most";
+      // humeur (écran des résultats / « C'est parti ») : win = grand sourire + étincelles, lose = triste et en sueur, fight = mâchoire serrée
+      const mood = opts.mood === "win" || opts.mood === "lose" || opts.mood === "fight" ? opts.mood : null;
+      const flush = m > 1.05 || pose === "most" || mood === "win";
       if (flush) s += `<circle cx="${f(hx - r * .5)}" cy="${f(hy + r * .35)}" r="${f(r * .2)}" fill="#ff5d6c" opacity="${pose === "most" ? ".7" : ".45"}"/><circle cx="${f(hx + r * .5)}" cy="${f(hy + r * .35)}" r="${f(r * .2)}" fill="#ff5d6c" opacity="${pose === "most" ? ".7" : ".45"}"/>`;
       if (look.acc === "lunettes" && !eq.visage) s += `<path d="M${f(hx - r * .82)} ${f(ey - 4)}h${f(r * 1.64)}" stroke="${ink}" stroke-width="3"/><rect x="${f(hx - r * .78)}" y="${f(ey - 5)}" width="${f(r * .66)}" height="${f(r * .38)}" rx="4" fill="#15121c"/><rect x="${f(hx + r * .12)}" y="${f(ey - 5)}" width="${f(r * .66)}" height="${f(r * .38)}" rx="4" fill="#15121c"/>`;
       else if (eq.visage === "aviateur") {
@@ -900,15 +902,25 @@
         for (const d of [-1, 1]) { const x = hx + d * r * .42, k = r / 22; s += `<path transform="translate(${f(x)} ${f(ey + 1)}) scale(${f(k)})" d="M0 7C-12 -1 -10 -10 -4 -10Q0 -10 0 -5Q0 -10 4 -10C10 -10 12 -1 0 7Z" fill="#ff2e63" stroke="${ink}" stroke-width="2.4"/>`; }
       } else if (pose === "kiss") {
         s += `<path d="M${f(hx - ex - 4)} ${f(ey)}q4 -4 8 0" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="${f(hx + ex)}" cy="${f(ey)}" r="3.4" fill="${ink}"/>`;
+      } else if (mood === "win") {
+        for (const d of [-1, 1]) s += `<path d="M${f(hx + d * ex - 5)} ${f(ey + 1.5)}q5 -7 10 0" stroke="${ink}" stroke-width="3.2" fill="none" stroke-linecap="round"/>`;
+      } else if (mood === "lose") {
+        for (const d of [-1, 1]) s += `<circle cx="${f(hx + d * ex)}" cy="${f(ey + 1)}" r="3.6" fill="${ink}"/><circle cx="${f(hx + d * ex + 1)}" cy="${f(ey - .4)}" r="1.3" fill="#fff"/>`;
+        s += `<path d="M${f(hx - ex - 1)} ${f(ey + 5)}q-2 6 0 9q3 1 3 -2q0 -3 -3 -7z" fill="#8fd3ff" stroke="${ink}" stroke-width="1.3"/>`; // larme
       } else s += `<circle cx="${f(hx - ex)}" cy="${f(ey)}" r="${f(m < .3 ? 4.2 : 3.4)}" fill="${ink}"/><circle cx="${f(hx + ex)}" cy="${f(ey)}" r="${f(m < .3 ? 4.2 : 3.4)}" fill="${ink}"/><circle cx="${f(hx - ex + 1.2)}" cy="${f(ey - 1.3)}" r="1.2" fill="#fff"/><circle cx="${f(hx + ex + 1.2)}" cy="${f(ey - 1.3)}" r="1.2" fill="#fff"/>`;
       // sourcils : inquiets quand maigre, froncés quand énorme (ou en plein effort)
-      const bt = pose === "most" ? -5 : m < .3 ? 4 : m > .9 ? -4 : 0;
-      const gOff = eq.visage === "aviateur" || eq.visage === "coeur" ? 3 : 0;
+      const bt = mood === "lose" ? 5 : mood === "fight" ? -5 : mood === "win" ? 1 : pose === "most" ? -5 : m < .3 ? 4 : m > .9 ? -4 : 0;
+      const gOff = (eq.visage === "aviateur" || eq.visage === "coeur" ? 3 : 0) + (mood === "win" ? 3 : 0);
       s += `<path d="M${f(hx - ex - 6)} ${f(ey - 9 + bt - gOff)}L${f(hx - ex + 5)} ${f(ey - 9 - bt - gOff)}M${f(hx + ex + 6)} ${f(ey - 9 + bt - gOff)}L${f(hx + ex - 5)} ${f(ey - 9 - bt - gOff)}" stroke="${ink}" stroke-width="3" stroke-linecap="round"/>`;
       if (eq.visage === "guerre") s += `<path d="M${f(hx - ex - 6)} ${f(ey + 6)}h11M${f(hx - ex - 6)} ${f(ey + 10)}h11M${f(hx + ex - 5)} ${f(ey + 6)}h11M${f(hx + ex - 5)} ${f(ey + 10)}h11" stroke="${ink}" stroke-width="2.6" stroke-linecap="round"/><path d="M${hx} ${f(ey - r * .55)}v${f(r * .35)}" stroke="#d62828" stroke-width="3.4" stroke-linecap="round"/>`;
       const my = hy + r * .45;
-      const grin = pose === "most" || eq.visage === "dentor" || (m >= .9 && pose !== "kiss");
-      if (pose === "kiss") s += `<ellipse cx="${f(hx + 2)}" cy="${f(my)}" rx="4.6" ry="5.2" fill="#ff5d8a" stroke="${ink}" stroke-width="2.4"/><path d="M${f(hx + 1)} ${f(my - 2)}q3 2 0 4" stroke="${ink}" stroke-width="1.6" fill="none"/>`;
+      const grin = mood === "fight" || (mood !== "lose" && mood !== "win" && (pose === "most" || eq.visage === "dentor" || (m >= .9 && pose !== "kiss")));
+      if (mood === "win") {
+        // bouche grande ouverte (dents + langue)
+        s += `<path d="M${f(hx - 12)} ${f(my - 4)}h24q-1 14 -12 14t-12 -14z" fill="#5a1020" stroke="${ink}" stroke-width="2.8" stroke-linejoin="round"/><path d="M${f(hx - 10.5)} ${f(my - 3)}h21v3.2h-21z" fill="#fff"/><path d="M${f(hx - 6)} ${f(my + 6.5)}q6 -5 12 0q-6 4 -12 0z" fill="#ff6b81"/>`;
+        if (eq.visage === "dentor") s += `<rect x="${f(hx + 1)}" y="${f(my - 3)}" width="5" height="3.2" fill="#f5c518" stroke="${ink}" stroke-width="1"/>`;
+      } else if (mood === "lose") s += `<path d="M${f(hx - 8)} ${f(my + 5)}q8 -8 16 0" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+      else if (pose === "kiss") s += `<ellipse cx="${f(hx + 2)}" cy="${f(my)}" rx="4.6" ry="5.2" fill="#ff5d8a" stroke="${ink}" stroke-width="2.4"/><path d="M${f(hx + 1)} ${f(my - 2)}q3 2 0 4" stroke="${ink}" stroke-width="1.6" fill="none"/>`;
       else if (grin) {
         s += `<path d="M${f(hx - 10)} ${f(my - 3)}h20q-2 10 -10 10t-10 -10z" fill="#fff" stroke="${ink}" stroke-width="2.6" stroke-linejoin="round"/><path d="M${f(hx - 9)} ${f(my + 1)}h18" stroke="${ink}" stroke-width="1.5"/>`;
         if (eq.visage === "dentor") s += `<rect x="${f(hx + 1)}" y="${f(my - 2.2)}" width="5" height="3.6" fill="#f5c518" stroke="${ink}" stroke-width="1"/>${star(hx + 7, my - 5, 3, "#fff6a8")}`;
@@ -921,7 +933,9 @@
         s += `<path d="M${f(hx - r - 1)} ${f(ey - 2)}H${f(hx + r + 1)}" stroke="#111" stroke-width="5"/><rect x="${f(hx - r * .8)}" y="${f(ey - r * .38)}" width="${f(r * 1.6)}" height="${f(r * .66)}" rx="${f(r * .3)}" fill="#8fe3ff" fill-opacity=".45" stroke="#ff7b00" stroke-width="4"/><path d="M${f(hx - r * .55)} ${f(ey - r * .22)}l${f(r * .2)} ${f(r * .3)}" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>`;
         s += `<path d="M${f(hx + r * .55)} ${f(my + 2)}H${f(hx + r + 6)}V${f(hy - r - 14)}" stroke="${ink}" stroke-width="8" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="M${f(hx + r * .55)} ${f(my + 2)}H${f(hx + r + 6)}V${f(hy - r - 14)}" stroke="#ffd23f" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`;
       }
-      if (m < .15) s += `<path d="M${f(hx + r * .85)} ${f(hy - r * .5)}q5 8 0 11q-5 -3 0 -11z" fill="#8fd3ff" stroke="${ink}" stroke-width="1.8"/>`; // goutte de sueur
+      if (m < .15 || mood === "lose") s += `<path d="M${f(hx + r * .85)} ${f(hy - r * .5)}q5 8 0 11q-5 -3 0 -11z" fill="#8fd3ff" stroke="${ink}" stroke-width="1.8"/>`; // goutte de sueur
+      if (mood === "lose") s += `<path d="M${f(hx - r * 1.05)} ${f(hy - r * .75)}q6 9 0 13q-6 -4 0 -13z" fill="#8fd3ff" stroke="${ink}" stroke-width="1.8"/><path d="M${f(hx + r * 1.1)} ${f(hy + r * .15)}q4 6 0 9q-4 -3 0 -9z" fill="#8fd3ff" stroke="${ink}" stroke-width="1.5"/>`;
+      if (mood === "win") s += star(hx - r - 12, hy - r * .7, 6, "#ffd23f") + star(hx + r + 13, hy - r * .9, 7.5, "#fff6a8") + star(hx + r + 6, hy + r * .5, 4.5, "#ffd23f") + star(hx - r - 6, hy + r * .55, 4, "#fff6a8");
       if (pose === "most") s += `<path d="M${f(hx - r * .45)} ${f(hy - r * .72)}q4 3 2 7q4 -2 6 2" stroke="#6d8fd0" stroke-width="2.4" fill="none" stroke-linecap="round"/>`; // veine du front
 
       // ---- coiffure avant
@@ -987,10 +1001,13 @@
     return s;
   }
 
-  // Plus il est musclé, plus le perso prend de place à l'écran : ×1 (0 XP) → ×8 (2 000 XP et plus).
-  // Un cran tous les 100 XP, progression géométrique : ×8^(L/20), soit ≈ +11 % par palier, ×8 au niveau 20.
-  const size = xp => Math.pow(8, level(xp) / MAX_LEVEL);
-  G.avatar = {svg, tier, muscle, size, SKINS, HAIR_COLORS, HAIR_STYLES, CLOTH, TOPS, ACCS, TIERS, DEFAULT_LOOK,
+  // Plus il est musclé, plus le perso prend de place à l'écran : ×1,5 (0 XP, la crevette reste lisible sur téléphone)
+  // → ×8 (2 000 XP et plus, comme avant). Un cran tous les 100 XP, progression géométrique : 1,5 × (8/1,5)^(L/20),
+  // soit ≈ +8,7 % par palier. growth(xp) = la même taille rapportée au départ (×1 → ×5,3), pour les textes « taille × ».
+  const SIZE0 = 1.5, SIZE_MAX = 8;
+  const size = xp => SIZE0 * Math.pow(SIZE_MAX / SIZE0, level(xp) / MAX_LEVEL);
+  const growth = xp => size(xp) / SIZE0;
+  G.avatar = {svg, tier, muscle, size, growth, SKINS, HAIR_COLORS, HAIR_STYLES, CLOTH, TOPS, ACCS, TIERS, DEFAULT_LOOK,
     LEVEL_XP, MAX_LEVEL, level, groups, skipLegDay, RARITIES, SLOTS, ITEMS, ITEM, equipped, POSES,
     // infos de l'effet d'arme pour une pose : {kind, word, color, x, y, ang, s} en unités du SVG (ou null)
     weaponFx(look, xp, pose) { const o = {}; svg(look, xp, {pose, fx: true, out: o}); return o.fx || null; }};

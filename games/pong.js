@@ -98,8 +98,9 @@ GONFLETTE.registerGame({
       .pg-chip i{position:absolute;left:0;right:0;bottom:0;height:3px;background:#3B1F3A;transform-origin:left center}
       @keyframes pg-chip{from{transform:scale(.3)}}
       .pg-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
-      .pg-btn{width:36px;height:36px;display:grid;place-items:center;padding:0;border:3px solid #3B1F3A;border-radius:11px;background:#FFC83D;box-shadow:0 3px 0 #3B1F3A;cursor:pointer}
+      .pg-btn{position:relative;width:36px;height:36px;display:grid;place-items:center;padding:0;border:3px solid #3B1F3A;border-radius:11px;background:#FFC83D;box-shadow:0 3px 0 #3B1F3A;cursor:pointer}
       .pg-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #3B1F3A}
+      .pg-btn::before{content:"";position:absolute;inset:-6px} /* zone tactile 48 px (kit : cibles ≥ 44 px) */
       .pg-btn svg{width:18px;height:18px}
       .pg-btn:focus-visible{outline:3px solid #3B1F3A;outline-offset:2px}
       .pg-to{font-family:Anton,Impact,sans-serif;font-size:12px;letter-spacing:.03em;background:#FFFDF7;border:2px solid #3B1F3A;border-radius:999px;padding:0 6px;white-space:nowrap}

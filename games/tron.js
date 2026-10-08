@@ -131,7 +131,8 @@ GONFLETTE.registerGame({
       .tr-dots i.tr-on{background:var(--c);box-shadow:0 0 7px var(--c)}
       .tr-dots i.tr-pop{animation:tr-pop .6s cubic-bezier(.3,1.8,.5,1)}
       @keyframes tr-pop{0%{transform:scale(2.4)}100%{transform:none}}
-      .tr-mute{flex:none;width:38px;align-self:center;height:38px;display:grid;place-items:center;padding:0;border-radius:11px;border:2px solid #b04dff;background:rgba(176,77,255,.15);color:#fff;cursor:pointer}
+      .tr-mute{position:relative;flex:none;width:38px;align-self:center;height:38px;display:grid;place-items:center;padding:0;border-radius:11px;border:2px solid #b04dff;background:rgba(176,77,255,.15);color:#fff;cursor:pointer}
+      .tr-mute::before{content:"";position:absolute;inset:-6px} /* zone tactile ≥ 44 px (kit) */
       .tr-mute svg{width:18px;height:18px}
       .tr-mute:focus-visible,.tr-btn:focus-visible,.tr-boost:focus-visible{outline:3px solid #fff;outline-offset:2px}
       .tr-stage{position:relative;flex:1;min-height:0}
