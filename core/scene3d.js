@@ -1,7 +1,8 @@
 /* Gonflette Party : scène 3D du lobby (three.js r128, global window.THREE).
    GONFLETTE.scene3d.supported -> WebGL + THREE disponibles.
    const s = GONFLETTE.scene3d.create(el, {theme, tiles, onFloorClick});
-   s.setTheme / setTiles / setTileState / setEntities / ping / resize / destroy.
+   s.setTheme / setTiles / setTileState / setEntities / ping / resize / setInsets({t, b, hud}) / destroy.
+   opts.insets = {t, b, hud} (px) : zone réservée au HUD en haut / en bas (lobby plein écran du téléphone).
    Tout est construit à partir de primitives et de textures dessinées sur canvas : aucun chargement réseau. */
 (function () {
   "use strict";
@@ -156,31 +157,48 @@
       }
       return {x0, x1, y0, y1};
     }
+    /* Zone utile de l'écran (plein écran du téléphone) : le HUD couvre le haut (ins.t px, marge pour les têtes comprise)
+       et le bas (ins.b px). Tout le sol (carrés + zones d'équipe) doit tenir entre les deux ; le décor peut passer sous le HUD.
+       ins.hud = bas du HUD du haut (px) : les étiquettes de nom ne passent pas dessous. */
+    const ins = {t: 0, b: 0, hud: 0};
+    if (opts.insets) { ins.t = Math.round(+opts.insets.t || 0); ins.b = Math.round(+opts.insets.b || 0); ins.hud = Math.round(+opts.insets.hud || 0); }
     function fitCamera() {
       const aspect = vpW / vpH;
       camera.aspect = aspect;
+      const ra = Math.max(1, vpH - ins.t - ins.b) / vpW; // forme (hauteur / largeur) de la zone du sol
       cam.fov = aspect < 1 ? 40 : 34;
-      cam.elev = (aspect < 1 ? 50 : 44) * Math.PI / 180;
+      cam.elev = (aspect < 1 ? (ra > 1.2 ? 55 : 50) : 44) * Math.PI / 180;
       camera.fov = cam.fov;
       camera.updateProjectionMatrix();
-      const pts = [
-        new THREE.Vector3(-W / 2 - .2, 0, D / 2 + .55), new THREE.Vector3(W / 2 + .2, 0, D / 2 + .55),
+      const floorPts = [
+        new THREE.Vector3(-W / 2 - .2, 0, D / 2 + (ins.b ? .35 : .55)), new THREE.Vector3(W / 2 + .2, 0, D / 2 + (ins.b ? .35 : .55)),
         new THREE.Vector3(-W / 2 - .2, 0, -D / 2), new THREE.Vector3(W / 2 + .2, 0, -D / 2),
-        new THREE.Vector3(-W / 2, 2.6, -D / 2), new THREE.Vector3(W / 2, 2.6, -D / 2),
-      ].concat(theme && theme.fitPoints ? theme.fitPoints() : []);
+      ];
+      const backPts = [new THREE.Vector3(-W / 2, 2.6, -D / 2), new THREE.Vector3(W / 2, 2.6, -D / 2)].concat(theme && theme.fitPoints ? theme.fitPoints() : []);
+      const allPts = floorPts.concat(backPts);
       const mx = 0.985, my = 0.97;
+      // bornes verticales (NDC) de la zone du sol ; sans HUD, comme avant : tout l'écran
+      const yB = ins.b ? -1 + 2 * ins.b / vpH : -my, yT = ins.t ? 1 - 2 * ins.t / vpH : my;
+      const fits = () => {
+        const f = bounds(floorPts), a = bounds(allPts);
+        return Math.max(-a.x0, a.x1) <= mx && f.y1 - f.y0 <= yT - yB && a.y1 - f.y0 <= my - yB;
+      };
       cam.target.set(0, 0, 0);
-      for (let it = 0; it < 5; it++) {
+      for (let it = 0; it < 6; it++) {
         let lo = 4, hi = 150;
         for (let k = 0; k < 28; k++) {
           cam.dist = (lo + hi) / 2; placeCamera(0);
-          const b = bounds(pts);
-          if (Math.max(-b.x0, b.x1) <= mx && b.y1 - b.y0 <= 2 * my) hi = cam.dist; else lo = cam.dist;
+          if (fits()) hi = cam.dist; else lo = cam.dist;
         }
         cam.dist = hi; placeCamera(0);
-        const b = bounds(pts), c = (b.y0 + b.y1) / 2;
-        // remonte/descend la cible pour centrer verticalement le contenu
-        cam.target.z -= c * cam.dist * Math.tan(cam.fov * Math.PI / 360) / Math.sin(cam.elev);
+        // centre le contenu (sol + décor du fond) entre le bas de la zone et le haut de l'écran,
+        // puis redescend si le fond du sol passe sous le HUD du haut
+        const f = bounds(floorPts), a = bounds(allPts);
+        // avec HUD (téléphone) : le sol se pose sur le bas de la zone, le surplus de hauteur va au décor du fond
+        let s = ins.b || ins.t ? yB - f.y0 : (yB + my) / 2 - (f.y0 + a.y1) / 2;
+        if (f.y1 + s > yT) s = yT - f.y1;
+        if (f.y0 + s < yB) s = yB - f.y0;
+        cam.target.z += s * cam.dist * Math.tan(cam.fov * Math.PI / 360) / Math.sin(cam.elev);
       }
       placeCamera(0);
       if (theme && theme.onFit) theme.onFit();
@@ -1328,9 +1346,12 @@
       vpW = w; vpH = h;
       renderer.setSize(w, h, false);
       const p = w < h;
-      if (p !== portrait || !theme) {
+      // portrait : sol plus profond quand la zone utile est très haute (téléphone en plein écran)
+      const ra = Math.max(1, h - ins.t - ins.b) / w;
+      const nW = p ? 11 : 16, nD = p ? (ins.t || ins.b ? clamp(Math.round(ra * 12.5 * 2) / 2, 13.5, 18) : 13.5) : 11;
+      if (p !== portrait || nW !== W || nD !== D || !theme) {
         portrait = p;
-        W = p ? 11 : 16; D = p ? 13.5 : 11;
+        W = nW; D = nD;
         buildWorld();
       } else fitCamera();
       needRender = true;
@@ -1367,7 +1388,7 @@
         const e = en.cache, ready = e && e.tex;
         if (ready && en.mat.map !== e.tex) { en.mat.map = e.tex; en.mat.needsUpdate = true; }
         en.fade = Math.min(1, en.fade + (ready ? dt * 4 : 0));
-        const X = wx(en.x), Z = wz(en.y), floorY = tileTopAt(en.x, en.y);
+        let X = wx(en.x); const Z = wz(en.y), floorY = tileTopAt(en.x, en.y);
         const walkAmt = reduced ? 0 : en.walkK;
         const bob = Math.abs(Math.sin(en.ph)) * .09 * walkAmt;
         const wob = Math.sin(en.ph) * .07 * walkAmt;
@@ -1375,12 +1396,21 @@
         let pop = 1;
         if (en.popT != null) { en.popT += dt; const pk = en.popT / .45; if (pk < 1 && !reduced) pop = 1 + .2 * Math.sin(pk * Math.PI); else if (pk >= 1) en.popT = null; }
         const sz = CHAR_SIZE * (en.k || 1) * pop, hy = sz * stretch;
+        // garde le perso et son étiquette dans l'écran : décalage horizontal (affichage seulement) près des bords
+        tmpA.set(X, floorY, Z).project(camera); tmpB.set(X + 1, floorY, Z).project(camera);
+        const ux = tmpB.x - tmpA.x;
+        if (ux > 1e-6) {
+          const bodyHalf = Math.min(VB.w * .5, ((e && e.rx) || 40) * 2.1) * SU * (en.k || 1) * ux, tagHalf = (en.tagW || 60) * tagK / vpW;
+          const hw = Math.max(bodyHalf, tagHalf) + 12 / vpW, lo = -1 + hw, hi = 1 - hw;
+          const sx = lo > hi ? -tmpA.x : tmpA.x < lo ? lo - tmpA.x : tmpA.x > hi ? hi - tmpA.x : 0;
+          X += sx / ux;
+        }
         en.mesh.scale.set(sz * en.facing, hy * breath, 1);
         en.mesh.position.set(X, floorY + bob - FOOT_FRAC * hy, Z);
         en.mesh.rotation.set(0, Math.atan2(camera.position.x - X, camera.position.z - Z), wob * en.facing);
         en.mat.opacity = en.fade * (en.busy ? .55 : 1);
         en.mat.color.setScalar(en.busy ? .78 : 1);
-        en.mesh.renderOrder = 100 + Math.round(en.y * 1000);
+        en.mesh.renderOrder = 100 + Math.round(en.y * 1000) + (en.me ? .5 : 0);
         en.mesh.visible = !!ready;
         const shw = Math.max(.7, ((e && e.rx) || 40) * 2.3 * SU) * (en.k || 1) * (1 - bob * 1.5);
         en.sh.scale.set(shw, 1, shw * .42); en.sh.position.set(X, floorY + .012, Z + .05);
@@ -1388,10 +1418,16 @@
         en.ring.visible = en.me || !!en.pose; en.ring.position.set(X, floorY + .014, Z + .05); en.ring.scale.set(shw * .62, 1, shw * .3);
         // étiquette au-dessus de la tête
         const headH = ((e && e.top) || .9) - FOOT_FRAC;
-        en.tag.position.set(X, floorY + bob + headH * hy * breath + .06, Z);
+        let tagY = floorY + bob + headH * hy * breath + .06;
+        if (ins.hud) { // l'étiquette ne passe pas sous le HUD du haut : on la descend (sur la tête) si besoin
+          tmpA.set(X, tagY, Z).project(camera); tmpB.set(X, tagY + 1, Z).project(camera);
+          const uy = tmpB.y - tmpA.y, top = tmpA.y + 2 * (en.tagH || 20) * tagK / vpH, lim = 1 - 2 * (ins.hud + 4) / vpH;
+          if (uy > 1e-6 && top > lim) tagY -= Math.min((top - lim) / uy, headH * hy * .7);
+        }
+        en.tag.position.set(X, tagY, Z);
         const sc = 2 / (P11 * vpH) * tagK;
         en.tag.scale.set((en.tagW || 60) * sc, (en.tagH || 20) * sc, 1);
-        en.tag.renderOrder = 5000 + Math.round(en.y * 1000);
+        en.tag.renderOrder = 5000 + Math.round(en.y * 1000) + (en.me ? .5 : 0);
         en.tagMat.opacity = en.fade * (en.busy ? .75 : 1);
         if (en.pendingFx && ready && en.svg && en.cache === svgCache.get(en.svg)) { spawnWeaponFx(en, en.pendingFx); en.pendingFx = null; }
       }
@@ -1462,6 +1498,13 @@
       setEntities,
       ping,
       resize,
+      // zone utile (px) : t = haut réservé au HUD (+ marge pour les têtes), b = bas réservé, hud = bas du HUD du haut
+      setInsets(o) {
+        const t = Math.max(0, Math.round((o && o.t) || 0)), b = Math.max(0, Math.round((o && o.b) || 0)), hud = Math.max(0, Math.round((o && o.hud) || 0));
+        if (t === ins.t && b === ins.b && hud === ins.hud) return;
+        ins.t = t; ins.b = b; ins.hud = hud;
+        if (vpW && theme) { vpW = 0; resize(); }
+      },
       destroy() {
         if (destroyed) return;
         destroyed = true; stop();
