@@ -19,7 +19,7 @@
 
   // Durée approximative d'une partie (minutes), pour estimer la soirée.
   const MINUTES = {airhockey: 3, bataille: 7, brasdefer: 2, dames: 10, dessine: 8, developpe: 3, flip7: 6, morpion: 4, motinterdit: 8, petitbac: 6, pfc: 2,
-    pictionary: 10, pong: 3, puissance4: 5, quiadit: 7, quiestce: 5, reflexes: 2, relais: 3, spotteur: 3, tiracorde: 2, tron: 3, undercover: 8, uno: 8};
+    pictionary: 10, pong: 3, priorities: 10, puissance4: 5, quiadit: 7, quiestce: 5, reflexes: 2, relais: 3, spotteur: 3, tiracorde: 2, tron: 3, undercover: 8, uno: 8};
   const minutesOf = id => MINUTES[id] || 5;
   const STEP_OVERHEAD = .6; // compte à rebours + résultats + entracte
   const INTER_MS = 15000, FIRST_MS = 12000, SKIP_LEFT_MS = 6000, MJ_GONE_MS = 15000, CLAIM_MS = 12000;

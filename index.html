@@ -627,6 +627,8 @@ GONFLETTE.registerGame = def => { GONFLETTE.games.push(def); };
 <script src="games/airhockey.js"></script>
 <script src="games/tron.js"></script>
 <script src="games/pfc.js"></script>
+<script src="games/priorities-deck.js"></script>
+<script src="games/priorities.js"></script>
 <script>
 (() => {
 "use strict";
@@ -635,7 +637,7 @@ const $ = id => document.getElementById(id);
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const GAME_COLORS = ["#e63946", "#3a86ff", "#2a9d8f", "#8338ec", "#fb8500", "#ff006e", "#06a77d", "#f15bb5", "#4361ee", "#ff7b00", "#9b5de5", "#00b4d8", "#d62828", "#80b918"];
-const GAMES = G.games.slice(0, 24).map((g, i) => Object.assign({color: GAME_COLORS[i % GAME_COLORS.length]}, g));
+const GAMES = G.games.slice(0, 60).map((g, i) => Object.assign({color: GAME_COLORS[i % GAME_COLORS.length]}, g));
 const gameById = id => GAMES.find(g => g.id === id);
 /* ---------- trois lieux : chaque jeu a sa place ----------
    Muscle Beach = plein air, jeux de plage et de société ; Salle de muscu = force, vestiaire, jeux de mots ;
@@ -643,7 +645,7 @@ const gameById = id => GAMES.find(g => g.id === id);
    Un jeu absent de cette table (nouveau jeu) va à la plage par défaut. */
 const PLACE_OF = {
   tiracorde: "plage", relais: "plage", pong: "plage", bataille: "plage", flip7: "plage", uno: "plage", petitbac: "plage", dessine: "plage",
-  developpe: "salle", spotteur: "salle", quiestce: "salle", motinterdit: "salle", undercover: "salle", quiadit: "salle", pictionary: "salle",
+  developpe: "salle", spotteur: "salle", quiestce: "salle", motinterdit: "salle", undercover: "salle", quiadit: "salle", pictionary: "salle", priorities: "salle",
   brasdefer: "ring", pfc: "ring", reflexes: "ring", airhockey: "ring", tron: "ring", dames: "ring", puissance4: "ring", morpion: "ring"
 };
 // pc = code du lieu dans la présence (absent = plage : rétrocompatible avec les anciens clients)
@@ -1840,7 +1842,7 @@ async function mountGame(M) {
     resume: saved ? saved.s : null, // (jeux `resumable`, hôte rechargé) dernier état publié : repartir de là au lieu d'un état neuf
     rng: rngFrom(M.seed),
     name: k => (M.ro[k] ? M.ro[k].p : "?"),
-    avatar: (k, opts) => rosterAv(M, k, opts && opts.pose, opts && opts.view),
+    avatar: (k, opts) => rosterAv(M, k, opts && opts.pose, opts && opts.view, opts && opts.mood),
     setInput(obj) {
       // Après un rechargement, le jeu recompte ses `seq` à partir de 1 : on les décale après le dernier envoyé avant,
       // sinon l'hôte (qui ignore un seq déjà vu) pourrait jeter la première action.

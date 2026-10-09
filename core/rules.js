@@ -17,7 +17,7 @@ const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({"&": "&am
 /* ---------- les 23 cartes ----------
    ORDER fixe les bits du masque « déjà vu » publié dans la présence : n'ajoutez qu'à la fin. */
 const ORDER = ["puissance4", "flip7", "quiestce", "pong", "dessine", "motinterdit", "bataille", "brasdefer", "morpion", "reflexes",
-  "developpe", "uno", "undercover", "petitbac", "tiracorde", "pictionary", "relais", "quiadit", "spotteur", "dames", "airhockey", "tron", "pfc"];
+  "developpe", "uno", "undercover", "petitbac", "tiracorde", "pictionary", "relais", "quiadit", "spotteur", "dames", "airhockey", "tron", "pfc", "priorities"];
 // s : résumé d'une ligne (pour ceux qui connaissent déjà) · l : 3 lignes max · k : animation du geste
 const R = {
   puissance4: {s: "Touchez une colonne, alignez 4 jetons.", k: "drop", l: [
@@ -111,7 +111,11 @@ const R = {
   pfc: {s: "Choisissez avant « CHI-FOU-MI ! », bluffez.", k: "pfc", l: [
     "<b>Choisissez</b> pierre, feuille ou ciseaux avant « CHI-FOU-MI ! »",
     "<b>Annoncez</b> votre signe pour bluffer : gagner avec = +1 bonus.",
-    "Duel en 3 points ; à plusieurs, <b>tournoi</b> à élimination."]}
+    "Duel en 3 points ; à plusieurs, <b>tournoi</b> à élimination."]},
+  priorities: {s: "La Vedette classe 5 cartes en secret, devinez son classement.", k: "sort", l: [
+    "La <b>Vedette</b> classe 5 cartes en secret, de <b>J'ADORE ❤️</b> à <b>JE DÉTESTE 💀</b>.",
+    "Les autres <b>glissent les cartes</b> pour deviner son classement.",
+    "<b>Pile = 2 pts</b>, à une place près = 1 pt. La Vedette gagne la moyenne des autres."]}
 };
 
 /* ---------- illustrations (CSS seulement, en boucle) ---------- */
@@ -134,6 +138,7 @@ const ILL = {
   vote: o => `<span class="gr-bub q">${esc(o.txt)}</span><div class="gr-faces v"><span>🧑</span><span class="pick">👩</span><span>🧔</span></div><b class="gr-sym appear" style="left:76px;top:44px">✓</b>${F("left:80px;top:66px", "tapmove")}`,
   type: o => `<b class="gr-letter">${esc(o.letter)}</b><div class="gr-field"><span class="lbl">Fruit</span><span class="txt">${esc(o.txt)}</span></div><span class="gr-stop">STOP !</span>${F("left:118px;top:60px", "typef")}`,
   relay: () => `<div class="gr-lanes"><span class="r1">🏃</span><span class="baton">🥢</span><span class="r2">🏃‍♀️</span></div><div class="gr-tasks"><span>👆</span><span>🎯</span><span>🧠</span></div>${F("left:120px;top:58px", "mash")}`,
+  sort: () => `<div class="gr-lad"><i class="h">❤️</i><i class="s">💀</i></div><span class="gr-sc a" style="--cc:#ff9a2e">🍍 Ananas</span><span class="gr-sc b" style="--cc:#2fd18a">🎤 Karaoké</span><span class="gr-sc c" style="--cc:#93cc45">🐦 Pigeons</span>${F("left:118px;top:62px", "sortf")}`,
   pfc: () => `<div class="gr-hands"><span>✊</span><span>✋</span><span>✌️</span></div><b class="gr-chi">CHI-FOU-MI !</b>${F("left:96px;top:58px", "tapmove")}`
 };
 const CSS = `
@@ -246,6 +251,15 @@ const CSS = `
 .gr-hands span{left:56px;top:2px;opacity:0;animation:gr-hand 1.8s steps(1) infinite}
 .gr-hands span:nth-child(2){animation-delay:.6s}.gr-hands span:nth-child(3){animation-delay:1.2s}
 .gr-chi{left:10px;bottom:6px;font:400 1.05rem "Anton",Impact,sans-serif;color:#ffcc33;text-shadow:2px 2px 0 #e63946;animation:gr-pulse .6s ease-in-out infinite alternate}
+.gr-lad{left:8px;top:8px;width:18px;height:80px;border-radius:9px;background:linear-gradient(#ff2d6f,#f5b52e 50%,#4b4468)}
+.gr-lad i{left:1px;font-style:normal;font-size:13px;line-height:1}.gr-lad .h{top:2px}.gr-lad .s{bottom:2px}
+.gr-sc{left:32px;width:108px;height:23px;border-radius:7px;border:2px solid #1d1420;background:var(--cc);color:#fff;font:400 .78rem/19px "Anton",Impact,sans-serif;padding-left:5px;white-space:nowrap;text-transform:uppercase;box-shadow:0 2px 0 #1d1420}
+.gr-sc.a{top:9px;animation:gr-sorta var(--d) ease-in-out infinite}.gr-sc.b{top:37px;animation:gr-sorta var(--d) ease-in-out infinite}
+.gr-sc.c{top:65px;z-index:3;animation:gr-sortc var(--d) ease-in-out infinite}
+.gr-ill.gr-k-sort{--d:3s}
+.gr-f.sortf{animation:gr-sortc var(--d) ease-in-out infinite}
+@keyframes gr-sortc{0%,15%{transform:translateY(0)}55%,88%{transform:translateY(-56px)}100%{transform:translateY(0)}}
+@keyframes gr-sorta{0%,28%{transform:translateY(0)}48%,88%{transform:translateY(28px)}100%{transform:translateY(0)}}
 @keyframes gr-tapmove{0%{transform:translate(34px,30px);opacity:0}15%{opacity:1}35%{transform:translate(0,0)}42%{transform:translate(0,4px) scale(.9)}50%,80%{transform:translate(0,0);opacity:1}100%{transform:translate(34px,30px);opacity:0}}
 @keyframes gr-drop{0%,42%{transform:translateY(-52px);opacity:0}44%{opacity:1;transform:translateY(-52px)}62%{transform:translateY(0)}68%{transform:translateY(-5px)}74%,88%{transform:translateY(0);opacity:1}100%{opacity:0}}
 @keyframes gr-appear{0%,40%{transform:scale(0);opacity:0}48%{transform:scale(1.3);opacity:1}55%,88%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:0}}
