@@ -682,6 +682,28 @@ html.imm .ov-card{max-height:calc(100dvh - 32px)}
 .gm-vote .row{display:flex;gap:8px;justify-content:center}
 .gm-vote .btn{padding:8px 14px;font-size:.95rem}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+/* ---------- prestige (formes légendaires : core/legend.js) ---------- */
+.ent .tag.lgp{border-color:var(--lgc)}
+.ent:not(.me) .tag.lgp{box-shadow:0 0 10px -2px var(--lgc)}
+.ent .tag .lg-b{width:1.45em;height:1.45em;margin:-.25em .15em -.2em -.35em}
+.rebirth-cta{margin-top:10px;display:grid;justify-items:center;gap:6px;text-align:center}
+.rebirth-cta small{color:var(--gold);font-weight:800}
+.btn.rebirth{background:linear-gradient(90deg,#ffcc33,#ff6ad5 55%,#8a5cff);color:#1d1420;animation:rbGlow 1.6s ease-in-out infinite alternate}
+.rebirth-cta.fresh .btn.rebirth{font-size:1.15rem}
+@keyframes rbGlow{from{box-shadow:0 4px 0 var(--ink),0 0 0 0 #ffcc3300}to{box-shadow:0 4px 0 var(--ink),0 0 22px 2px #ff6ad5aa}}
+@media (prefers-reduced-motion:reduce){.btn.rebirth{animation:none}}
+.rebirth-card h2{margin:0 0 4px}
+.rb-duo{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:6px;margin:6px 0}
+.rb-duo figure{margin:0;text-align:center;min-width:0}
+.rb-duo figure .av{width:100%;height:auto;max-height:42vh}
+.rb-duo figure.new{background:radial-gradient(circle at 50% 60%,color-mix(in srgb,var(--lgc) 30%,transparent),transparent 65%)}
+.rb-duo figcaption{font-family:var(--f-display);text-transform:uppercase;font-size:1.05rem;line-height:1.1}
+.rb-duo figcaption small{display:block;font-family:var(--f-ui);font-size:.85rem;color:var(--dim);letter-spacing:.04em}
+.rb-duo figcaption small.lg-rank{color:var(--lgc);white-space:normal;font-size:.8rem}
+.rb-arrow{font-family:var(--f-display);font-size:2rem;color:var(--gold);align-self:center}
+.rb-list{margin:8px 0;padding-left:0;list-style:none;display:grid;gap:4px;font-weight:600}
+.rb-list .lg-b{width:1.2em;height:1.2em}
+.rb-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
 </style>
 </head>
 <body>
@@ -796,6 +818,7 @@ html.imm .ov-card{max-height:calc(100dvh - 32px)}
 <script src="vendor/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="core/avatar.js"></script>
+<script src="core/legend.js"></script>
 <script src="core/scene3d.js"></script>
 <script src="core/net.js"></script>
 <script src="core/kit.js"></script>
@@ -841,6 +864,10 @@ GONFLETTE.registerGame = def => { GONFLETTE.games.push(def); };
 (() => {
 "use strict";
 const G = window.GONFLETTE, A = G.avatar;
+// Prestige (core/legend.js) : formes légendaires + emblèmes de rang. Facultatif : sans legend.js, tout reste normal.
+const LG = G.legend || null;
+const prOf = look => LG ? LG.level(look) : 0;
+const nmH = (name, look, o) => LG ? LG.nameHtml(esc(name), prOf(look), o) : esc(name); // nom échappé + emblème + couleur du rang
 const $ = id => document.getElementById(id);
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
@@ -897,6 +924,8 @@ function migrateProfile() {
   if (typeof profile.loot !== "number" || !isFinite(profile.loot)) profile.loot = 0;
   if (!profile.h2h || typeof profile.h2h !== "object") profile.h2h = {};
   if (typeof profile.xp !== "number" || !isFinite(profile.xp)) profile.xp = 0;
+  // pr : niveau de prestige (renaissances au niveau max). Anciens profils : 0.
+  profile.pr = Math.max(0, Math.floor(+profile.pr || 0));
 }
 migrateProfile();
 // Le look diffusé : apparence + objets équipés (compacts, tout passe par presence.lk)
@@ -905,6 +934,7 @@ function myLook() {
   delete l.mg;
   const it = Object.values(profile.eq).filter(id => A.ITEM[id] && profile.own.includes(id));
   if (it.length) l.it = it;
+  if (profile.pr > 0) l.pr = profile.pr; else delete l.pr; // forme légendaire (voyage avec le look ; ignoré des anciens clients)
   return l;
 }
 // Le lieu où je suis (= le décor affiché). Tout le monde arrive à la plage.
@@ -948,10 +978,10 @@ const OPTS = [
 ];
 let editing = false;
 function drawEditor() {
-  $("ed-preview").innerHTML = A.svg(myLook(), profile.xp, {pose: "flex"});
-  $("ed-name").textContent = profile.pseudo;
+  $("ed-preview").innerHTML = A.svg(myLook(), profile.xp, {pose: "flex", lg: "full"});
+  $("ed-name").innerHTML = LG ? LG.nameHtml(esc(profile.pseudo), profile.pr) : esc(profile.pseudo);
   const t = A.tier(profile.xp);
-  $("ed-lvl").textContent = `${t.name} · Niv. ${A.level(profile.xp)} · ${profile.xp} XP`;
+  $("ed-lvl").innerHTML = `${profile.pr > 0 && LG ? `<span class="lg-rank" style="--lgc:${LG.color(profile.pr)}">Prestige ${profile.pr} · ${esc(LG.rankLabel(profile.pr))}</span><br>` : ""}${esc(t.name)} · Niv. ${A.level(profile.xp)} · ${profile.xp} XP`;
   $("ed-opts").innerHTML = OPTS.map(o => `<div class="opt-group"><h3>${o.label}</h3><div class="opt-row">${
     o.sw ? o.sw.map(c => `<button type="button" class="opt sw" style="background:${c}" data-k="${o.k}" data-v="${c}" aria-label="${o.label} ${c}" aria-pressed="${profile.look[o.k] === c}"></button>`).join("")
          : o.list.map(([v, l]) => `<button type="button" class="opt" data-k="${o.k}" data-v="${v}" aria-pressed="${profile.look[o.k] === v}">${l}</button>`).join("")}</div></div>`).join("");
@@ -1332,7 +1362,12 @@ G.debug = {launch(gid) { if (!amHost()) return false; forceVote = gid; return tr
     pushPresence(); return true;
   },
   unstuck: () => ({gx: myGx, gv: myGv, quit: [...quitM], vote: me.vote, ln: me.ln || null, mid: myMid, inGame, ls: profile.ls || 0, xp: profile.xp}),
-  h2h: () => profile.h2h};
+  h2h: () => profile.h2h,
+  // prestige : fixe le niveau (0 = aucun) ; legendGallery() : toutes les formes et emblèmes
+  prestige(n) { profile.pr = Math.max(0, Math.floor(+n || 0)); saveProfile(); pushPresence(); renderAll(); if (editing) drawEditor(); return profile.pr; },
+  rebirth: () => doRebirth(),
+  entrance: (peer, P) => { arrFx.clear(); playEntrance(peer || myPeer, P || profile.pr || 1); return true; }, // tests : effet d'entrée sur un joueur
+  legendGallery: look => LG ? LG.gallery(look || myLook()) : null};
 
 /* ---------- réaction à l'état ---------- */
 let seenKey = null, mounted = null, resultsShown = null, myMid = null;
@@ -1439,10 +1474,11 @@ let s3d = null, want3D = true;
 try { want3D = localStorage.getItem("gonflette-3d") !== "0"; } catch (e) {}
 const svgCache = new Map();
 // pendant une pose, le SVG porte aussi l'effet d'arme (éclair, confettis…) : on garde l'info pour l'onomatopée
-function cachedSvgFx(look, xp, pose) {
-  const k = JSON.stringify([look, xp, pose || ""]);
+// lg : rendu des formes légendaires (prestige) : "full" = animé (lobby 2D), "sprite" = image fixe (3D)
+function cachedSvgFx(look, xp, pose, lg) {
+  const k = JSON.stringify([look, xp, pose || "", lg || ""]);
   let v = svgCache.get(k);
-  if (!v) { const o = {}; v = {svg: A.svg(look, xp, pose ? {pose, fx: true, out: o} : undefined), fx: o.fx || null}; svgCache.set(k, v); if (svgCache.size > 200) svgCache.delete(svgCache.keys().next().value); }
+  if (!v) { const o = {}; v = {svg: A.svg(look, xp, pose ? {pose, fx: true, out: o, lg} : {lg}), fx: o.fx || null}; svgCache.set(k, v); if (svgCache.size > 200) svgCache.delete(svgCache.keys().next().value); }
   return v;
 }
 const cachedSvg = (look, xp, pose) => cachedSvgFx(look, xp, pose).svg;
@@ -1495,7 +1531,43 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 const entEls = new Map();
+/* Prestige : entrée en scène d'un joueur légendaire qui arrive sur MON sol (il rejoint, sort de l'éditeur ou change de lieu).
+   Ceux déjà là quand j'arrive (ou quand je change de lieu) ne déclenchent rien. Effet visuel : au plus 1 fois / 60 s par
+   joueur ; annonce vocale : 1 fois / 5 min (legend.js, respecte le bouton 🎙️). */
+const arrSeen = new Set(), arrFx = new Map();
+let arrSeedUntil = 0;
+function arrivalsReset() { arrSeen.clear(); arrSeedUntil = Date.now() + 2500; }
+function checkArrivals() {
+  if (!LG || !inLobby || inGame) return;
+  const now = Date.now(), live = new Set();
+  for (const p of playersHere()) {
+    if (p.peer === myPeer || p.presence.ed) continue;
+    live.add(p.peer);
+    if (arrSeen.has(p.peer)) continue;
+    arrSeen.add(p.peer);
+    const P = prOf(p.presence.lk);
+    if (!P || now < arrSeedUntil) continue;
+    const key = typeof p.presence.id === "string" ? p.presence.id : p.peer;
+    if (now - (arrFx.get(key) || 0) < 60000) continue;
+    arrFx.set(key, now);
+    setTimeout(() => playEntrance(p.peer, P), s3d ? 150 : 40);
+    LG.announceArrival(key, p.presence.ps, P);
+  }
+  for (const k of arrSeen) if (!live.has(k)) arrSeen.delete(k);
+}
+function playEntrance(peer, P) {
+  if (!LG || !inLobby || inGame) return;
+  if (s3d) {
+    const o = s3d.screenOf && s3d.screenOf(peer); if (!o) return;
+    LG.entrance(scene, o.x, o.y, Math.max(o.w, o.h * .6), P, 0);
+    return;
+  }
+  const e = entEls.get(peer); if (!e) return;
+  const fx = LG.entrance(floor, e.el.offsetLeft, e.el.offsetTop, Math.max(e.el.offsetWidth * 1.3, 70), P, -floor.offsetTop);
+  if (fx) fx.style.zIndex = Math.max(1, (parseInt(e.el.style.zIndex, 10) || 10) - 1);
+}
 function renderEntities() {
+  checkArrivals();
   if (s3d) {
     const host = hostPeer(), list = [];
     for (const p of playersHere()) {
@@ -1504,8 +1576,8 @@ function renderEntities() {
       if (typeof x !== "number" || typeof y !== "number") continue;
       const xp = isMe ? profile.xp : pr.xp || 0, BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
       const look = isMe ? myLook() : pr.lk, pz = BM ? null : poseOf(p.peer), pd = pz && POSE[pz];
-      const sf = cachedSvgFx(look, xp, pz);
-      list.push({key: p.peer, x, y, svg: sf.svg, fx: pz ? sf.fx : null, poseKey: pz ? pz + ":" + (isMe ? myPose.seq : (seenPoses.get(p.peer) || {}).k) : null, name: pr.ps + (SO ? SO.badge(p, true) : ""), sub:(pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " : "") + (BM ? "🎮 " + (bg ? bg.name : "en partie") : pd ? pd[2] + " " + pd[1] + " !" : titleOf(look, xp)),
+      const sf = cachedSvgFx(look, xp, pz, "sprite");
+      list.push({key: p.peer, pr: prOf(look), x, y, svg: sf.svg, fx: pz ? sf.fx : null, poseKey: pz ? pz + ":" + (isMe ? myPose.seq : (seenPoses.get(p.peer) || {}).k) : null, name: pr.ps + (SO ? SO.badge(p, true) : ""), sub:(pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " : "") + (BM ? "🎮 " + (bg ? bg.name : "en partie") : pd ? pd[2] + " " + pd[1] + " !" : titleOf(look, xp)),
         me: isMe, scale: A.size(xp) * .55 * (1 + .4 * (1 - A.level(xp) / A.MAX_LEVEL)), pose: pz, /* 3D : petits gabarits encore un peu agrandis (la caméra est loin), taille max inchangée */ walking: !!(isMe ? me.walking : pr.w), facing: (isMe ? me.facing : pr.f) === -1 ? -1 : 1, busy: !!BM && !isMe, crown: host === p.peer, voted: !!pr.v && !BM});
     }
     s3d.setEntities(list);
@@ -1531,8 +1603,8 @@ function renderEntities() {
     const key = JSON.stringify([pr.lk, pr.xp, pr.ps, sob, pr.v, host === p.peer,isMe ? myLook() : 0, isMe ? profile.xp : 0, BM ? BM.g : 0, pz ? pz + (isMe ? myPose.seq : (seenPoses.get(p.peer) || {}).k) + fc : 0]);
     if (key !== e.key) {
       e.key = key;
-      const look = isMe ? myLook() : pr.lk, xp = isMe ? profile.xp : pr.xp || 0, sf = cachedSvgFx(look, xp, pz);
-      e.el.innerHTML = `<div class="body">${sf.svg}${pd ? weaponFxHtml(sf.fx, fc) : ""}${pr.v && !BM ? `<span class="voted" title="A validé">✔</span>` : ""}${host === p.peer ? `<span class="crown" title="Hôte">👑</span>` : ""}${pd ? `<span class="poseflash"></span><span class="posefx">${pd[2]}</span>` : ""}</div><div class="tag">${esc(pr.ps + sob)}${BM ?`<small>🎮 ${esc(bg ? bg.name : "en partie")}</small>` : pd ? `<small class="pz">${pd[2]} ${esc(pd[1])} !</small>` : `<small>${esc(titleOf(look, xp))}</small>`}</div>`;
+      const look = isMe ? myLook() : pr.lk, xp = isMe ? profile.xp : pr.xp || 0, sf = cachedSvgFx(look, xp, pz, "full"), P = prOf(look);
+      e.el.innerHTML = `<div class="body">${sf.svg}${pd ? weaponFxHtml(sf.fx, fc) : ""}${pr.v && !BM ? `<span class="voted" title="A validé">✔</span>` : ""}${host === p.peer ? `<span class="crown" title="Hôte">👑</span>` : ""}${pd ? `<span class="poseflash"></span><span class="posefx">${pd[2]}</span>` : ""}</div><div class="tag${P ? " lgp" : ""}"${P ? ` style="--lgc:${LG.color(P)}"` : ""}>${nmH(pr.ps, look, {plain: isMe})}${esc(sob)}${BM ?`<small>🎮 ${esc(bg ? bg.name : "en partie")}</small>` : pd ? `<small class="pz">${pd[2]} ${esc(pd[1])} !</small>` : `<small>${esc(titleOf(look, xp))}</small>`}</div>`;
       e.el.classList.toggle("posing", !!pd);
       const tg = e.el.querySelector(".tag"); e.tw = tg ? tg.offsetWidth : 0; e.th = tg ? tg.offsetHeight : 0; e.tdy = 0;
     }
@@ -1692,12 +1764,12 @@ function renderRoster() {
     const pr = p.presence, isMe = p.peer === myPeer, xp = isMe ? profile.xp : pr.xp || 0;
     const g = pr.v && gameById(pr.v), BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
     const look = isMe ? myLook() : pr.lk, rec = !isMe && typeof pr.id === "string" ? profile.h2h[pr.id] : null;
-    return `<li data-peer="${esc(p.peer)}" title="${isMe ? "Mes rivaux" : "Face-à-face"}"><div class="mini">${A.svg(look, xp, {view: "bust"})}</div><div><b>${esc(pr.ps)}${isMe ? " (vous)" : ""}${host === p.peer ? " 👑" : ""}${SO ? SO.badge(p) : ""}${rec && nemOf(rec) ? ` <span class="nem${nemOf(rec) === "victime" ? " vic" : ""}">${nemOf(rec) === "victime" ? "VICTIME 😇" : "NÉMÉSIS 😈"}</span>` : ""}</b><small><span class="ptag ${isMe ? place : placeOf(pr)}">${PLACES[isMe ? place : placeOf(pr)].tag}</span> ${pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " + esc(teamLabel(pr.tm)) + " · " : ""}${esc(A.tier(xp).name)} · ${xp} XP${rec && (rec.w || rec.l) ? ` · ⚔️ ${rec.w}–${rec.l}` : ""}</small></div><span class="st ${g || BM ? "ok" : ""}${BM ? " play" : ""}">${BM ? "🎮 " + esc(bg ? bg.name : "") : pr.ed ? "se prépare" : g ? "✔ " + esc(g.name) : "choisit…"}</span></li>`;
+    return `<li data-peer="${esc(p.peer)}" title="${isMe ? "Mes rivaux" : "Face-à-face"}"><div class="mini">${A.svg(look, xp, {view: "bust"})}</div><div><b>${nmH(pr.ps, look)}${isMe ? " (vous)" : ""}${host === p.peer ? " 👑" : ""}${SO ? SO.badge(p) : ""}${rec && nemOf(rec) ? ` <span class="nem${nemOf(rec) === "victime" ? " vic" : ""}">${nemOf(rec) === "victime" ? "VICTIME 😇" : "NÉMÉSIS 😈"}</span>` : ""}</b><small><span class="ptag ${isMe ? place : placeOf(pr)}">${PLACES[isMe ? place : placeOf(pr)].tag}</span> ${pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " + esc(teamLabel(pr.tm)) + " · " : ""}${esc(A.tier(xp).name)} · ${xp} XP${rec && (rec.w || rec.l) ? ` · ⚔️ ${rec.w}–${rec.l}` : ""}</small></div><span class="st ${g || BM ? "ok" : ""}${BM ? " play" : ""}">${BM ? "🎮 " + esc(bg ? bg.name : "") : pr.ed ? "se prépare" : g ? "✔ " + esc(g.name) : "choisit…"}</span></li>`;
   }).join("");
 }
 function renderMe() {
   $("me-mini").innerHTML = A.svg(myLook(), profile.xp, {view: "bust"});
-  $("me-name").textContent = profile.pseudo;
+  $("me-name").innerHTML = nmH(profile.pseudo, myLook());
   const t = A.tier(profile.xp);
   $("me-lvl").textContent = `${titleOf(myLook(), profile.xp)} · ${profile.xp} XP`;
   $("wallet").textContent = `🥤 ${profile.sh}`;
@@ -1725,6 +1797,7 @@ function renderLobby() { renderNet(); if (!inLobby || inGame) return; fitHud(); 
 function renderAll() { renderMe(); renderLobby(); }
 function enterLobby() {
   saveSess({lob: 1, r: roomCode || null}); keepAwake();
+  if (!inLobby) arrivalsReset();
   inLobby = true; show("scr-lobby"); layoutTiles(); init3D(); renderAll(); pushPresence();
 }
 addEventListener("resize", () => { syncImm(); if (inLobby) { layoutTiles(); renderAll(); } });
@@ -1872,7 +1945,7 @@ $("rack").innerHTML = Array.from({length: 7}, (_, i) => `<svg viewBox="0 0 60 30
 function setPlace(pl, instant) {
   if (!isPlace(pl) || pl === place || placeBusy) return;
   const swap = () => {
-    place = pl; setTheme(pl);
+    place = pl; setTheme(pl); arrivalsReset();
     me.vote = null; me.x = me.tx = spawnX; me.y = me.ty = .9; me.walking = false; me.facing = 1;
     if (inLobby && !inGame) { layoutTiles(); entEls.forEach(e => e.el.remove()); entEls.clear(); }
     pushPresence(); renderAll();
@@ -1890,7 +1963,7 @@ document.querySelectorAll("[data-theme-btn]").forEach(b => b.addEventListener("c
 
 /* ---------- overlays ---------- */
 function closeOverlay() { $("overlay").innerHTML = ""; }
-function rosterAv(M, k, pose, view, mood) { const r = M.ro[k]; return r ? A.svg(r.l, r.x, {pose, view, mood}) : ""; }
+function rosterAv(M, k, pose, view, mood, lg) { const r = M.ro[k]; return r ? A.svg(r.l, r.x, {pose, view, mood, lg}) : ""; }
 let chosenSeen = null;
 function showChosen(M) {
   const g = gameById(M.g);
@@ -1906,7 +1979,7 @@ function showChosen(M) {
     }
   }
   $("overlay").innerHTML = `<div class="ov"><div class="ov-card"><p>${SO ? SO.chosenTag(M) : ""}C'est parti pour</p><h2>${esc(g ? g.name : M.g)}</h2>
-    <div class="versus">${M.pl.map((k, i) => `${i && M.pl.length === 2 ? `<div class="vs">VS</div>` : ""}<figure style="width:min(${Math.round(70 * A.size(M.ro[k].x))}px,${M.pl.length === 2 ? 42 : 30}vw)">${badge[k] || ""}${rosterAv(M, k, "flex", undefined, "fight")}<figcaption>${esc(M.ro[k].p)}</figcaption></figure>`).join("")}</div>
+    <div class="versus">${M.pl.map((k, i) => `${i && M.pl.length === 2 ? `<div class="vs">VS</div>` : ""}<figure style="width:min(${Math.round(70 * A.size(M.ro[k].x))}px,${M.pl.length === 2 ? 42 : 30}vw)">${badge[k] || ""}${rosterAv(M, k, "flex", undefined, "fight", M.pl.length <= 2 ? "still" : undefined)}<figcaption>${nmH(M.ro[k].p, M.ro[k].l)}</figcaption></figure>`).join("")}</div>
     ${g && placeOfGame(g) === "ring" ? announceHtml(M) : ""}${h2h}<div class="cd" id="countdown" aria-live="assertive"><small>Préparez-vous…</small><b></b></div>
     ${M.pl.includes(myPeer) ? `<div class="ch-acts"><button class="btn alt" type="button" id="ch-cancel">✕ Annuler la partie</button><small>Retour au lobby pour tout le monde, sans gain ni perte</small></div>` : ""}</div></div>`;
   // Quelqu'un ne confirme pas, on s'est trompé de jeu… : n'importe quel joueur du match peut tout annuler avant le début.
@@ -1947,14 +2020,15 @@ function showResults(M) {
   const res = M.res || {winners: [], ranking: [], gains: {}};
   res.gains = res.gains || {}; res.winners = res.winners || []; res.ranking = res.ranking || [];
   const before = profile.xp;
-  let gained = 0, shk = 0, duel = null, iWon = false, lootWon = false, deflated = false;
+  let gained = 0, shk = 0, prB = 0, duel = null, iWon = false, lootWon = false, deflated = false;
   if (M.pl.includes(myPeer) && profile.lastMid !== M.mid) {
     gained = res.gains[myPeer] || 0;
     iWon = res.winners.includes(myPeer);
     shk = shakersFor(iWon);
     duel = res.int ? null : recordH2H(M, res); // partie interrompue : rien n'est compté dans les face-à-face
     if (duel && duel.revanche) { gained += 50; shk += 20; } // REVANCHE : bonus calculé sur ce téléphone
-    profile.xp += gained; profile.sh += shk;
+    prB = prestigeShakers(iWon, profile.pr); // prestige : +10 🥤 par niveau, victoires seulement
+    profile.xp += gained; profile.sh += shk + prB;
     // Défaites : 2 de suite = −5 % de taille (≈ −100 XP, jamais sous 0), puis le compteur repart de zéro.
     // Une victoire remet le compteur à zéro ; nul, partie interrompue ou 2e place (à 3 et plus) ne comptent pas.
     const lost = !res.int && res.winners.length && !iWon && !(M.pl.length >= 3 && res.ranking[res.winners.length] === myPeer);
@@ -1976,15 +2050,16 @@ function showResults(M) {
   const title = res.int ? "Partie interrompue" : wTeam !== undefined ? `${esc((M.tn && M.tn[wTeam]) || "L'équipe")} gagne !` : res.winners.length ? (res.winners.length === 1 ? `${esc(M.ro[res.winners[0]].p)} gagne !` : "Victoire partagée !") : "Match nul !";
   $("overlay").innerHTML = `<div class="ov"><div class="ov-card"><p>${esc(g ? g.name : "")}</p><h2>${title}</h2>
     ${res.summary ? `<p>${esc(res.summary)}</p>` : ""}
-    <div class="podium">${order.concat(others).map(k => `<figure class="${res.winners.includes(k) ? "win" : ""}" style="width:min(${Math.round(75 * A.size(M.ro[k].x))}px,${M.pl.length <= 2 ? 44 : 30}vw)">${rosterAv(M, k, res.winners.includes(k) ? "flex" : "idle", undefined, res.winners.length ? (res.winners.includes(k) ? "win" : "lose") : undefined)}<figcaption><b>${esc(M.ro[k].p)}</b><span class="gain">+${res.gains[k] || 0} XP</span>${res.winners.includes(k) ? `<span class="shk">+${shakersFor(true)} 🥤 🎁</span>` : ""}</figcaption></figure>`).join("")}</div>
+    <div class="podium">${order.concat(others).map(k => `<figure class="${res.winners.includes(k) ? "win" : ""}" style="width:min(${Math.round(75 * A.size(M.ro[k].x))}px,${M.pl.length <= 2 ? 44 : 30}vw)">${rosterAv(M, k, res.winners.includes(k) ? "flex" : "idle", undefined, res.winners.length ? (res.winners.includes(k) ? "win" : "lose") : undefined, M.pl.length <= 2 ? "still" : undefined)}<figcaption><b>${nmH(M.ro[k].p, M.ro[k].l)}</b><span class="gain">+${res.gains[k] || 0} XP</span>${res.winners.includes(k) ? `<span class="shk">+${shakersFor(true)} 🥤${prestigeShakers(true, prOf(M.ro[k].l)) ? ` +${prestigeShakers(true, prOf(M.ro[k].l))} prestige` : ""} 🎁</span>` : ""}</figcaption></figure>`).join("")}</div>
     ${duel && duel.revanche ? `<div class="revanche">🔥 REVANCHE ! 🔥<small>Vous avez vengé votre défaite contre ${esc(duel.name)} : +50 XP et +20 🥤</small></div>` : ""}
-    ${deflated ? `<p>Partie : +${gained} XP, mais 2 défaites d'affilée : <b>${profile.xp - before} XP</b> au final (${profile.xp} XP au total).</p>` : gained ? (shk ? `<p>Vous gagnez <b>+${gained} XP</b> et <b>+${shk} 🥤</b> : ${profile.xp} XP au total, ${profile.sh} shakers.</p>` : `<p>Vous gagnez <b>+${gained} XP</b> (${profile.xp} XP au total).</p>${res.int ? "" : `<p class="nowin">Pas de shakers pour les perdants 💀 Gagnez la prochaine pour remplir le vôtre !</p>`}`) : ""}
+    ${deflated ? `<p>Partie : +${gained} XP, mais 2 défaites d'affilée : <b>${profile.xp - before} XP</b> au final (${profile.xp} XP au total).</p>` : gained ? (shk + prB ? `<p>Vous gagnez <b>+${gained} XP</b> et <b>+${shk} 🥤${prB ? ` +${prB} prestige` : ""}</b> : ${profile.xp} XP au total, ${profile.sh} shakers.</p>` : `<p>Vous gagnez <b>+${gained} XP</b> (${profile.xp} XP au total).</p>${res.int ? "" : `<p class="nowin">Pas de shakers pour les perdants 💀 Gagnez la prochaine pour remplir le vôtre !</p>`}`) : ""}
     ${deflated ? (grow <= -.005 ? `<div class="gonfle degonfle">${Math.round(grow * 100)} % 💀 ça dégonfle !<small>2 défaites d'affilée · gagnez la prochaine pour regonfler</small></div>` : `<div class="gonfle degonfle">💀 2 défaites d'affilée<small>Déjà tout maigre : impossible de dégonfler plus !</small></div>`) : ""}
     ${M.pl.includes(myPeer) && !deflated && (profile.ls || 0) === 1 && !iWon ? `<p class="nowin">⚠️ Encore une défaite d'affilée et votre perso dégonfle de 5 %…</p>` : ""}
     ${grow >= .01 ? `<div class="gonfle">+${Math.round(grow * 100)} % 💪 ça gonfle !<small>Niveau ${lvA}${lvA >= A.MAX_LEVEL ? " (MAX)" : ""} · taille ×${(A.growth || A.size)(profile.xp).toFixed(1)}</small></div>` : ""}
     ${M.pl.includes(myPeer) && profile.loot > 0 ? `<div class="res-actions"><button class="btn loot" type="button" data-openloot>🎁 ${lootWon ? "Shaker mystère gagné : secouez-le !" : `Shakers à ouvrir : ${profile.loot}`}</button></div>` : ""}
     ${deflated && grow <= -.005 ? `<div class="levelup"><div>${A.svg(myLook(), before, {mood: "lose"})}</div><div class="arrow">→</div><div class="inflate deflate" style="--from:${(A.size(before) / A.size(profile.xp)).toFixed(3)}">${A.svg(myLook(), profile.xp, {mood: "lose"})}</div></div>` : ""}
-    ${grow >= .01 ? `${ta.index > tb.index ? `<div class="levelup-title">Nouveau palier : ${esc(ta.name)} !</div>` : ""}<div class="levelup"><div style="align-self:end;transform-origin:bottom;transform:scale(${(A.size(before) / A.size(profile.xp)).toFixed(3)})">${A.svg(myLook(), before)}</div><div class="arrow">→</div><div class="inflate" style="--from:${(A.size(before) / A.size(profile.xp)).toFixed(3)}">${A.svg(myLook(), profile.xp, {pose: "flex"})}</div></div>` : ""}
+    ${grow >= .01 ? `${ta.index > tb.index ? `<div class="levelup-title">Nouveau palier : ${esc(ta.name)} !</div>` : ""}<div class="levelup"><div style="align-self:end;transform-origin:bottom;transform:scale(${(A.size(before) / A.size(profile.xp)).toFixed(3)})">${A.svg(myLook(), before)}</div><div class="arrow">→</div><div class="inflate" style="--from:${(A.size(before) / A.size(profile.xp)).toFixed(3)}">${A.svg(myLook(), profile.xp, {pose: "flex", lg: "full"})}</div></div>` : ""}
+    ${M.pl.includes(myPeer) && lvA >= A.MAX_LEVEL ? rebirthHtml(lvB < A.MAX_LEVEL) : ""}
     ${SO ? SO.resultsHtml(M) : ""}<p style="font-size:.95rem">Retour au lobby dans quelques secondes…</p><button class="btn alt" type="button" id="res-close">Revenir au lobby maintenant</button></div></div>`;
   $("res-close").onclick = () => { closeOverlay(); afterResults(); };
   emit("results", {M, mine: M.pl.includes(myPeer), won: res.winners.includes(myPeer), draw: !res.winners.length, int: !!res.int, winners: res.winners.map(k => M.ro[k] ? M.ro[k].p : "?"),
@@ -1998,7 +2073,7 @@ const POSE_SHORT = {flex: "Biceps", most: "Most musc.", kiss: "Bisou", back: "Do
 const POSE_MS = 2600;
 let myPose = null, poseSeq = Math.floor(Math.random() * 1e5), poseHist = [], poseCdUntil = 0;
 const seenPoses = new Map(); // pose des autres : affichée ~2,5 s à partir du moment où CE téléphone la reçoit (horloges différentes)
-const titleOf = (look, xp) => A.tier(xp).name;
+const titleOf = (look, xp) => (prOf(look) && LG ? LG.formName(prOf(look)) + " · " : "") + A.tier(xp).name;
 function strikePose(p, force) {
   if (!POSE[p]) return false;
   const now = Date.now();
@@ -2043,6 +2118,9 @@ $("posebar").addEventListener("click", e => { const b = e.target.closest("[data-
 // Shakers 🥤 : uniquement pour les gagnants (+ un shaker mystère). Les autres ne gagnent que de l'XP.
 const WIN_SHAKERS = 40;
 const shakersFor = won => won ? WIN_SHAKERS : 0;
+// Prestige : +10 🥤 par niveau de prestige pour chaque victoire (en plus des shakers normaux). Pas de bonus d'XP.
+const PRESTIGE_SHAKERS = 10;
+const prestigeShakers = (won, pr) => won ? PRESTIGE_SHAKERS * Math.max(0, pr | 0) : 0;
 const RAR = r => A.RARITIES[r] || A.RARITIES.commun;
 const slotOf = s => A.SLOTS.find(x => x[0] === s) || ["", "", ""];
 const nemOf = r => !r ? null : (r.l - r.w >= 3 ? "nemesis" : r.w - r.l >= 3 ? "victime" : null);
@@ -2092,7 +2170,52 @@ function growPanel() {
   return `<div class="grow-panel"><h3>💪 Gonflette</h3><div class="lv">Niveau ${L}${max ? " · MAX" : ""} <small style="display:inline;font-size:.55em;color:var(--dim)">/ ${A.MAX_LEVEL}</small></div>
     <div class="grow-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${A.LEVEL_XP}" aria-valuenow="${max ? A.LEVEL_XP : into}"><i style="width:${max ? 100 : into}%"></i></div>
     <small>${max ? "Taille maximale : vous êtes un titan démesuré." : `Encore <b style="color:var(--text)">${A.LEVEL_XP - into} XP</b> avant de gonfler d'un cran (taille ×${(A.growth || A.size)(profile.xp).toFixed(1)}).`} Tous les ${A.LEVEL_XP} XP, le perso grossit tout seul.</small>
-    <div class="grow-steps">${steps.map(l => `<div style="opacity:${l === L ? 1 : .55}">${A.svg(myLook(), l * A.LEVEL_XP, {pose: l === L ? "flex" : "idle"})}</div>`).join("")}</div></div>`;
+    <div class="grow-steps">${steps.map(l => `<div style="opacity:${l === L ? 1 : .55}">${A.svg(myLook(), l * A.LEVEL_XP, {pose: l === L ? "flex" : "idle"})}</div>`).join("")}</div>${max ? rebirthHtml() : ""}</div>`;
+}
+
+/* ---------- prestige : renaissance au niveau max ----------
+   XP → 0, prestige +1 (forme légendaire de core/legend.js, emblème de rang). On garde TOUT le reste : objets, compagnons,
+   shakers, shakers mystère, face-à-face… Pas d'XP plus rapide : seul bonus, +10 🥤 par niveau de prestige à chaque victoire. */
+const canRebirth = () => !!LG && A.level(profile.xp) >= A.MAX_LEVEL;
+function rebirthHtml(justReached) {
+  if (!canRebirth()) return "";
+  const n = (profile.pr || 0) + 1;
+  return `<div class="rebirth-cta${justReached ? " fresh" : ""}">${justReached ? `<small>Taille maximale atteinte : vous pouvez renaître en légende !</small>` : ""}<button class="btn rebirth" type="button" data-rebirth>⭐ Renaître (Prestige ${n})</button></div>`;
+}
+function openRebirth() {
+  if (!canRebirth()) return;
+  const P = profile.pr || 0, n = P + 1, now = myLook(), after = Object.assign({}, now, {pr: n}), col = LG.color(n);
+  openSheet("rebirth", `<div class="rebirth-card" style="--lgc:${col}"><h2>⭐ Renaissance</h2>
+    <p class="sub">Votre perso redevient une crevette… mais <b>légendaire</b>. Prestige ${n} : forme <b class="lg-nm" style="--lgc:${col}">${esc(LG.formName(n))}</b>.</p>
+    <div class="rb-duo"><figure>${A.svg(now, profile.xp, {pose: "flex", lg: "still"})}<figcaption>${P ? LG.badgeHtml(P) : ""}${esc(A.tier(profile.xp).name)}<small>${profile.xp} XP${P ? ` · Prestige ${P}` : ""}</small></figcaption></figure>
+      <div class="rb-arrow">→</div>
+      <figure class="new">${A.svg(after, 0, {pose: "flex", lg: "full"})}<figcaption>${LG.badgeHtml(n)}<span class="lg-nm" style="--lgc:${col}">${esc(A.tier(0).name)} ${esc(LG.formName(n))}</span><small class="lg-rank" style="--lgc:${col}">Prestige ${n} · ${esc(LG.rankLabel(n))}</small></figcaption></figure></div>
+    <ul class="rb-list"><li>💪 XP remise à <b>0</b> : il faut tout regonfler (même vitesse qu'avant)</li><li>🎽 Vous gardez <b>tout</b> : objets, compagnons, 🥤 ${profile.sh} shakers, 🎁 shakers mystère, rivaux</li><li>🥤 Bonus : <b>+${PRESTIGE_SHAKERS * n} 🥤</b> à chaque victoire (+${PRESTIGE_SHAKERS} par niveau de prestige)</li><li>${LG.badgeHtml(n)} Emblème et nom en couleur, visibles par tout le monde</li></ul>
+    <div class="rb-acts"><button class="btn red" type="button" data-rebirth-go>⭐ Renaître !</button><button class="btn alt" type="button" data-close>Plus tard</button></div></div>`, true);
+}
+function doRebirth() {
+  if (!canRebirth()) return false;
+  profile.pr = (profile.pr || 0) + 1; profile.xp = 0; profile.ls = 0;
+  saveProfile(); closeSheet(); closeOverlay(); pushPresence(); renderAll(); if (editing) drawEditor();
+  celebrateRebirth(profile.pr);
+  return true;
+}
+function celebrateRebirth(n) {
+  const old = document.querySelector(".lg-cele"); if (old) old.remove();
+  const col = LG.color(n), el = document.createElement("div");
+  el.className = "lg-cele"; el.style.setProperty("--lgc2", col);
+  let cf = ""; const C = ["#ffd23f", col, "#ff2e88", "#3ef2ff", "#ffffff"];
+  for (let i = 0; i < 36; i++) cf += `<i class="cf" style="--x:${(i * 37) % 100}vw;--c:${C[i % 5]};--t:${(2.2 + (i % 5) * .35).toFixed(2)}s;--d:${((i % 9) * .12).toFixed(2)}s"></i>`;
+  el.innerHTML = `<div class="in"><div class="k">Renaissance</div><h2>Prestige ${n} !</h2><div class="av-w">${A.svg(myLook(), profile.xp, {pose: "flex", lg: "full"})}</div>
+    <div class="rk">${LG.badgeHtml(n)}<span>${esc(LG.formName(n))} · ${esc(LG.rankLabel(n))}</span></div><small>XP remise à 0 · objets et shakers gardés · +${PRESTIGE_SHAKERS * n} 🥤 par victoire</small><small style="opacity:.7">Touchez pour continuer</small></div>${cf}`;
+  document.body.appendChild(el);
+  const close = () => { el.remove(); };
+  el.addEventListener("click", close);
+  setTimeout(close, 6000);
+  if (G.kit) { G.kit.sfx("win"); G.kit.haptic("success"); }
+  const AN = G.announcer;
+  if (AN) AN.say([{t: "Renaissance !", rate: .85, pitch: .6}, {t: `${AN.stretch(profile.pseudo)} renaît en légende… ${LG.formName(n)} ! Prestige ${n} !`, rate: .8, pitch: 1.25}], {cut: true});
+  emit("rebirth", {pr: n});
 }
 function drawEdExtra() {
   const el = $("ed-extra"); if (!el) return;
@@ -2144,9 +2267,11 @@ $("sheet").addEventListener("click", e => {
 addEventListener("keydown", e => { if (e.key === "Escape") closePoses(); if (e.key === "Escape" && sheetKind) { closeSheet(); renderAll(); } });
 // boutons présents dans plusieurs écrans (résultats, éditeur, fenêtres)
 document.addEventListener("click", e => {
-  const t = e.target.closest("[data-openloot],[data-shop],[data-eq]");
+  const t = e.target.closest("[data-openloot],[data-shop],[data-eq],[data-rebirth],[data-rebirth-go]");
   if (!t || t.disabled) return;
-  if (t.hasAttribute("data-openloot")) openLoot();
+  if (t.hasAttribute("data-rebirth")) openRebirth();
+  else if (t.hasAttribute("data-rebirth-go")) doRebirth();
+  else if (t.hasAttribute("data-openloot")) openLoot();
   else if (t.hasAttribute("data-shop")) openShop();
   else if (t.dataset.eq) { const it = A.ITEM[t.dataset.eq]; equipItem(it.id, profile.eq[it.s] !== it.id); if (editing) drawEditor(); }
 });
@@ -2166,7 +2291,7 @@ function drawShop() {
     return `<button type="button" class="item ${it.r}" style="--rc:${R2.color}" data-item="${it.id}" aria-pressed="${shopSel === it.id}">${A.svg(withItem(base, it.id), profile.xp, {view: it.s === "animal" ? "pet" : bust ? "bust" : undefined, pose: itemPose(it)})}<b>${esc(it.n)}</b><span class="rar">${R2.name}</span>${own ? "" : `<span class="price">🥤 ${it.price}</span>`}${own ? `<span class="tagown${eq ? " eq" : ""}">${eq ? "Équipé" : "À vous"}</span>` : ""}</button>`;
   };
   body.innerHTML = `<h2>Boutique Protéines</h2><p class="sub">Vous avez <b style="color:var(--gold)">🥤 ${profile.sh} shakers</b> · seuls les gagnants sont payés : <b>victoire = +${WIN_SHAKERS} 🥤 et un shaker mystère 🎁</b>.</p>
-    <div class="shop"><div class="shop-prev">${A.svg(sel ? withItem(base, sel.id) : base, profile.xp, {pose: sel ? itemPose(sel) : "flex"})}<div><div class="nm">${sel ? esc(sel.n) : "Cabine d'essayage"}</div>${sel ? `<span class="rar" style="--rc:${R.color}">${R.name}</span>` : ""}<p class="ds">${sel ? esc(sel.d) : "Touchez un objet pour l'essayer sur votre perso."}</p><div class="acts">${acts}</div></div></div>
+    <div class="shop"><div class="shop-prev">${A.svg(sel ? withItem(base, sel.id) : base, profile.xp, {pose: sel ? itemPose(sel) : "flex", lg: "full"})}<div><div class="nm">${sel ? esc(sel.n) : "Cabine d'essayage"}</div>${sel ? `<span class="rar" style="--rc:${R.color}">${R.name}</span>` : ""}<p class="ds">${sel ? esc(sel.d) : "Touchez un objet pour l'essayer sur votre perso."}</p><div class="acts">${acts}</div></div></div>
     <div><div class="shop-tabs" role="group" aria-label="Emplacements">${A.SLOTS.map(([k, n, e]) => `<button class="chip" type="button" data-tab="${k}" aria-pressed="${k === shopTab}">${e} ${n}</button>`).join("")}</div>
     <div class="shop-grid">${A.ITEMS.filter(i => i.s === shopTab).map(card).join("")}</div></div></div>`;
 }

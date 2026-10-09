@@ -310,6 +310,9 @@
     if (p) { const v = {lk: p.presence.lk, xp: p.presence.xp || 0}; looks.set(pid, v); return v; }
     return looks.get(pid) || {lk: null, xp: 0};
   }
+  // prestige (core/legend.js) : emblème de rang + nom coloré
+  const prOfPid = pid => { const L = G.legend; return L ? L.level(lookOf(pid).lk) : 0; };
+  const nmP = (pid, name) => { const L = G.legend, P = prOfPid(pid); return L && P ? L.nameHtml(esc(name), P) : esc(name); };
   const svgCache = new Map();
   function avatar(pid, opts) {
     const L = lookOf(pid), k = JSON.stringify([L.lk, L.xp, opts || 0]);
@@ -541,7 +544,7 @@
       const last = r.s.slice(-1);
       return `<div class="so-sr${r.pid === me ? " me" : ""}" data-pid="${esc(r.pid)}" data-top="${n * RH}" data-w="${(r.pts / max * 100).toFixed(1)}" style="top:${top}px">
         <span class="so-rk">${r.rank}</span><span class="so-av">${avatar(r.pid, {view: "bust"})}</span>
-        <span class="so-nmw"><b>${esc(r.name)}${so.mj === r.pid ? " 🎤" : ""}</b><span class="so-barw"><i style="width:${w}%"></i></span></span>
+        <span class="so-nmw"><b>${nmP(r.pid, r.name)}${so.mj === r.pid ? " 🎤" : ""}</b><span class="so-barw"><i style="width:${w}%"></i></span></span>
         <span class="so-pts"><b>${r.pts}</b><small>pt${r.pts > 1 ? "s" : ""}</small>${d > 0 ? `<em class="up">▲${d}</em>` : d < 0 ? `<em class="dn">▼${-d}</em>` : so.ph === "i" && L > 0 && last && last !== "-" ? `<em class="eq">+${PTS[last] || 0}</em>` : ""}</span></div>`;
     }).join("");
     if (anim) requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => {
@@ -607,7 +610,7 @@
     const S = standings(so).filter(r => r.pl + r.by > 0), top = S.slice(0, 3);
     const AW = awards(so);
     const poses = ["flex", "most", "kiss"], H = [118, 84, 62], order = [1, 0, 2];
-    const pod = order.filter(n => top[n]).map(n => { const r = top[n]; return `<div class="so-step s${n + 1}" data-rev="${n}"><div class="so-fig">${n === 0 ? `<span class="so-trophy">🏆</span>` : ""}${avatar(r.pid, {pose: poses[n]})}</div><b>${esc(r.name)}</b><span class="so-ptsb">${r.pts} pt${r.pts > 1 ? "s" : ""}</span><div class="so-blk" style="height:${H[n]}px"><span>${n + 1}</span></div></div>`; }).join("");
+    const pod = order.filter(n => top[n]).map(n => { const r = top[n]; return `<div class="so-step s${n + 1}" data-rev="${n}"><div class="so-fig">${n === 0 ? `<span class="so-trophy">🏆</span>` : ""}${avatar(r.pid, {pose: poses[n]})}</div><b>${nmP(r.pid, r.name)}</b><span class="so-ptsb">${r.pts} pt${r.pts > 1 ? "s" : ""}</span><div class="so-blk" style="height:${H[n]}px"><span>${n + 1}</span></div></div>`; }).join("");
     const b = myBonus && myBonus.so === so.i ? myBonus.b : null;
     return `<div class="so-cer"><div class="so-kicker">🎉 ${so.pl.length} jeux · ${S.length} athlètes</div><h2 class="so-olympia">Mister Olympia<small>de la soirée</small></h2>
       <div class="so-drum" data-so-drum>🥁 Roulement de tambour…</div>
@@ -616,7 +619,7 @@
         ${S[0] ? `<p class="so-champ-l">👑 <b>${esc(S[0].name)}</b> est champion de la soirée : +${BONUS[0][0]} XP, +${BONUS[0][1]} 🥤 et un shaker mystère 🎁</p>` : ""}
         ${b ? `<p class="so-mybonus">Votre bonus de podium : <b>+${b.xp} XP</b> et <b>+${b.sh} 🥤</b>${b.n === 0 ? " · titre « 👑 Champion de la soirée »" : ""}</p>` : ""}
         ${AW.length ? `<h3>Les trophées</h3><ul class="so-aw">${AW.map(a => `<li><span class="so-awe">${a.e}</span><span><b>${esc(a.t)}</b><small>${esc(a.name)} · ${esc(a.d)}</small></span><span class="so-awav">${avatar(a.pid, {view: "bust"})}</span></li>`).join("")}</ul>` : ""}
-        <h3>Classement final</h3><ol class="so-final">${standings(so).map(r => `<li><span>${r.rank}.</span><b>${esc(r.name)}${so.mj === r.pid ? " 🎤" : ""}</b><small>${r.w} V · ${r.l} D${r.by ? ` · ${r.by} exempt` : ""}</small><em>${r.pts} pt${r.pts > 1 ? "s" : ""}</em></li>`).join("")}</ol>
+        <h3>Classement final</h3><ol class="so-final">${standings(so).map(r => `<li><span>${r.rank}.</span><b>${nmP(r.pid, r.name)}${so.mj === r.pid ? " 🎤" : ""}</b><small>${r.w} V · ${r.l} D${r.by ? ` · ${r.by} exempt` : ""}</small><em>${r.pts} pt${r.pts > 1 ? "s" : ""}</em></li>`).join("")}</ol>
         <div class="so-row so-center"><button class="btn red" type="button" data-so="photo" data-kind="soiree">📸 Photo souvenir</button><button class="btn alt" type="button" data-so="replay">Rejouer la remise</button><button class="btn alt" type="button" data-so="close">Retour au lobby</button>${so.mj === myPid() && curSo() ? `<button class="btn alt" type="button" data-so="stop">Fermer la soirée</button>` : ""}</div>
       </div></div>`;
   }
@@ -715,13 +718,21 @@
     let people;
     if (so) { people = standings(so).map(r => ({pid: r.pid, name: r.name, pts: r.pts, rank: r.rank, played: r.pl + r.by > 0})).filter(p => p.played); }
     else people = C.players().map(p => ({pid: pidOf(p), name: p.presence.ps}));
-    people.forEach(p => { const L = lookOf(p.pid); p.lk = L.lk; p.xp = L.xp; p.k = .78 + .22 * Math.log(Math.max(1, A.size(L.xp))) / Math.log(8); });
+    people.forEach(p => { const L = lookOf(p.pid); p.lk = L.lk; p.xp = L.xp; p.pr = G.legend ? G.legend.level(L.lk) : 0; p.k = .78 + .22 * Math.log(Math.max(1, A.size(L.xp))) / Math.log(8); });
     const AW = so ? awards(so) : [];
     const draw = async (p, cx, feetY, h, pose) => {
-      const w = h * 290 / 280, img = await loadImg(A.svg(p.lk, p.xp, pose ? {pose} : undefined), Math.round(w), Math.round(h));
+      const w = h * 290 / 280, img = await loadImg(A.svg(p.lk, p.xp, pose ? {pose, lg: "still"} : {lg: "still"}), Math.round(w), Math.round(h));
       if (img) x.drawImage(img, cx - w / 2, feetY - h * (272 / 280), w, h);
     };
-    const label = (t, cx, y, size, bg, fg) => { x.font = `800 ${size}px ${FU}`; const tw = Math.min(x.measureText(t).width, 300) + size; x.fillStyle = bg; rr(x, cx - tw / 2, y - size * .95, tw, size * 1.3, size * .5); x.fill(); x.fillStyle = fg; x.fillText(t, cx, y, 300); };
+    // étiquette ; pr > 0 : emblème de prestige à gauche, texte et liseré à la couleur du rang
+    const label = (t, cx, y, size, bg, fg, pr) => {
+      const L = G.legend, bi = pr && L ? L.badgeImg(pr) : null, rc = pr && L ? L.color(pr) : null, bs = bi ? Math.round(size * 1.5) : 0;
+      x.font = `800 ${size}px ${FU}`; const tx = Math.min(x.measureText(t).width, 300), tw = tx + size + bs;
+      x.fillStyle = bg; rr(x, cx - tw / 2, y - size * .95, tw, size * 1.3, size * .5); x.fill();
+      if (rc) { x.strokeStyle = rc; x.lineWidth = 3; x.stroke(); }
+      if (bi) x.drawImage(bi, cx - tw / 2 + size * .25, y - size * .35 - bs / 2, bs, bs);
+      x.fillStyle = rc && bg !== "#e63946" ? rc : fg; x.fillText(t, cx + bs / 2, y, 300);
+    };
     if (so) {
       const top = people.slice(0, 3), rest = people.slice(3).sort((a, b) => b.k - a.k);
       // rangée du fond : les autres, les plus gonflés au fond
@@ -729,7 +740,7 @@
       const back = rest, nb = back.length, SLOTS = [390, 690, 90, 990, 240, 840];
       for (let j = 0; j < nb; j++) {
         const p = back[j], cx = nb <= SLOTS.length ? SLOTS[j] : W * (j + .5) / nb, h = 290 * p.k * (nb > 6 ? .8 : 1);
-        await draw(p, cx, 545, h); label(p.name, cx, 578, 26, "#000000aa", "#fff");
+        await draw(p, cx, 545, h); label(p.name, cx, 578, 26, "#000000aa", "#fff", p.pr);
       }
       // podium
       const spots = [[W / 2, 300, 150, "#ffcc33", "flex"], [W / 2 - 300, 260, 110, "#d9dde6", "most"], [W / 2 + 300, 240, 80, "#d98b4a", "kiss"]];
@@ -739,7 +750,7 @@
         x.fillStyle = col; x.strokeStyle = "#1d1420"; x.lineWidth = 6; rr(x, cx - bw / 2, baseY - bh, bw, bh, 10); x.fill(); x.stroke();
         x.fillStyle = "#1d1420"; x.font = `400 ${Math.round(bh * .55)}px ${FD}`; x.fillText(String(n + 1), cx, baseY - bh * (n ? .28 : .45));
         await draw(p, cx, baseY - bh + 6, hh * 1.25 * p.k, pose);
-        label(`${p.name} · ${p.pts} pt${p.pts > 1 ? "s" : ""}`, cx, baseY - bh - hh * 1.25 * p.k * .93 - 6, 32, n ? "#1d1420dd" : "#e63946", "#fff");
+        label(`${p.name} · ${p.pts} pt${p.pts > 1 ? "s" : ""}`, cx, baseY - bh - hh * 1.25 * p.k * .93 - 6, 32, n ? "#1d1420dd" : "#e63946", "#fff", p.pr);
         if (n === 0) { x.font = `48px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; x.textBaseline = "middle"; x.fillText("🏆", cx - 92, baseY - bh / 2); x.fillText("🏆", cx + 92, baseY - bh / 2); x.textBaseline = "alphabetic"; }
       }
       // panneau du bas : classement + trophées
@@ -747,7 +758,7 @@
       x.fillStyle = "#14101add"; rr(x, 36, py, W - 72, H - py - 30, 28); x.fill(); x.strokeStyle = "#ffcc33"; x.lineWidth = 4; x.stroke();
       x.textAlign = "left"; x.fillStyle = "#ffcc33"; x.font = `400 40px ${FD}`; x.fillText("CLASSEMENT FINAL", 70, py + 56);
       const S = standings(so).filter(r => r.pl + r.by > 0).slice(0, 10);
-      S.forEach((r, n) => { const y = py + 102 + n * 41; x.font = `800 32px ${FU}`; x.fillStyle = n < 3 ? ["#ffcc33", "#e6e9f0", "#e8a06a"][n] : "#f5efe6"; x.fillText(`${r.rank}. ${r.name}`, 70, y, 300); x.textAlign = "right"; x.fillText(`${r.pts} pt${r.pts > 1 ? "s" : ""}`, 500, y); x.textAlign = "left"; });
+      S.forEach((r, n) => { const y = py + 102 + n * 41, bi = G.legend ? G.legend.badgeImg(prOfPid(r.pid)) : null; if (bi) x.drawImage(bi, 38, y - 29, 32, 32); x.font = `800 32px ${FU}`; x.fillStyle = n < 3 ? ["#ffcc33", "#e6e9f0", "#e8a06a"][n] : "#f5efe6"; x.fillText(`${r.rank}. ${r.name}`, 70, y, 300); x.textAlign = "right"; x.fillText(`${r.pts} pt${r.pts > 1 ? "s" : ""}`, 500, y); x.textAlign = "left"; });
       x.fillStyle = "#ffcc33"; x.font = `400 40px ${FD}`; x.fillText("TROPHÉES", 560, py + 56);
       AW.slice(0, 7).forEach((a, n) => { const y = py + 100 + n * 58; x.font = `34px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; x.fillText(a.e, 560, y + 4); x.font = `800 30px ${FU}`; x.fillStyle = "#fff"; x.fillText(a.t, 610, y - 6, 400); x.font = `600 24px ${FU}`; x.fillStyle = "#b9aec6"; x.fillText(`${a.name} · ${a.d}`, 610, y + 22, 400); x.fillStyle = "#ffcc33"; });
       x.textAlign = "center"; x.font = `700 26px ${FU}`; x.fillStyle = "#b9aec6"; x.fillText(`${so.pl.length} jeux · ${people.length} athlètes · 🎤 ${nameOf(so, so.mj)}`, W / 2, H - 50);

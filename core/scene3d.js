@@ -1172,8 +1172,9 @@
     function drawTag(en) {
       const name = en.name || "", sub = en.sub || "", S = 2;
       const nameF = 15 * S, subF = 11.5 * S, padX = 8 * S, padY = 3 * S;
+      const LG = G.legend, pr = en.pr > 0 && LG ? en.pr : 0, bImg = pr ? LG.badgeImg(pr) : null, bSz = pr ? Math.round(nameF * 1.35) : 0, bGap = pr ? 3 * S : 0;
       const c0 = mkCanvas(4, 4).getContext("2d");
-      c0.font = `800 ${nameF}px ${FONT_UI}`; const nw = c0.measureText(name).width;
+      c0.font = `800 ${nameF}px ${FONT_UI}`; const nw = c0.measureText(name).width + bSz + bGap;
       c0.font = `700 ${subF}px ${FONT_UI}`; const sw = sub ? c0.measureText(sub).width : 0;
       const pw = Math.ceil(Math.max(nw, sw) + padX * 2), ph = Math.ceil(nameF * 1.12 + (sub ? subF * 1.12 : 0) + padY * 2);
       const crownH = en.crown ? 22 * S : 0, badge = en.voted ? 11 * S : 0, bw = 2 * S;
@@ -1183,9 +1184,17 @@
       x.textAlign = "center"; x.textBaseline = "middle";
       x.fillStyle = "rgba(0,0,0,.25)"; rrect(x, px + 1, py + 3, pw, ph, 8 * S); x.fill();
       x.fillStyle = en.me ? ME_GOLD : "rgba(20,14,26,.82)"; rrect(x, px, py, pw, ph, 8 * S); x.fill();
-      x.lineWidth = bw; x.strokeStyle = en.me ? "#1d1420" : "rgba(255,255,255,.3)"; x.stroke();
-      x.font = `800 ${nameF}px ${FONT_UI}`; x.fillStyle = en.me ? "#1d1420" : "#ffffff";
-      x.fillText(name, cw / 2, py + padY + nameF * .58);
+      const rc = pr ? LG.color(pr) : null;
+      x.lineWidth = rc ? bw * 1.4 : bw; x.strokeStyle = rc || (en.me ? "#1d1420" : "rgba(255,255,255,.3)"); x.stroke();
+      x.font = `800 ${nameF}px ${FONT_UI}`; x.fillStyle = en.me ? "#1d1420" : rc || "#ffffff";
+      const nx = cw / 2 + (bSz + bGap) / 2, ny = py + padY + nameF * .58;
+      if (rc && !en.me) { x.save(); x.shadowColor = rc; x.shadowBlur = 6 * S; x.fillText(name, nx, ny); x.restore(); }
+      x.fillText(name, nx, ny);
+      if (pr) {
+        const bx = nx - (nw - bSz - bGap) / 2 - bGap - bSz, by = ny - bSz / 2 - S;
+        if (bImg) x.drawImage(bImg, bx, by, bSz, bSz);
+        else { x.font = `800 ${Math.round(nameF * .8)}px ${FONT_UI}`; x.fillStyle = rc; x.fillText("★", bx + bSz / 2, ny); }
+      }
       if (sub) { x.font = `700 ${subF}px ${FONT_UI}`; x.fillStyle = en.me ? "#5b3a00" : "#ffd977"; x.fillText(sub, cw / 2, py + padY + nameF * 1.12 + subF * .55); }
       if (en.crown) { x.font = `${20 * S}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; x.fillText("👑", cw / 2, py - crownH / 2 + 2); }
       if (en.voted) {
@@ -1231,8 +1240,9 @@
           en.svg = d.svg; en.cache = d.svg ? acquireSvg(d.svg) : null;
           if (old) releaseSvg(old);
         }
-        const tk = [d.name, d.sub, en.me, !!d.voted, !!d.crown].join("\u0001");
-        if (tk !== en.tagKey) { en.tagKey = tk; en.name = d.name; en.sub = d.sub; en.voted = !!d.voted; en.crown = !!d.crown; drawTag(en); }
+        const pr = d.pr > 0 ? d.pr | 0 : 0, bReady = pr && G.legend ? G.legend.badgeReady(pr) : false;
+        const tk = [d.name, d.sub, en.me, !!d.voted, !!d.crown, pr, bReady].join("\u0001");
+        if (tk !== en.tagKey) { en.tagKey = tk; en.name = d.name; en.sub = d.sub; en.voted = !!d.voted; en.crown = !!d.crown; en.pr = pr; drawTag(en); }
       }
       for (const [k, en] of ents) if (!live.has(k)) removeEnt(k, en);
     }
@@ -1405,6 +1415,7 @@
           const sx = lo > hi ? -tmpA.x : tmpA.x < lo ? lo - tmpA.x : tmpA.x > hi ? hi - tmpA.x : 0;
           X += sx / ux;
         }
+        en.sx = X; en.sfy = floorY; en.sz = Z; en.shy = hy;   // pour screenOf (effets DOM par-dessus la 3D)
         en.mesh.scale.set(sz * en.facing, hy * breath, 1);
         en.mesh.position.set(X, floorY + bob - FOOT_FRAC * hy, Z);
         en.mesh.rotation.set(0, Math.atan2(camera.position.x - X, camera.position.z - Z), wob * en.facing);
@@ -1498,6 +1509,14 @@
       setEntities,
       ping,
       resize,
+      // position à l'écran (px dans le conteneur) des pieds d'un perso et sa hauteur (effets DOM : entrée des légendes)
+      screenOf(key) {
+        const en = ents.get(key);
+        if (!en || en.sx == null || !vpW || !vpH) return null;
+        tmpA.set(en.sx, en.sfy, en.sz).project(camera); tmpB.set(en.sx, en.sfy + en.shy * .62, en.sz).project(camera);
+        const x = (tmpA.x + 1) / 2 * vpW, y = (1 - tmpA.y) / 2 * vpH, h = Math.max(10, y - (1 - tmpB.y) / 2 * vpH);
+        return {x, y, h, w: h * .75};
+      },
       // zone utile (px) : t = haut réservé au HUD (+ marge pour les têtes), b = bas réservé, hud = bas du HUD du haut
       setInsets(o) {
         const t = Math.max(0, Math.round((o && o.t) || 0)), b = Math.max(0, Math.round((o && o.b) || 0)), hud = Math.max(0, Math.round((o && o.hud) || 0));
