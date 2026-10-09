@@ -29,9 +29,10 @@
   const LEVEL_XP = 100, MAX_LEVEL = 20;
   const level = xp => Math.max(0, Math.min(MAX_LEVEL, Math.floor(Math.max(0, +xp || 0) / LEVEL_XP)));
   // 0 = brindille, 1 = très musclé (niveau 15), jusqu'à 1.35 = démesuré (niveau 20).
+  // Continu : chaque XP compte, une victoire (+100 XP) se voit un peu à chaque fois.
   function muscle(xp) {
-    const L = level(xp);
-    return L <= 15 ? L / 15 : 1 + (L - 15) / 5 * 0.35;
+    xp = Math.max(0, Math.min(MAX_LEVEL * LEVEL_XP, +xp || 0));
+    return xp <= 1500 ? xp / 1500 : 1 + (xp - 1500) / 500 * 0.35;
   }
   const DEFAULT_LOOK = {skin: SKINS[1], hair: "court", hairColor: HAIR_COLORS[0], top: "debardeur", topColor: CLOTH[0], shorts: CLOTH[4], acc: "aucun"};
 
@@ -1001,11 +1002,12 @@
     return s;
   }
 
-  // Plus il est musclé, plus le perso prend de place à l'écran : ×1,5 (0 XP, la crevette reste lisible sur téléphone)
-  // → ×8 (2 000 XP et plus, comme avant). Un cran tous les 100 XP, progression géométrique : 1,5 × (8/1,5)^(L/20),
-  // soit ≈ +8,7 % par palier. growth(xp) = la même taille rapportée au départ (×1 → ×5,3), pour les textes « taille × ».
-  const SIZE0 = 1.5, SIZE_MAX = 8;
-  const size = xp => SIZE0 * Math.pow(SIZE_MAX / SIZE0, level(xp) / MAX_LEVEL);
+  // Plus il est musclé, plus le perso prend de place à l'écran. growth(xp) = la taille rapportée au départ (×1 → ×2,7),
+  // pour les textes « taille × ».
+  // Départ ×3 (on voit les détails dès la crevette), croissance continue jusqu'à ×8 à 2 000 XP :
+  // ≈ +5 % de taille par victoire (+100 XP), ≈ +1,2 % par partie jouée (+25 XP).
+  const SIZE0 = 3, SIZE_MAX = 8;
+  const size = xp => SIZE0 * Math.pow(SIZE_MAX / SIZE0, Math.max(0, Math.min(MAX_LEVEL * LEVEL_XP, +xp || 0)) / (MAX_LEVEL * LEVEL_XP));
   const growth = xp => size(xp) / SIZE0;
   G.avatar = {svg, tier, muscle, size, growth, SKINS, HAIR_COLORS, HAIR_STYLES, CLOTH, TOPS, ACCS, TIERS, DEFAULT_LOOK,
     LEVEL_XP, MAX_LEVEL, level, groups, skipLegDay, RARITIES, SLOTS, ITEMS, ITEM, equipped, POSES,
