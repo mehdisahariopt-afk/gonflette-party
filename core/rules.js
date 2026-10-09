@@ -17,7 +17,7 @@ const esc = t => String(t == null ? "" : t).replace(/[&<>"']/g, c => ({"&": "&am
 /* ---------- les 23 cartes ----------
    ORDER fixe les bits du masque « déjà vu » publié dans la présence : n'ajoutez qu'à la fin. */
 const ORDER = ["puissance4", "flip7", "quiestce", "pong", "dessine", "motinterdit", "bataille", "brasdefer", "morpion", "reflexes",
-  "developpe", "uno", "undercover", "petitbac", "tiracorde", "pictionary", "relais", "quiadit", "spotteur", "dames", "airhockey", "tron", "pfc", "priorities"];
+  "developpe", "uno", "undercover", "petitbac", "tiracorde", "pictionary", "relais", "quiadit", "spotteur", "dames", "airhockey", "tron", "pfc", "priorities", "plusprobable", "loupgarou", "totem"];
 // s : résumé d'une ligne (pour ceux qui connaissent déjà) · l : 3 lignes max · k : animation du geste
 const R = {
   puissance4: {s: "Touchez une colonne, alignez 4 jetons.", k: "drop", l: [
@@ -112,6 +112,18 @@ const R = {
     "<b>Choisissez</b> pierre, feuille ou ciseaux avant « CHI-FOU-MI ! »",
     "<b>Annoncez</b> votre signe pour bluffer : gagner avec = +1 bonus.",
     "Duel en 3 points ; à plusieurs, <b>tournoi</b> à élimination."]},
+  totem: {s: "Même forme qu'un autre ? Attrapez le totem en premier, videz vos piles.", k: "cards", o: {v: ["▲", "▲"], c: ["#e5383b", "#2f6fed"]}, l: [
+    "À votre tour, <b>touchez votre pile</b> pour retourner une carte.",
+    "Même <b>forme</b> qu'un adversaire (couleur ignorée) ? <b>Attrapez le totem</b> : le plus rapide lui donne ses cartes !",
+    "Totem pris pour rien = <b>vous ramassez tout</b>. <b>Videz vos piles</b> pour gagner."]},
+  loupgarou: {s: "La nuit, tout le monde tapote en secret ; le jour, votez contre les loups.", k: "vote", o: {txt: "🐺 Qui est le loup ?"}, l: [
+    "<b>Maintiens ta carte</b> pour voir ton rôle en secret : loup, voyante, sorcière…",
+    "La nuit, <b>tout le monde touche son écran</b> : les rôles agissent, les autres chassent le moustique 🦟.",
+    "Le jour, <b>débattez puis votez</b>. Village : éliminez les loups. Loups : devenez aussi nombreux que les autres."]},
+  plusprobable: {s: "Votez pour le plus susceptible, pariez sur le plus voté.", k: "vote", o: {txt: "« …rater son train ? »"}, l: [
+    "« Qui est le plus susceptible de… ? » <b>Votez en secret</b> pour un joueur (vous compris).",
+    "<b>Pariez</b> sur celui qui aura le plus de voix : <b>+2</b> si vous voyez juste.",
+    "Votre vote va au plus voté : <b>+1</b>. Les votes sont <b>révélés</b> au dépouillement !"]},
   priorities: {s: "La Vedette classe 5 cartes en secret, devinez son classement.", k: "sort", l: [
     "La <b>Vedette</b> classe 5 cartes en secret, de <b>J'ADORE ❤️</b> à <b>JE DÉTESTE 💀</b>.",
     "Les autres <b>glissent les cartes</b> pour deviner son classement.",
@@ -364,8 +376,13 @@ function markSeen(id) {
   if (G.lobby && G.lobby.saveProfile) G.lobby.saveProfile();
   if (G.lobby && G.lobby.pushPresence) G.lobby.pushPresence();
 }
-function mask() { let m = 0; ORDER.forEach((id, i) => { if (seen(id)) m |= 1 << i; }); return m.toString(36); }
-const hasBit = (m, id) => { const i = ORDER.indexOf(id); if (i < 0) return true; const n = parseInt(m, 36); return isFinite(n) && !!(n & (1 << i)); };
+// Masque des jeux vus : "x" + un chiffre hexadécimal par groupe de 4 jeux (pas de limite à 31 jeux).
+function mask() { const n = []; ORDER.forEach((id, i) => { if (seen(id)) n[i >> 2] = (n[i >> 2] || 0) | (1 << (i & 3)); }); let s = "x"; for (let j = 0; j < Math.ceil(ORDER.length / 4); j++) s += (n[j] || 0).toString(16); return s; }
+const hasBit = (m, id) => {
+  const i = ORDER.indexOf(id); if (i < 0) return true;
+  if (m[0] === "x") { const d = parseInt(m[1 + (i >> 2)] || "0", 16); return !!(d & (1 << (i & 3))); }
+  const n = parseInt(m, 36); return i < 31 && isFinite(n) && !!(n & (1 << i)); // ancien format (base 36)
+};
 let readyM = null;
 
 /* ---------- hôte du lobby ---------- */
@@ -376,11 +393,12 @@ function onNewMatch(M, grp, viaDebug) {
   const rw = grp.filter(p => p.presence && typeof p.presence.rs === "string" && !hasBit(p.presence.rs, M.g)).map(p => p.peer);
   if (rw.length) M.rw = rw;
 }
-// Pendant l'attente : tout le monde prêt (ou parti), ou délai dépassé → on relance le 3-2-1 normal à partir de maintenant.
+// Pendant l'attente : tout le monde prêt (ou parti, ou onglet caché), ou délai dépassé → on relance le 3-2-1 normal à partir de maintenant.
 function hostStep(M, now, peers) {
   if (!M.rw) return null;
   const pr = new Map((peers || []).map(p => [p.peer, p.presence || {}]));
-  const ready = M.rw.every(k => !pr.has(k) || pr.get(k).rd === M.mid);
+  // parti, prêt, ou onglet caché (téléphone en veille : il ne lira pas la carte maintenant, on ne l'attend pas)
+  const ready = M.rw.every(k => !pr.has(k) || pr.get(k).rd === M.mid || pr.get(k).hd);
   if (!ready && now - M.at <= WAIT_MS) return null;
   const c = Object.assign({}, M, {at: now}); delete c.rw;
   return c;
@@ -411,7 +429,7 @@ function wait(M, el) {
     if (!el.isConnected) { clearInterval(iv); return; }
     if (mode === "read") { const s = el.querySelector("[data-gr-left]"); if (s) s.textContent = left(); return; }
     const peers = L.peers ? L.peers() : [], byK = new Map(peers.map(p => [p.peer, p.presence || {}]));
-    const pending = M.rw.filter(k => (k === me ? readyM !== M.mid : byK.has(k) && byK.get(k).rd !== M.mid));
+    const pending = M.rw.filter(k => (k === me ? readyM !== M.mid : byK.has(k) && byK.get(k).rd !== M.mid && !byK.get(k).hd));
     const nm = pending.map(k => (M.ro[k] && M.ro[k].p) || "?");
     const m = el.querySelector("[data-gr-msg]"); if (!m) return;
     const txt = nm.length ? `En attente : ${esc(names(nm))} ${nm.length > 1 ? "lisent" : "lit"} les règles<span class="dots"></span> (${left()} s)` : `Tout le monde est prêt<span class="dots"></span>`;

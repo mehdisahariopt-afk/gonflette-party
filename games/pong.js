@@ -1,15 +1,21 @@
 /* Gonflette Party : Pong Délire en réseau (2 joueurs, chacun sur son téléphone).
    L'air-hockey de fête foraine, version multi-téléphones.
 
-   Réseau :
-   - L'hôte (qui peut être spectateur) simule tout à pas fixe (120 Hz) : balles, bonus, effets, score.
-     Il publie ~22 fois par seconde un état compact (positions normalisées 0..1 arrondies à 3 décimales).
-   - Chaque joueur envoie la position visée de SA raquette : api.setInput({x: 0.42}) (0..1 le long de
-     son rail, en coordonnées de la table, avant inversion ; ~20 envois/s au plus).
-   - Chaque téléphone affiche à 60 i/s en interpolant entre les états reçus (retard ~100 ms) et prédit
-     localement sa propre raquette.
-   - Pour compenser la latence, l'hôte accorde un court « délai de grâce » quand une balle passe
-     derrière une raquette : si l'entrée du joueur (qui arrive en retard) la couvrait, la balle est sauvée.
+   Réseau (p2p via un téléphone relais : 50 à 300 ms de latence, avec de la gigue) :
+   - L'hôte simule tout à pas fixe (120 Hz) : balles, bonus, effets, score. Il publie ~30 fois par seconde un état
+     compact (tick k, balles, raquettes, accusés de frappe, écho d'horloge, événements).
+   - Chaque téléphone fait tourner sa propre simulation des balles, calée sur « l'heure de l'hôte » (tick reçu +
+     demi-aller-retour mesuré). À chaque état reçu, les balles sont remises à l'état de l'hôte puis rejouées.
+   - Ma raquette : affichée sans latence. Mes frappes sont jugées sur MON écran (balle au présent près de ma
+     raquette) : le téléphone applique la frappe tout de suite et l'annonce (tick, balle au contact, raquette).
+     L'hôte la retrouve dans son historique, rembobine et rejoue. L'hôte ne fait JAMAIS rebondir une balle sur la
+     raquette (forcément en retard) d'un joueur distant : pas d'arrêt fantôme.
+   - Un but dans le camp d'un joueur distant n'est validé que quand ce joueur a « joué » ce moment-là sans frapper
+     (tick joint à sa raquette), ou après un délai de garde : un arrêt de dernière seconde arrive toujours à temps.
+   - Raquette adverse : chaque joueur envoie sa position avec le tick qu'il voyait. Près de l'adversaire, la balle
+     est montrée avec ce même retard (rampe sur toute la table, vitesse apparente ±18 % au plus) : on voit sa
+     raquette et la balle au même instant que lui, donc ses arrêts et ses ratés tels qu'ils ont été jugés.
+   - Raquette et balle : la zone de frappe est exactement la capsule dessinée (contours compris) et la balle.
 
    Repère de simulation : table verticale W × L. Le siège 0 (joueur 1) défend le bas, le siège 1 le haut.
    Chaque joueur voit sa raquette en bas (vue tournée de 180° pour le siège 1). */
@@ -24,7 +30,7 @@ GONFLETTE.registerGame({
     const W = 600, L = 1000, WALL = 30, SIDE = 18;
     const PT = 40, PH = 118, PY = [L - 64, 64];
     const BALL_R = 12, SPEED0 = 420, SPEED_MAX = 1050, MAX_BALLS = 7;
-    const TARGET = 5, TICK = 1 / 120, PUB_MS = 42;
+    const TARGET = 5, TICK = 1 / 120, PUB_MS = 33, SEND_MS = 33;
     const FOLLOW = 26, FOLLOW_MAX = 2600;
     const INK = "#3B1F3A";
     const COLORS = ["#FF5A47", "#17BFB0"], COLORS_LIGHT = ["#FFB0A6", "#9CEAE2"], COLORS_D = ["#C8321F", "#0B7F75"];
@@ -206,7 +212,13 @@ GONFLETTE.registerGame({
     });
     muteBtn.addEventListener("pointerdown", e => e.stopPropagation());
 
-    /* ================= Raquette : physique partagée (hôte et prédiction locale) ================= */
+    /* ================= Physique partagée (hôte, prédiction locale, rejeu) ================= */
+    const NH = 192;                       // historique : 1,6 s de ticks
+    const SPAN = PY[0] - PY[1];           // distance entre les deux lignes de raquettes
+    const CONTACT = PT / 2 + BALL_R + 3;  // contact = contours dessinés (traits compris) qui se touchent
+    const K_WARP = 0.18, K_RATE = 0.3, D_MAX = 0.6; // K_WARP : écart de vitesse apparente toléré pour décaler l'affichage
+    const T_TURTLE = BTYPES.indexOf("turtle"), T_ZIGZAG = BTYPES.indexOf("zigzag");
+    const r1 = v => Math.round(v * 10) / 10;
     function padRange(h) { return [WALL + h / 2 + 2, W - WALL - h / 2 - 2]; }
     function stepPad(p, rawT, inv, h, dt) {
       const [lo, hi] = padRange(h);
@@ -215,114 +227,254 @@ GONFLETTE.registerGame({
       const v = clamp((tx - p.x) * FOLLOW, -FOLLOW_MAX, FOLLOW_MAX);
       p.vx = v; p.x = clamp(p.x + v * dt, lo, hi);
     }
-
-    /* ================= HÔTE : simulation ================= */
-    let H = null, hostTimer = null, finishTimer = null;
-    const targets = [0.5, 0.5];
-    const stats = {pubs: 0, maxSize: 0, lastSize: 0, t0: 0, hits: 0, rescues: 0};
-    let forceGoalReq = -1, dropReq = null;
-    if (api.isHost) {
-      H = {k: 0, simT: 0, ph: "c", cd: 3.6, gt: 0, sc: [0, 0], serveDir: Math.random() < 0.5 ? -1 : 1,
-        pads: [{x: W / 2, vx: 0, h: PH}, {x: W / 2, vx: 0, h: PH}], balls: [], nextId: 1, effects: [],
-        bonus: null, bonusTimer: rand(4, 6), evs: [], evId: 0, winner: -1, ff: 0, tz: 0, missingSince: 0, finished: false};
-      H.balls = [mkBall(W / 2, L / 2, 0, 0)];
-      api.onInputs(map => {
-        P.forEach((p, s) => {
-          if (s === mySeat) return; // ma propre entrée est lue directement
-          const i = map[p.key];
-          if (i && typeof i.x === "number" && isFinite(i.x)) targets[s] = clamp(i.x, 0, 1);
-        });
-        // un joueur a disparu de la salle : on vérifie tout de suite (sinon le lobby annulerait la partie)
-        if (P.some(p => !(p.key in map))) checkForfeit(true);
-      });
+    const padTargetH = (giant, mini) => PH * (giant ? 1.65 : 1) * (mini ? 0.58 : 1);
+    // distance du centre de la balle à l'axe de la raquette du siège s (capsule dessinée : longueur h, épaisseur PT)
+    function padDist(bx, by, s, px, h) {
+      const hw = PT / 2, cx = clamp(bx, px - h / 2 + hw, px + h / 2 - hw);
+      return Math.hypot(bx - cx, by - PY[s]);
     }
-    function mkBall(x, y, vx, vy, last) { return {id: H.nextId++ % 1000, x, y, vx, vy, r: BALL_R, last: last == null ? -1 : last, zz: rand(0, 6), miss: null, held: false}; }
-    function ev(code, ...args) { H.evs.push([++H.evId, H.k, code, ...args]); }
-    function hasEff(type, side) { return H.effects.some(e => e.type === type && e.side === side); }
-    function hasEffAny(type) { return H.effects.some(e => e.type === type); }
-    function addEff(type, side, dur) {
-      if (BALL_EFFECTS.includes(type)) H.effects = H.effects.filter(e => !(e.type === type && e.side !== side));
-      const ex = H.effects.find(e => e.type === type && e.side === side);
-      if (ex) { ex.t = dur; ex.dur = dur; return; }
-      H.effects.push({type, side, t: dur, dur});
-    }
-    function graceFor(s) { return s === mySeat ? 0.08 : 0.2; }
-    function bounce(b, s, px, h, pvx) {
+    // La balle touche-t-elle la raquette du siège s ? (elle arrive vers son but et n'est pas déjà derrière la raquette)
+    function touches(b, s, px, h) {
       const dir = s === 0 ? -1 : 1;
-      const rel = clamp((b.x - px) / (h / 2), -1, 1);
-      const ang = rel * 1.02;
+      if (b.in >= 0 || b.vy * dir >= 0) return false;
+      if ((PY[s] - b.y) * dir > PT / 2) return false; // centre au-delà de la face arrière : trop tard
+      return padDist(b.x, b.y, s, px, h) <= CONTACT;
+    }
+    // Rebond sur une raquette : même formule partout (hôte, prédiction, frappe annoncée)
+    function bounceState(b, s, px, h, pvx) {
+      const dir = s === 0 ? -1 : 1;
+      const rel = clamp((b.x - px) / (h / 2), -1, 1), ang = rel * 1.02;
       const sp = Math.min(SPEED_MAX, Math.hypot(b.vx, b.vy) * 1.065 + 10);
       b.vy = dir * Math.cos(ang) * sp;
       b.vx = Math.sin(ang) * sp + pvx * 0.14;
       if (Math.abs(b.vy) < sp * 0.5) b.vy = dir * sp * 0.5;
-      b.y = PY[s] + dir * (PT / 2 + b.r + 0.5);
-      b.x = clamp(b.x, WALL + b.r, W - WALL - b.r);
-      b.last = s; b.miss = null; b.held = false; stats.hits++;
-      ev(1, s, Math.round(sp), r3(b.x / W), r3(b.y / L));
+      b.y = PY[s] + dir * (CONTACT + 0.5);
+      b.x = clamp(b.x, WALL + BALL_R, W - WALL - BALL_R);
+      b.last = s; b.in = -1;
+      return sp;
     }
-    function hitPaddle(b, s) {
-      const p = H.pads[s], hw = PT / 2, hh = p.h / 2;
-      const dir = s === 0 ? -1 : 1;
-      if (b.vy * dir >= 0) return false;
-      if (s === 0 ? b.y > PY[0] + 4 : b.y < PY[1] - 4) return false;
-      const cx = clamp(b.x, p.x - hh + hw, p.x + hh - hw);
-      const dx = b.x - cx, dy = b.y - PY[s], rad = b.r + hw;
-      if (dx * dx + dy * dy > rad * rad) return false;
-      bounce(b, s, p.x, p.h, p.vx);
-      return true;
-    }
-    // Délai de grâce : l'entrée la plus récente du joueur couvre-t-elle le point où la balle est passée ?
-    function checkRescue(b) {
-      const m = b.miss; if (!m || H.simT - m.t > graceFor(m.s)) return;
-      const s = m.s, p = H.pads[s];
-      const [lo, hi] = padRange(p.h);
-      let tx = targets[s] * W; if (hasEff("invert", s)) tx = W - tx;
-      tx = clamp(tx, lo, hi);
-      for (const cx of [tx, p.x]) {
-        if (Math.abs(m.x - cx) <= p.h / 2 + b.r * 0.6) { b.x = m.x; stats.rescues++; bounce(b, s, cx, p.h, 0); return; }
+    // Un tick de balle (sous-pas de 6 unités au plus). cols : raquettes qui peuvent frapper [{s, x, h, vx}].
+    // Une frappe termine le tick (balle posée devant la raquette) : l'hôte reconstruit exactement le même état.
+    function stepBall(b, ph, cols, onHit) {
+      if (b.in >= 0) return;
+      const mult = ph.mult, zz = ph.zz;
+      if (zz) b.zz += TICK * 11;
+      const sp = Math.hypot(b.vx, b.vy) * mult + (zz ? 300 : 0);
+      const n = Math.max(1, Math.ceil(sp * TICK / 6)), h = TICK / n;
+      for (let i = 0; i < n; i++) {
+        b.y += b.vy * mult * h;
+        b.x += b.vx * mult * h + (zz ? Math.cos(b.zz) * 300 * h : 0);
+        if (b.x < WALL + BALL_R) { b.x = WALL + BALL_R; b.vx = Math.abs(b.vx); }
+        else if (b.x > W - WALL - BALL_R) { b.x = W - WALL - BALL_R; b.vx = -Math.abs(b.vx); }
+        for (const c of cols) {
+          if (!touches(b, c.s, c.x, c.h)) continue;
+          const pre = {x: b.x, y: b.y};
+          const hs = bounceState(b, c.s, c.x, c.h, c.vx);
+          if (onHit) onHit(b, c, pre, hs);
+          return;
+        }
+        if (b.y > L - SIDE + 2) { b.y = L - SIDE + 2; b.in = 0; return; }
+        if (b.y < SIDE - 2) { b.y = SIDE - 2; b.in = 1; return; }
       }
     }
-    function updateBalls(dt) {
-      const mult = hasEffAny("turtle") ? 0.5 : 1;
-      const zz = hasEffAny("zigzag");
+    // effets qui changent la trajectoire (tortue, zigzag) : [type, tick début, tick fin]
+    function physAt(pf, t) {
+      let mult = 1, zz = false;
+      for (const f of pf) if (t >= f[1] && t < f[2]) { if (f[0] === T_TURTLE) mult = 0.5; else if (f[0] === T_ZIGZAG) zz = true; }
+      return {mult, zz};
+    }
+    const hsnap = (b, t) => ({t, x: b.x, y: b.y, vx: b.vx, vy: b.vy, zz: b.zz, in: b.in, last: b.last});
+    const hball = e => ({x: e.x, y: e.y, vx: e.vx, vy: e.vy, zz: e.zz, in: e.in, last: e.last});
+    function hget(hist, t) { const e = hist[((t % NH) + NH) % NH]; return e && e.t === t ? e : null; }
+    // Balles affichables (hôte et clients) : id -> {id, hist, born, endK, kin, tdb, eo, ...}
+    const DB = new Map();
+    function newEntry(id, born) {
+      return {id, hist: new Array(NH), born, endK: Infinity, kin: -1, tdb: null, eo: {x: 0, y: 0}, pend: 0, pendAt: 0,
+        goalFx: false, disp: null, pdx: 0, x: 0, y: 0, vx: 0, vy: 0, zz: 0, in: -1, last: -1};
+    }
+
+    /* ================= Suivi des raquettes adverses : « où était sa raquette quand il voyait la balle au tick k » ================= */
+    // Chaque joueur envoie la position de SA raquette avec le tick (heure de l'hôte) qu'il affichait à ce moment-là.
+    // D[s] : retard (s) de cette information sur ce téléphone, mesuré ; la balle est montrée avec ce retard près de lui.
+    const TR = [0, 1].map(() => ({pts: [], ages: [], D: 0.12, last: -1e9}));
+    function trackSample(s, k, x, P, isTag) {
+      const tr = TR[s], pts = tr.pts;
+      if (!isFinite(k) || !isFinite(x)) return;
+      let i = pts.length;
+      while (i > 0 && pts[i - 1][0] > k) i--;
+      if (i > 0 && pts[i - 1][0] === k) pts[i - 1][1] = x; else pts.splice(i, 0, [k, x]);
+      while (pts.length > 2 && pts[0][0] < k - 360) pts.shift();
+      if (isTag && k > tr.last) { tr.last = k; tr.ages.push([nowS(), Math.max(0, (P - k) * TICK)]); }
+    }
+    function trackAt(s, tk) {
+      const pts = TR[s].pts;
+      if (!pts.length) return null;
+      if (tk >= pts[pts.length - 1][0]) return pts[pts.length - 1][1];
+      if (tk <= pts[0][0]) return pts[0][1];
+      let i = pts.length - 1;
+      while (i > 0 && pts[i - 1][0] > tk) i--;
+      const A = pts[i - 1], B = pts[i];
+      return A[1] + (B[1] - A[1]) * (tk - A[0]) / Math.max(1e-6, B[0] - A[0]);
+    }
+    function updateTrackDelays(dt) {
+      const tn = nowS();
+      for (const tr of TR) {
+        while (tr.ages.length > 1 && tr.ages[0][0] < tn - 3) tr.ages.shift();
+        if (!tr.ages.length) continue;
+        let m = 0; for (const a of tr.ages) if (a[1] > m) m = a[1];
+        // (côté client, + un intervalle de publication : une frappe attend la publication suivante de l'hôte)
+        const want = clamp(m + (api.isHost ? 0.012 : PUB_MS / 1000 + 0.012), 0, D_MAX);
+        tr.D += (want - tr.D) * Math.min(1, dt * (want > tr.D ? 6 : 0.8));
+      }
+    }
+
+    /* ================= HÔTE : simulation autoritaire ================= */
+    let H = null, hostTimer = null, finishTimer = null;
+    const stats = {pubs: 0, maxSize: 0, lastSize: 0, t0: 0, hits: 0, claims: 0, acc: 0, rej: 0, rejWhy: {}, hold: 0, early: 0, timeout: 0, corr: 0, corrMax: 0, corrLog: [], warp: [0, 0, 0, 0], skipped: 0, sent: 0};
+    let forceGoalReq = -1, dropReq = null, localT = 0.5;
+    if (api.isHost) {
+      H = {k: 0, ph: "c", cd: 3.6, gt: 0, sc: [0, 0], serveDir: Math.random() < 0.5 ? -1 : 1,
+        pads: [{x: W / 2, vx: 0, h: PH}, {x: W / 2, vx: 0, h: PH}], balls: [], nextId: 1, effects: [], pf: [],
+        bonus: null, bonusTimer: rand(4, 6), evs: [], evId: 0, winner: -1, ff: 0, tz: 0, missingSince: 0, finished: false,
+        MH: new Array(NH), tag: [-1e9, -1e9], lastS: [0, 0], sid: [null, null], q: [0, 0], echo: [null, null], delays: [], hold: 0.3, defer: []};
+      H.balls = [mkBall(W / 2, L / 2, 0, 0)];
+      api.onInputs(map => {
+        if (!H) return;
+        P.forEach((p, s) => {
+          if (s === mySeat) return; // ma propre raquette est lue directement
+          const i = map[p.key];
+          if (!i || typeof i !== "object" || typeof i.s !== "number") return;
+          if (i.sid !== H.sid[s]) { H.sid[s] = i.sid; H.lastS[s] = 0; H.q[s] = 0; } // téléphone rechargé : tout repart de zéro
+          if (i.s <= H.lastS[s]) return; // déjà vue
+          H.lastS[s] = i.s;
+          // frappes annoncées d'abord (elles sont antérieures au tick joint à la position)
+          if (Array.isArray(i.h)) for (const c of i.h.slice().sort((a, b) => a[0] - b[0])) if (Array.isArray(c)) tryClaim(s, c);
+          if (isFinite(i.k) && isFinite(i.x) && i.k > H.tag[s]) {
+            const [lo, hi] = padRange(H.pads[s].h);
+            H.tag[s] = Math.min(+i.k, H.k + 60);
+            trackSample(s, H.tag[s], clamp(+i.x, lo - 40, hi + 40), H.k, true);
+          }
+          if (isFinite(i.ct)) H.echo[s] = [i.ct, H.k];
+        });
+        if (P.some(p => !(p.key in map))) checkForfeit(true);
+      });
+    }
+    function mkBall(x, y, vx, vy, last) {
+      const b = newEntry(H.nextId++ % 1000, H.k);
+      Object.assign(b, {x, y, vx, vy, zz: rand(0, 6), in: -1, last: last == null ? -1 : last});
+      b.hist[H.k % NH] = hsnap(b, H.k);
+      DB.set(b.id, b);
+      return b;
+    }
+    function evAt(k, code, ...args) { const e = [++H.evId, k, code, ...args]; H.evs.push({at: H.k, e}); evQueue.push(e); return e; }
+    function ev(code, ...args) { return evAt(H.k, code, ...args); }
+    function hasEff(type, side) { return H.effects.some(e => e.type === type && e.side === side); }
+    function addEff(type, side, dur) {
+      if (BALL_EFFECTS.includes(type)) H.effects = H.effects.filter(e => !(e.type === type && e.side !== side));
+      const ex = H.effects.find(e => e.type === type && e.side === side);
+      if (ex) { ex.t = dur; ex.dur = dur; } else H.effects.push({type, side, t: dur, dur});
+      const ti = BTYPES.indexOf(type);
+      if (ti === T_TURTLE || ti === T_ZIGZAG) {
+        const open = H.pf.find(f => f[0] === ti && f[2] > H.k);
+        if (open) open[2] = H.k + 1 + Math.round(dur / TICK); else H.pf.push([ti, H.k + 1, H.k + 1 + Math.round(dur / TICK)]);
+      }
+    }
+    function endPhysFx() { for (const f of H.pf) if (f[2] > H.k + 1) f[2] = H.k + 1; }
+    const hostPhys = t => physAt(H.pf, t);
+    function hostCols(t, fromHist) {
+      if (mySeat < 0 || H.ph !== "p") return [];
+      if (fromHist) { const m = hget(H.MH, t); return m ? [{s: mySeat, x: m.x, h: m.h, vx: m.vx}] : []; }
+      const p = H.pads[mySeat];
+      return [{s: mySeat, x: p.x, h: p.h, vx: p.vx}];
+    }
+    // frappe de la raquette du joueur de l'hôte (jugée en direct, sans latence)
+    function onHostHit(b, s, t, px, hs) {
+      stats.hits++;
+      evAt(t, 1, s, Math.round(hs), r1(b.x), r1(b.y), r1(b.vx), r1(b.vy), b.id, Math.round(b.zz * 100) / 100, r1(px), s);
+      hitFx(s, b.x, b.y, hs);
+    }
+    const holdTicks = () => Math.round(clamp(H.hold * 1.5 + 0.06, 0.2, 0.8) / TICK);
+    // un but n'est sûr que si le défenseur a déjà joué ce moment-là sans frapper (ou si on a trop attendu)
+    function goalSure(b) {
+      const def = b.in;
+      if (def === mySeat || !P[def]) return true;
+      if (H.tag[def] >= b.kin) { stats.early++; return true; }
+      if (H.k - b.kin >= holdTicks()) { stats.timeout++; return true; }
+      return false;
+    }
+    function updateBalls(t) {
+      const ph = hostPhys(t), cols = hostCols(t, false);
       for (const b of H.balls.slice()) {
-        if (b.miss) checkRescue(b);
-        if (b.held) {
-          if (H.simT - b.miss.t >= graceFor(b.miss.s)) scoreGoal(b.miss.s === 0 ? 1 : 0, b);
-          continue;
-        }
-        if (zz) b.zz += dt * 11;
-        const sp = Math.hypot(b.vx, b.vy) * mult + (zz ? 300 : 0);
-        const n = Math.max(1, Math.ceil(sp * dt / 6)), h = dt / n;
-        for (let k = 0; k < n; k++) {
-          const y0 = b.y;
-          b.y += b.vy * mult * h;
-          b.x += b.vx * mult * h + (zz ? Math.cos(b.zz) * 300 * h : 0);
-          if (b.x < WALL + b.r) { b.x = WALL + b.r; b.vx = Math.abs(b.vx); ev(2, r3(WALL / W), r3(b.y / L)); }
-          else if (b.x > W - WALL - b.r) { b.x = W - WALL - b.r; b.vx = -Math.abs(b.vx); ev(2, r3((W - WALL) / W), r3(b.y / L)); }
-          if (!b.miss && !hitPaddle(b, 0)) hitPaddle(b, 1);
-          if (!b.miss) {
-            if (b.vy > 0 && y0 <= PY[0] + 4 && b.y > PY[0] + 4) b.miss = {s: 0, x: b.x, t: H.simT};
-            else if (b.vy < 0 && y0 >= PY[1] - 4 && b.y < PY[1] - 4) b.miss = {s: 1, x: b.x, t: H.simT};
-          }
+        if (b.in < 0) {
+          stepBall(b, ph, cols, (bb, c, pre, hs) => onHostHit(bb, c.s, t, c.x, hs));
+          if (b.in >= 0) b.kin = t;
           const bn = H.bonus;
-          if (bn && b.last >= 0 && bn.t > 0.25) {
+          if (b.in < 0 && bn && b.last >= 0 && bn.t > 0.25) {
             const dx = b.x - bn.x, dy = b.y - bn.y;
-            if (dx * dx + dy * dy < (b.r + bn.r) * (b.r + bn.r)) collect(bn.type, b.last, bn.x, bn.y);
-          }
-          const goalBottom = b.y > L - SIDE + 2, goalTop = b.y < SIDE - 2;
-          if (goalBottom || goalTop) {
-            const def = goalBottom ? 0 : 1;
-            if (b.miss && b.miss.s === def && H.simT - b.miss.t < graceFor(def)) { b.y = goalBottom ? L - SIDE + 2 : SIDE - 2; b.held = true; }
-            else scoreGoal(1 - def, b);
-            break;
+            if (dx * dx + dy * dy < (BALL_R + bn.r) * (BALL_R + bn.r)) collect(bn.type, b.last, bn.x, bn.y);
           }
         }
+        b.hist[t % NH] = hsnap(b, t);
+        if (b.in >= 0 && goalSure(b)) scoreGoal(1 - b.in, b);
       }
+    }
+    // Frappe annoncée par un joueur distant : [q, id, k, bx, by, px, h, pvx] (balle au contact, raquette telle qu'il la voyait)
+    function tryClaim(s, c) {
+      const q = +c[0];
+      if (!(q > H.q[s])) return;
+      H.q[s] = q; stats.claims++;
+      const k = Math.round(+c[2]);
+      if (isFinite(k) && k > H.k) { H.defer.push({s, c, k}); return; }
+      applyClaim(s, c);
+    }
+    function rej(why) { stats.rej++; stats.rejWhy[why] = (stats.rejWhy[why] || 0) + 1; return false; }
+    function applyClaim(s, c) {
+      if (H.ph !== "p") return rej("phase");
+      const id = +c[1], k = Math.round(+c[2]), bx = +c[3], by = +c[4], px = +c[5], ph = +c[6], pvx = +c[7] || 0;
+      if (![id, k, bx, by, px, ph].every(isFinite)) return rej("nan");
+      const b = H.balls.find(x => x.id === id);
+      if (!b) return rej("gone");
+      if (k < H.k - NH + 8 || k < b.born) return rej("old");
+      const hp = H.pads[s].h;
+      if (Math.abs(ph - hp) > hp * 0.45 + 6) return rej("size"); // (géante / mini : son téléphone l'apprend un peu après l'hôte)
+      const [lo, hi] = padRange(ph);
+      if (px < lo - 6 || px > hi + 6) return rej("range");
+      if (padDist(bx, by, s, px, ph) > CONTACT + 8) return rej("contact");
+      // position de l'hôte la plus proche de la balle annoncée, autour du tick annoncé
+      let best = -1, bd = 1e9;
+      for (let t = k - 4; t <= Math.min(k + 4, H.k); t++) {
+        const e = hget(b.hist, t);
+        if (!e || e.in >= 0) continue;
+        const d = Math.hypot(e.x - bx, e.y - by) + Math.abs(t - k) * 1.5;
+        if (d < bd) { bd = d; best = t; }
+      }
+      if (best < 0) return rej("window");
+      if (bd > 36) return rej("far");
+      const e = hget(b.hist, best);
+      const nb = {x: bx, y: by, vx: e.vx, vy: e.vy, zz: e.zz, in: -1, last: e.last};
+      if (nb.vy * (s === 0 ? -1 : 1) >= 0) return rej("dir");
+      const before = dispRaw(b);
+      const hs = bounceState(nb, s, px, ph, pvx);
+      Object.assign(b, nb); b.kin = -1;
+      b.hist[best % NH] = hsnap(b, best);
+      for (let t = best + 1; t <= H.k; t++) {
+        stepBall(b, hostPhys(t), hostCols(t, true), (bb, cc, pre, hs2) => onHostHit(bb, cc.s, t, cc.x, hs2));
+        if (b.in >= 0 && b.kin < 0) b.kin = t;
+        b.hist[t % NH] = hsnap(b, t);
+      }
+      fixEo(b, before);
+      stats.acc++; stats.hits++;
+      H.delays.push((H.k - k) * TICK); if (H.delays.length > 12) H.delays.shift();
+      H.hold = clamp(Math.max(...H.delays) + 0.04, 0.08, 0.6); stats.hold = H.hold;
+      const he = hget(b.hist, best);
+      evAt(best, 1, s, Math.round(hs), r1(he.x), r1(he.y), r1(he.vx), r1(he.vy), b.id, Math.round(he.zz * 100) / 100, r1(px), s);
+      trackSample(s, best, px, H.k, false);
+      return true;
     }
     function updateEffects(dt) {
       for (const e of H.effects) if (e.dur > 0) e.t -= dt;
       H.effects = H.effects.filter(e => e.type === "multi" ? H.balls.length > 1 : e.t > 0);
+      while (H.pf.length && H.pf[0][2] < H.k - NH) H.pf.shift();
     }
     function spawnBonus(type) {
       H.bonus = {type: type || BTYPES[(Math.random() * BTYPES.length) | 0], x: rand(W * 0.22, W * 0.78), y: rand(L * 0.36, L * 0.64), r: 30, t: 0, life: 11};
@@ -349,7 +501,9 @@ GONFLETTE.registerGame({
           [-0.45, 0.45].forEach(a => {
             if (H.balls.length >= MAX_BALLS) return;
             const aa = a + rand(-0.15, 0.15);
-            H.balls.push(mkBall(x, y, Math.sin(aa) * base, dir * Math.cos(aa) * base, side));
+            const nb = mkBall(x, y, Math.sin(aa) * base, dir * Math.cos(aa) * base, side);
+            H.balls.push(nb);
+            ev(9, nb.id, r1(nb.x), r1(nb.y), r1(nb.vx), r1(nb.vy), Math.round(nb.zz * 100) / 100, side);
           });
           addEff("multi", side, 0);
           break;
@@ -359,24 +513,29 @@ GONFLETTE.registerGame({
       ev(4, BTYPES.indexOf(type), who, side, r3(x / W), r3(y / L));
       H.bonus = null; H.bonusTimer = rand(5, 8);
     }
+    function dropBalls() { for (const b of H.balls) if (b.endK > H.k) b.endK = H.k; H.balls = []; }
     function startCountdown(dur) {
       H.ph = "c"; H.cd = dur;
+      dropBalls();
       H.balls = [mkBall(W / 2, L / 2, 0, 0)];
       H.effects = H.effects.filter(e => !BALL_EFFECTS.includes(e.type));
+      endPhysFx();
     }
     function launch() {
       const a = rand(-0.42, 0.42);
       const b = H.balls[0] || mkBall(W / 2, L / 2, 0, 0);
-      b.vx = Math.sin(a) * SPEED0; b.vy = Math.cos(a) * SPEED0 * H.serveDir;
+      b.vx = Math.sin(a) * SPEED0; b.vy = Math.cos(a) * SPEED0 * H.serveDir; b.in = -1;
+      b.hist[H.k % NH] = hsnap(b, H.k);
       H.balls = [b]; H.ph = "p";
-      ev(6);
+      ev(6, b.id, r1(b.x), r1(b.y), r1(b.vx), r1(b.vy));
     }
     function scoreGoal(scorer, b) {
       const i = H.balls.indexOf(b);
       if (i >= 0) H.balls.splice(i, 1);
+      if (b.endK > H.k) b.endK = H.k;
       if (H.ph !== "p") return;
       H.sc[scorer]++;
-      ev(3, scorer, (Math.random() * EXCL.length) | 0, r3(b.x / W));
+      goalEvent(ev(3, scorer, (Math.random() * EXCL.length) | 0, r1(b.x), b.id));
       if (H.sc[scorer] >= TARGET) { endMatch(scorer, 0); return; }
       if (!H.balls.length) {
         H.ph = "g"; H.gt = 1.6;
@@ -387,7 +546,7 @@ GONFLETTE.registerGame({
     function endMatch(w, ff) {
       if (H.ph === "o") return;
       H.ph = "o"; H.winner = w; H.ff = ff ? 1 : 0; H.tz = (Math.random() * TEASES.length) | 0;
-      H.balls = []; H.bonus = null; H.effects = [];
+      dropBalls(); H.bonus = null; H.effects = []; endPhysFx();
       ev(8, w);
       if (!ff) publish();
       const wk = P[w].key, lk = P[1 - w].key, a = H.sc[w], b = H.sc[1 - w];
@@ -403,31 +562,42 @@ GONFLETTE.registerGame({
         api.finish({winners: [wk], ranking: [wk, lk], summary});
       }, ff ? Math.max(0, lastPub + 50 - performance.now()) : 2200);
     }
-    function hostStep(dt) {
-      H.k++; H.simT += dt;
-      if (mySeat >= 0) targets[mySeat] = localT;
+    function hostStep() {
+      H.k++;
+      const t = H.k;
       for (let s = 0; s < 2; s++) {
         const p = H.pads[s];
-        const th = PH * (hasEff("giant", s) ? 1.65 : 1) * (hasEff("mini", s) ? 0.58 : 1);
-        p.h += (th - p.h) * Math.min(1, dt * 8);
-        stepPad(p, targets[s], hasEff("invert", s), p.h, dt);
+        const th = padTargetH(hasEff("giant", s), hasEff("mini", s));
+        p.h += (th - p.h) * Math.min(1, TICK * 8);
+        if (s === mySeat) stepPad(p, localT, hasEff("invert", s), p.h, TICK);
+        else { const x = trackAt(s, Infinity); if (x != null) { const [lo, hi] = padRange(p.h); p.x = clamp(x, lo, hi); } }
       }
-      if (H.ph === "c") { H.cd -= dt; if (H.cd <= 0) launch(); }
-      else if (H.ph === "p") {
+      if (mySeat >= 0) { const p = H.pads[mySeat]; H.MH[t % NH] = {t, x: p.x, h: p.h, vx: p.vx}; }
+      if (H.defer.length) {
+        const ready = H.defer.filter(d => d.k <= t);
+        if (ready.length) { H.defer = H.defer.filter(d => d.k > t); for (const d of ready) applyClaim(d.s, d.c); }
+      }
+      if (H.ph === "c") {
+        H.cd -= TICK;
+        if (H.cd <= 0) launch();
+        for (const b of H.balls) b.hist[t % NH] = hsnap(b, t);
+      } else if (H.ph === "p") {
         if (forceGoalReq >= 0 && H.balls.length) { const s = forceGoalReq; forceGoalReq = -1; scoreGoal(s, H.balls[0]); }
         if (dropReq && H.balls.length) { const b = H.balls[0]; if (b.last < 0) b.last = b.vy < 0 ? 0 : 1; H.bonus = {type: dropReq, x: b.x, y: b.y, r: 30, t: 1, life: 11}; dropReq = null; }
-        if (H.ph === "p") updateBalls(dt);
-        if (H.ph === "p") { updateEffects(dt); updateBonus(dt); }
-      } else if (H.ph === "g") { H.gt -= dt; if (H.gt <= 0) startCountdown(2.1); }
-      const old = H.k - 84;
-      while (H.evs.length && (H.evs[0][1] < old || H.evs.length > 14)) H.evs.shift();
+        if (H.ph === "p") updateBalls(t);
+        if (H.ph === "p") { updateEffects(TICK); updateBonus(TICK); }
+      } else if (H.ph === "g") { H.gt -= TICK; if (H.gt <= 0) startCountdown(2.1); }
+      while (H.evs.length && (H.evs[0].at < t - 96 || H.evs.length > 16)) H.evs.shift();
+      for (const [id, e] of DB) if (e.endK < t - NH) DB.delete(id);
     }
     function snapshot() {
-      const s = {k: H.k, ph: H.ph, sc: H.sc.slice(),
-        px: [r3(H.pads[0].x / W), r3(H.pads[1].x / W)], h: [Math.round(H.pads[0].h), Math.round(H.pads[1].h)],
-        b: H.balls.map(b => [b.id, r3(b.x / W), r3(b.y / L), Math.round(b.vx), Math.round(b.vy), b.last]),
+      const s = {k: H.k, ph: H.ph, sc: H.sc.slice(), h: [Math.round(H.pads[0].h), Math.round(H.pads[1].h)],
+        pt: [0, 1].map(i => i === mySeat ? [H.k, r1(H.pads[i].x)] : [H.tag[i] > -1e8 ? H.tag[i] : 0, r1(H.pads[i].x)]),
+        q: H.q.slice(), ec: H.echo.map(e => e ? [e[0], H.k - e[1]] : 0),
+        b: H.balls.map(b => [b.id, r1(b.x), r1(b.y), r1(b.vx), r1(b.vy), b.last, Math.round(b.zz * 100) / 100, b.in, b.kin]),
         e: H.effects.map(e => [BTYPES.indexOf(e.type), e.side, Math.max(0, Math.round(e.t * 10))]),
-        v: H.evs.slice()};
+        pf: H.pf.filter(f => f[2] > H.k - NH).map(f => f.slice()),
+        v: H.evs.map(x => x.e)};
       if (H.ph === "c") s.cd = Math.round(H.cd * 100) / 100;
       if (H.bonus) s.bn = [BTYPES.indexOf(H.bonus.type), r3(H.bonus.x / W), r3(H.bonus.y / L), Math.round(H.bonus.t * 10)];
       if (H.ph === "o") { s.w = H.winner; s.ff = H.ff; s.tz = H.tz; }
@@ -441,14 +611,15 @@ GONFLETTE.registerGame({
       stats.pubs++; stats.lastSize = size; if (size > stats.maxSize) stats.maxSize = size;
       if (!stats.t0) stats.t0 = performance.now();
       api.setState(s);
-      ingest(s);
     }
     function hostLoop() {
+      if (!H || !alive) return;
       const now = performance.now();
       let d = lastHT ? (now - lastHT) / 1000 : 0; lastHT = now;
       if (d > 0.5) d = 0.5; // un petit coup de mou est rattrapé au lieu de ralentir la partie
       acc += d;
-      while (acc >= TICK) { acc -= TICK; hostStep(TICK); }
+      let n = 0;
+      if (!H.finished) while (acc >= TICK) { acc -= TICK; hostStep(); if (++n > 70) { acc = 0; break; } }
       if (now - lastPub >= (H.ph === "o" ? 250 : PUB_MS) - 2) { lastPub = now; publish(); }
       if (now - lastConnCheck > 300) { lastConnCheck = now; checkForfeit(false); }
     }
@@ -470,72 +641,325 @@ GONFLETTE.registerGame({
       }
     }
 
-    /* ================= CLIENTS : réception et interpolation ================= */
-    const DELAY = api.isHost ? 0.06 : 0.1;
-    const buf = [];
-    let offset = null, lastEvQueued = 0;
+    /* ================= CLIENTS : simulation locale à l'heure de l'hôte + rejeu ================= */
+    const C = {S: null, k: 0, co: 0, offS: [], rttS: [], lead: 0.05, ph: "c", pf: [], me: {x: W / 2, vx: 0, h: PH},
+      MH: new Array(NH), claims: [], q: 0, ack: 0, lastEv: 0, lastEcho: -1};
     const evQueue = [];
-    function ingest(s) {
-      if (!s || typeof s.k !== "number") return;
-      const t = s.k * TICK;
-      if (buf.length && s.k <= buf[buf.length - 1].s.k) {
-        if (s.k < buf[buf.length - 1].s.k - 600) { buf.length = 0; offset = null; } else return;
-      }
-      const sample = nowS() - t;
-      // décalage horloge : suit vite les avances, et assez vite les retards pour ne pas figer puis téléporter la balle
-      if (offset === null || sample < offset) offset = sample; else offset += (sample - offset) * 0.08;
-      buf.push({t, s});
-      if (buf.length > 60) buf.splice(0, buf.length - 60);
-      for (const e of s.v || []) if (e[0] > lastEvQueued) { evQueue.push(e); lastEvQueued = e[0]; }
+    function minOf(arr) { let m = Infinity; for (const a of arr) if (a[1] < m) m = a[1]; return m; }
+    const effOn = (list, type, side) => list.some(q => BTYPES[q[0]] === type && q[1] === side && q[2] > 0);
+    function myCols(t) {
+      if (mySeat < 0 || C.ph !== "p") return [];
+      const m = hget(C.MH, t);
+      return m ? [{s: mySeat, x: m.x, h: m.h, vx: m.vx}] : [];
     }
-    if (!api.isHost) api.onState(ingest);
-
-    function computeView(now) {
-      if (!buf.length) return null;
-      const rt = now - offset - DELAY;
-      while (buf.length > 2 && buf[1].t < rt - 0.4) buf.shift();
-      let i = buf.length - 1;
-      while (i > 0 && buf[i].t > rt) i--;
-      const A = buf[i], B = buf[i + 1];
-      let f = 0, ext = 0;
-      if (B && rt > A.t) f = clamp((rt - A.t) / (B.t - A.t), 0, 1);
-      else if (!B) ext = clamp(rt - A.t, 0, 0.25); // si un paquet tarde, la balle continue sur sa lancée
-      const a = A.s, bS = B ? B.s : null;
-      const balls = [];
-      const bIdx = {};
-      if (bS) for (const q of bS.b) bIdx[q[0]] = q;
-      const aIds = {};
-      for (const q of a.b) {
-        aIds[q[0]] = 1;
-        const nq = bIdx[q[0]];
-        let x = q[1] * W, y = q[2] * L;
-        if (nq) { x += (nq[1] * W - x) * f; y += (nq[2] * L - y) * f; }
-        else if (bS) { if (f >= 0.5) continue; }
-        else if (ext && a.ph === "p") { x = clamp(x + q[3] * ext, WALL + BALL_R, W - WALL - BALL_R); y = clamp(y + q[4] * ext, 0, L); }
-        balls.push({id: q[0], x, y, vx: nq ? nq[3] : q[3], vy: nq ? nq[4] : q[4], last: f > 0.5 && nq ? nq[5] : q[5]});
+    // ma frappe : appliquée tout de suite chez moi, annoncée à l'hôte qui la vérifie dans son historique
+    function makeClaim(e, t, pre, c, hs) {
+      C.claims.push([++C.q, e.id, t, r1(pre.x), r1(pre.y), r1(c.x), r1(c.h), Math.round(c.vx)]);
+      if (C.claims.length > 6) C.claims.shift();
+      e.pend = C.q; e.pendAt = nowS(); claimDirty = true;
+      hitFx(mySeat, e.hist[t % NH] ? e.hist[t % NH].x : pre.x, PY[mySeat] + (mySeat === 0 ? -1 : 1) * CONTACT, hs);
+    }
+    function simBall(e, from, to, live) {
+      const st = hget(e.hist, from); if (!st) return;
+      const b = hball(st);
+      for (let t = from + 1; t <= to; t++) {
+        const wasIn = b.in;
+        stepBall(b, physAt(C.pf, t), live ? myCols(t) : [], live ? (bb, c, pre, hs) => { e.hist[t % NH] = hsnap(bb, t); makeClaim(e, t, pre, c, hs); } : null);
+        if (b.in >= 0 && wasIn < 0) e.kin = t;
+        e.hist[t % NH] = hsnap(b, t);
       }
-      if (bS && f >= 0.5) for (const q of bS.b) if (!aIds[q[0]]) balls.push({id: q[0], x: q[1] * W, y: q[2] * L, vx: q[3], vy: q[4], last: q[5]});
-      const px = [0, 1].map(s => (a.px[s] + ((bS ? bS.px[s] : a.px[s]) - a.px[s]) * f) * W);
-      const h = [0, 1].map(s => a.h[s] + ((bS ? bS.h[s] : a.h[s]) - a.h[s]) * f);
-      const dtA = Math.max(0, rt - A.t);
-      return {rt, ph: a.ph, sc: a.sc, cd: a.ph === "c" ? Math.max(0, (a.cd || 0) - dtA) : 0, balls, px, h,
-        e: a.e.map(q => ({type: BTYPES[q[0]], side: q[1], t: Math.max(0, q[2] / 10 - dtA)})),
-        bn: a.bn ? {type: BTYPES[a.bn[0]], x: a.bn[1] * W, y: a.bn[2] * L, t: a.bn[3] / 10 + dtA, r: 30, life: 11} : null,
-        w: a.w, ff: a.ff, tz: a.tz, latestT: buf[buf.length - 1].t};
+    }
+    function localStep(t) {
+      if (mySeat >= 0) {
+        const S = C.S, list = S ? S.e : [];
+        const th = padTargetH(effOn(list, "giant", mySeat), effOn(list, "mini", mySeat));
+        C.me.h += (th - C.me.h) * Math.min(1, TICK * 8);
+        stepPad(C.me, localT, effOn(list, "invert", mySeat), C.me.h, TICK);
+        C.MH[t % NH] = {t, x: C.me.x, h: C.me.h, vx: C.me.vx};
+      }
+      for (const e of DB.values()) if (e.endK > t && hget(e.hist, t - 1)) simBall(e, t - 1, t, C.ph === "p" && !e.pend);
+    }
+    function applyKeyframe(v, sk) {
+      const code = v[2], k = v[1];
+      if (k >= sk || k < C.k - NH + 4) return;
+      let id, st;
+      if (code === 1) { if (v[3] === mySeat) return; id = v[9]; st = {x: v[5], y: v[6], vx: v[7], vy: v[8], zz: v[10], in: -1, last: v[12] != null ? v[12] : v[3]}; }
+      else if (code === 6) { id = v[3]; st = {x: v[4], y: v[5], vx: v[6], vy: v[7], zz: 0, in: -1, last: -1}; }
+      else if (code === 9) { id = v[3]; st = {x: v[4], y: v[5], vx: v[6], vy: v[7], zz: v[8], in: -1, last: v[9]}; }
+      else return;
+      let e = DB.get(id);
+      if (!e || e.endK <= k) { if (code === 1) return; e = newEntry(id, k); DB.set(id, e); }
+      if (e.pend) return;
+      if (k < e.born) e.born = k;
+      st.t = k; e.hist[k % NH] = st; e.kin = -1;
+      simBall(e, k, sk - 1, false);
+    }
+    function ingest(S) {
+      if (!S || typeof S.k !== "number" || !Array.isArray(S.b)) return;
+      if (C.S && S.k <= C.S.k) {
+        if (S.k < C.S.k - 600) { C.S = null; C.offS = []; DB.clear(); } else return; // nouvelle partie / hôte relancé
+      }
+      const tn = nowS(), first = !C.S;
+      C.offS.push([tn, tn - S.k * TICK]);
+      while (C.offS.length > 2 && C.offS[0][0] < tn - 2.5) C.offS.shift();
+      if (mySeat >= 0 && Array.isArray(S.ec) && Array.isArray(S.ec[mySeat])) {
+        const [ct, age] = S.ec[mySeat];
+        if (ct !== C.lastEcho) {
+          C.lastEcho = ct;
+          const rtt = ((performance.now() - ct) % 1e8 + 1e8) % 1e8 - age * TICK * 1000;
+          if (rtt >= 0 && rtt < 3000) { C.rttS.push([tn, rtt]); while (C.rttS.length > 2 && C.rttS[0][0] < tn - 4) C.rttS.shift(); }
+        }
+      }
+      if (C.rttS.length) C.lead = clamp(minOf(C.rttS) / 2000, 0.005, 0.25);
+      C.S = S; C.pf = Array.isArray(S.pf) ? S.pf : [];
+      if (first) {
+        C.co = minOf(C.offS) - C.lead;
+        C.k = Math.max(S.k, Math.floor((tn - C.co) / TICK));
+        if (mySeat >= 0 && S.pt && S.pt[mySeat]) { C.me.x = S.pt[mySeat][1]; C.me.h = S.h ? S.h[mySeat] : PH; }
+      }
+      if (S.k > C.k) C.k = S.k;
+      const kfs = [];
+      for (const v of S.v || []) if (v[0] > C.lastEv) {
+        C.lastEv = v[0]; evQueue.push(v);
+        if (v[2] === 1 || v[2] === 6 || v[2] === 9) kfs.push(v);
+        if (v[2] === 3) goalEvent(v);
+      }
+      for (let s = 0; s < 2; s++) {
+        if (s === mySeat) continue;
+        if (S.pt && S.pt[s]) trackSample(s, S.pt[s][0], S.pt[s][1], C.k, true);
+      }
+      for (const v of kfs) if (v[2] === 1 && v[3] !== mySeat) trackSample(v[3], v[1], v[11], C.k, false);
+      if (mySeat >= 0 && Array.isArray(S.q)) {
+        C.ack = Math.max(C.ack, +S.q[mySeat] || 0);
+        C.claims = C.claims.filter(c => c[0] > C.ack);
+      }
+      for (const e of DB.values()) if (e.pend && (e.pend <= C.ack || tn - e.pendAt > 1.5)) e.pend = 0;
+      C.ph = S.ph;
+      const before = new Map();
+      for (const e of DB.values()) before.set(e, dispRaw(e));
+      if (S.ph === "c" || S.ph === "p") {
+        for (const v of kfs) applyKeyframe(v, S.k);
+        const seen = new Set();
+        for (const q of S.b) {
+          let e = DB.get(q[0]);
+          if (!e || e.endK <= S.k) { e = newEntry(q[0], S.k); DB.set(q[0], e); }
+          seen.add(e);
+          if (e.pend) { stats.skipped++; continue; }
+          e.hist[S.k % NH] = {t: S.k, x: q[1], y: q[2], vx: q[3], vy: q[4], last: q[5], zz: q[6] || 0, in: q[7] == null ? -1 : q[7]};
+          e.kin = q[7] >= 0 ? q[8] : -1;
+          simBall(e, S.k, C.k, false);
+        }
+        for (const e of DB.values()) if (!seen.has(e) && e.endK === Infinity && !e.pend) e.endK = S.k;
+      } else for (const e of DB.values()) if (e.endK === Infinity) e.endK = S.k;
+      for (const [e, b] of before) fixEo(e, b);
+      for (const [id, e] of DB) if (e.endK < C.k - NH) DB.delete(id);
+    }
+    if (!api.isHost) api.onState(s => { if (alive) ingest(s); });
+    function clientAdvance() {
+      if (!C.S) return;
+      const want = minOf(C.offS) - C.lead, tn = nowS();
+      // horloge ajustée en douceur (±6 %), ou d'un coup si elle est très loin
+      if (Math.abs(want - C.co) > 0.25) C.co = want; else C.co += clamp(want - C.co, -0.06 * 0.016, 0.06 * 0.016);
+      const kt = Math.floor((tn - C.co) / TICK);
+      if (kt - C.k > 60) { // onglet endormi : on saute (sans frappe), le prochain état recale tout
+        for (const e of DB.values()) { let t0 = C.k; while (t0 > C.k - 8 && !hget(e.hist, t0)) t0--; if (hget(e.hist, t0)) simBall(e, t0, kt - 1, false); }
+        C.k = kt - 1;
+      }
+      let n = 0;
+      while (C.k < kt && n < 60) { C.k++; n++; localStep(C.k); }
+    }
+
+    /* ================= Affichage : chaque balle a sa propre « heure d'affichage » ================= */
+    // Près de MA raquette : le présent (ce que je vois = ce qui est jugé). Vers l'adversaire, l'affichage recule
+    // jusqu'au retard de l'info sur SA raquette, à vitesse apparente bornée (±K_RATE) : mes yeux voient sa raquette
+    // et la balle au même instant, comme lui les a vues.
+    const presentK = () => api.isHost ? H.k : C.k;
+    // « présent » affiché, continu (sinon la balle avance par à-coups de ticks entiers) : un tick derrière la
+    // simulation, pour toujours pouvoir interpoler ; ma raquette est dessinée au même instant
+    function presentF(ft) { // ft : heure de l'image (s), la même que pour le pas d'affichage
+      if (api.isHost) return clamp(H.k + (acc + ft - lastHT / 1000) / TICK, H.k, H.k + 0.999) - 1;
+      return clamp((ft - C.co) / TICK, C.k, C.k + 0.999) - 1;
+    }
+    function myPadAt(tk) {
+      const MHs = api.isHost ? H.MH : C.MH, a = Math.floor(tk), fr = tk - a;
+      const A = hget(MHs, a), B = hget(MHs, a + 1);
+      if (A && B) return {x: A.x + (B.x - A.x) * fr, h: A.h + (B.h - A.h) * fr};
+      const m = api.isHost ? H.pads[mySeat] : C.me;
+      return {x: m.x, h: m.h};
+    }
+    function dProfile(y, vy) {
+      if (mySeat < 0) return Math.max(TR[0].D, TR[1].D);
+      const o = 1 - mySeat, u = clamp(mySeat === 0 ? PY[0] - y : y - PY[1], 0, SPAN);
+      // rampe répartie sur toute la table (écart de vitesse apparente le plus faible possible), bornée à ±K_WARP
+      return u * Math.min(TR[o].D / SPAN, K_WARP / Math.max(200, Math.abs(vy)));
+    }
+    function histAt(e, tk) {
+      const a = Math.floor(tk), fr = tk - a;
+      const A = hget(e.hist, a);
+      if (!A) {
+        // en dehors de l'historique : l'entrée la plus proche
+        for (let d = 1; d < 12; d++) { const X = hget(e.hist, a - d) || hget(e.hist, a + d); if (X) return X; }
+        return null;
+      }
+      const B = fr > 0 ? hget(e.hist, a + 1) : null;
+      if (!B || A.in >= 0) return A;
+      return {t: tk, x: A.x + (B.x - A.x) * fr, y: A.y + (B.y - A.y) * fr, vx: B.vx, vy: B.vy, zz: B.zz, in: B.in, last: fr > 0.5 ? B.last : A.last};
+    }
+    function dispRaw(e) { return e.tdb == null ? null : histAt(e, e.tdb); }
+    // une correction de l'historique ne doit pas faire sauter la balle : l'écart se résorbe en douceur
+    function fixEo(e, before) {
+      if (!before || e.tdb == null) return;
+      const a = histAt(e, e.tdb); if (!a) return;
+      const dx = before.x - a.x, dy = before.y - a.y;
+      if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) return;
+      e.eo.x += dx; e.eo.y += dy;
+      const d = Math.hypot(e.eo.x, e.eo.y);
+      stats.corr++; if (d > stats.corrMax) stats.corrMax = d;
+      if (Math.hypot(dx, dy) > 15 && stats.corrLog.length < 40) stats.corrLog.push([Math.round(a.y), Math.round(dx), Math.round(dy), Math.round(presentK() - e.tdb), a.in, e.pend ? 1 : 0]);
+      if (d > 260) { e.eo.x *= 260 / d; e.eo.y *= 260 / d; }
+    }
+    const goals = new Map(); // id de balle -> {scorer, inSc, fired, at}
+    function goalEvent(v) {
+      const g = goals.get(v[6]) || {scorer: v[3], inSc: false, fired: false, at: nowS()};
+      g.inSc = true; g.scorer = v[3]; goals.set(v[6], g);
+      const e = DB.get(v[6]); if (e && e.endK > v[1]) e.endK = v[1];
+    }
+    function goalFx(scorer, x, excl) {
+      const gy = scorer === 0 ? SIDE : L - SIDE;
+      burst(x, gy, COLORS[scorer], 46, 520, scorer === 0 ? Math.PI / 2 : -Math.PI / 2);
+      FX.shake = RM ? 0 : 16;
+      FX.floats = FX.floats.filter(f => !f.bonus);
+      FX.flash = {t: 0, life: 1.4, side: scorer, text: EXCL[excl] || EXCL[(Math.random() * EXCL.length) | 0]};
+      pads[1 - scorer].surprised = 1.6; pads[scorer].happy = 1.6;
+      sfx.goal();
+    }
+    const tagOf = s => api.isHost ? (s === mySeat ? H.k : H.tag[s]) : TR[s].last;
+    function dispScore(sc) {
+      const out = sc.slice(), tn = nowS();
+      for (const [id, g] of goals) {
+        if (tn - g.at > 6) { goals.delete(id); continue; }
+        if (g.inSc && !g.fired) out[g.scorer]--;
+        else if (!g.inSc && g.fired) out[g.scorer]++;
+      }
+      return out.map(x => Math.max(0, x));
+    }
+    const padT = [null, null]; // retard d'affichage de chaque raquette adverse (ticks)
+    function view(dt, rawDt, ft) {
+      let ph, sc, cd, eff, bn, w, ff, tz, hs;
+      if (api.isHost) {
+        ph = H.ph; sc = H.sc; cd = H.cd; w = H.winner; ff = H.ff; tz = H.tz; hs = H.pads.map(p => p.h);
+        eff = H.effects.map(e => ({type: e.type, side: e.side, t: e.t}));
+        bn = H.bonus ? {type: H.bonus.type, x: H.bonus.x, y: H.bonus.y, t: H.bonus.t, r: 30, life: 11} : null;
+      } else {
+        const S = C.S; if (!S) return null;
+        const age = Math.max(0, (C.k - S.k) * TICK);
+        ph = S.ph; sc = S.sc; w = S.w; ff = S.ff; tz = S.tz; hs = S.h || [PH, PH];
+        cd = ph === "c" ? Math.max(0, (S.cd || 0) - age) : 0;
+        eff = (S.e || []).map(q => ({type: BTYPES[q[0]], side: q[1], t: Math.max(0, q[2] / 10 - age)}));
+        bn = S.bn ? {type: BTYPES[S.bn[0]], x: S.bn[1] * W, y: S.bn[2] * L, t: S.bn[3] / 10 + age, r: 30, life: 11} : null;
+      }
+      updateTrackDelays(dt);
+      const Pk = presentF(ft == null ? nowS() : ft), dtT = (rawDt || dt) / TICK; // horloges d'affichage : temps réel (une image en retard ne ralentit pas la balle)
+      const balls = [];
+      let near = [null, null];
+      for (const e of DB.values()) {
+        const ref = e.disp || histAt(e, Pk);
+        if (!ref) continue;
+        const pf = api.isHost ? H.pf : C.pf;
+        const vyEff = (ref.vy || 0) * physAt(pf, Math.floor(e.tdb == null ? Pk : e.tdb)).mult;
+        const target = Pk - dProfile(ref.y, vyEff) / TICK;
+        // balle qui vient vers moi : elle doit être au présent en arrivant sur ma raquette (rattrapage garanti)
+        let hiRate = 1 + K_RATE;
+        if (mySeat >= 0 && e.tdb != null && (mySeat === 0 ? ref.vy > 0 : ref.vy < 0)) {
+          const u = Math.max(0, mySeat === 0 ? PY[0] - ref.y : ref.y - PY[1]);
+          hiRate = Math.max(hiRate, 1 + (Pk - e.tdb) * TICK / Math.max(0.05, u / Math.max(200, Math.abs(vyEff))));
+        }
+        if (e.tdb == null || target - e.tdb > 0.4 / TICK) e.tdb = target; // (jamais de retour en arrière)
+        else e.tdb = clamp(target, e.tdb + dtT * (1 - K_RATE), e.tdb + dtT * hiRate);
+        e.tdb = Math.min(e.tdb, Pk);
+        if (e.ptdb != null && dtT > 0.5 && dtT < 6) { const r = Math.abs((e.tdb - e.ptdb) / dtT - 1); stats.warp[r < 0.05 ? 0 : r < 0.15 ? 1 : r < 0.32 ? 2 : 3]++; }
+        e.ptdb = e.tdb;
+        if (e.tdb < e.born || e.tdb >= e.endK || e.goalFx) { e.disp = null; continue; }
+        const raw = histAt(e, e.tdb); if (!raw) continue;
+        // près de ma raquette, la correction se résorbe vite : l'image doit coller à ce qui est jugé
+        const nearMine = mySeat >= 0 && Math.abs(raw.y - PY[mySeat]) < 240;
+        const kd = Math.exp(-dt * (nearMine ? 30 : 12));
+        e.eo.x *= kd; e.eo.y *= kd;
+        if (Math.abs(e.eo.x) < 0.05 && Math.abs(e.eo.y) < 0.05) { e.eo.x = 0; e.eo.y = 0; }
+        const x = clamp(raw.x + e.eo.x, WALL + BALL_R, W - WALL - BALL_R), y = raw.y + e.eo.y;
+        // rebond sur une bande (son + étincelles), vu sur cet écran
+        if (e.disp) {
+          const dx = x - e.disp.x;
+          if (Math.abs(dx) > 0.01) {
+            const sg = Math.sign(dx);
+            if (e.pdx && sg !== e.pdx && (x < WALL + BALL_R + 10 || x > W - WALL - BALL_R - 10)) { burst(x < W / 2 ? WALL : W - WALL, y, "#FF7EB0", 5, 160); sfx.wall(); }
+            e.pdx = sg;
+          }
+        }
+        e.disp = {x, y, vx: raw.vx, vy: raw.vy};
+        // but sûr (le défenseur a joué ce moment sans frapper) : on le montre tout de suite
+        if (raw.in >= 0 && e.kin >= 0 && !e.goalFx && (ph === "p" || ph === "g" || ph === "o")) {
+          const def = raw.in;
+          if (def === mySeat ? !e.pend : tagOf(def) >= e.kin) {
+            e.goalFx = true; e.disp = null;
+            const g = goals.get(e.id) || {scorer: 1 - def, inSc: false, fired: false, at: nowS()};
+            if (!g.fired) { g.fired = true; goals.set(e.id, g); goalFx(1 - def, x); }
+            continue;
+          }
+        }
+        balls.push({id: e.id, x, y, vx: raw.vx, vy: raw.vy, last: raw.last, tdb: e.tdb});
+        for (let s = 0; s < 2; s++) {
+          if (s === mySeat) continue;
+          const app = (s === 0 ? raw.vy > 0 : raw.vy < 0);
+          const dd = Math.abs(y - PY[s]);
+          if ((app || dd < 120) && dd < 300 && (!near[s] || dd < near[s].dd)) near[s] = {dd, tdb: e.tdb};
+        }
+      }
+      const px = [0, 0], h = [0, 0];
+      for (let s = 0; s < 2; s++) {
+        if (s === mySeat) {
+          const m = myPadAt(Pk);
+          px[s] = m.x; h[s] = m.h;
+          continue;
+        }
+        // raquette adverse : là où elle était quand son joueur voyait la balle au même instant que moi
+        // (on lisse le retard, pas l'heure elle-même : sinon la raquette traînerait derrière la balle)
+        const want = Pk - (near[s] ? near[s].tdb : Pk - TR[s].D / TICK);
+        padT[s] = padT[s] == null || Math.abs(want - padT[s]) > 0.5 / TICK ? want : padT[s] + (want - padT[s]) * Math.min(1, dt * 14);
+        const x = trackAt(s, Pk - padT[s]);
+        const [lo, hi] = padRange(hs[s]);
+        px[s] = clamp(x == null ? W / 2 : x, lo, hi); h[s] = hs[s];
+      }
+      return {ph, sc: dispScore(sc), rawSc: sc.slice(), cd, balls, px, h, e: eff, bn, w, ff, tz, Pk};
     }
     const vHas = (v, type, side) => v.e.some(e => e.type === type && (side == null || e.side === side));
+    // événements : chacun est joué quand l'image affichée atteint son tick
+    function evReady(v, Pk) {
+      const k = v[1], code = v[2];
+      if (Pk - k > 0.9 / TICK) return true;
+      if (code === 1 && v[3] === mySeat) return true;
+      if (code === 1 || code === 3) {
+        const e = DB.get(code === 1 ? v[9] : v[6]);
+        if (e && e.tdb != null) return e.tdb >= k || e.goalFx;
+      }
+      return Pk - dProfile(L / 2, 600) / TICK >= k;
+    }
 
     /* ================= Entrées locales ================= */
-    let matchOver = false, localT = 0.5, lastSent = -1, lastSendAt = 0, sendTimer = null, interacted = false;
-    function queueSend() {
-      if (mySeat < 0 || !alive || matchOver) return;
-      const r = r3(localT);
-      if (r === lastSent) return;
+    const SID = Math.random().toString(36).slice(2, 8);
+    let matchOver = false, lastSendAt = 0, sendSeq = 0, claimDirty = false, interacted = false;
+    function maybeSend() {
+      if (mySeat < 0 || api.isHost || !alive || matchOver || !C.S) return;
       const now = performance.now();
-      if (now - lastSendAt >= 50) { lastSendAt = now; lastSent = r; api.setInput({x: r}); }
-      else if (!sendTimer) sendTimer = setTimeout(() => { sendTimer = null; queueSend(); }, 52 - (now - lastSendAt));
+      if (!claimDirty && now - lastSendAt < SEND_MS) return;
+      // envoyé même immobile : le tick joint dit à l'hôte jusqu'où j'ai joué (validation rapide des buts)
+      const x = r1(C.me.x);
+      lastSendAt = now; claimDirty = false; stats.sent++;
+      const inp = {s: ++sendSeq, sid: SID, x, k: C.k, ct: Math.round(now) % 1e8};
+      if (C.claims.length) inp.h = C.claims.slice();
+      api.setInput(inp);
     }
-    function setTarget(v) { localT = clamp(v, 0, 1); interacted = true; queueSend(); }
+    function setTarget(v) { localT = clamp(v, 0, 1); interacted = true; }
     // Vue : rot 0 = joueur 1 en bas (portrait), 2 = tourné de 180°, 1/3 = paysage (ma raquette à gauche)
     const V = {rot: 0, s: 1, ox: 0, oy: 0, cw: 0, ch: 0, dpr: 1, w: 0, h: 0, M: [1, 0, 0, 1, 0, 0]};
     function screenToSimX(cx, cy) {
@@ -706,7 +1130,6 @@ GONFLETTE.registerGame({
     // ---------- effets visuels locaux ----------
     const FX = {particles: [], floats: [], confetti: [], flash: null, shake: 0, time: 0, party: 0, over: false};
     const pads = [0, 1].map(() => ({sq: 0, surprised: 0, happy: 0, blinkIn: rand(1.5, 4), blinkT: 0, lx: 0, ly: 0}));
-    const me = {x: W / 2, vx: 0};
     const trails = new Map();
     function burst(x, y, color, n, speed, ang) {
       if (RM) n = Math.ceil(n / 2);
@@ -716,6 +1139,11 @@ GONFLETTE.registerGame({
           color: Math.random() < 0.3 ? "#FFC83D" : color, size: rand(2, 5), star: Math.random() < 0.35});
       }
       if (FX.particles.length > 400) FX.particles.splice(0, FX.particles.length - 400);
+    }
+    function hitFx(s, x, y, sp) {
+      pads[s].sq = 1;
+      burst(x, y, COLORS[s], 14, 340, s === 0 ? -Math.PI / 2 : Math.PI / 2);
+      sfx.hit(sp);
     }
     function launchConfetti() {
       if (RM) return;
@@ -730,19 +1158,12 @@ GONFLETTE.registerGame({
     }
     function fireEvent(e) {
       const code = e[2], a = e.slice(3);
-      if (code === 1) { // touche de raquette
-        const s = a[0]; pads[s].sq = 1;
-        burst(a[2] * W, a[3] * L, COLORS[s], 14, 340, s === 0 ? -Math.PI / 2 : Math.PI / 2);
-        sfx.hit(a[1]);
-      } else if (code === 2) { burst(a[0] * W, a[1] * L, "#FF7EB0", 5, 160); sfx.wall(); }
-      else if (code === 3) { // but
-        const scorer = a[0], gy = scorer === 0 ? SIDE : L - SIDE;
-        burst(a[2] * W, gy, COLORS[scorer], 46, 520, scorer === 0 ? Math.PI / 2 : -Math.PI / 2);
-        FX.shake = RM ? 0 : 16;
-        FX.floats = FX.floats.filter(f => !f.bonus);
-        FX.flash = {t: 0, life: 1.4, side: scorer, text: EXCL[a[1]] || "BOUM !"};
-        pads[1 - scorer].surprised = 1.6; pads[scorer].happy = 1.6;
-        sfx.goal();
+      if (code === 1) { // touche de raquette (les miennes sont déjà jouées chez moi)
+        if (a[0] === mySeat) return;
+        hitFx(a[0], a[2], a[3], a[1]);
+      } else if (code === 3) { // but
+        const g = goals.get(a[3]) || {scorer: a[0], inSc: true, fired: false, at: nowS()};
+        if (!g.fired) { g.fired = true; goals.set(a[3], g); goalFx(a[0], a[2], a[1]); }
       } else if (code === 4) { // bonus ramassé
         const type = BTYPES[a[0]], who = a[1], B = BONUS[type];
         const x = a[3] * W, y = a[4] * L;
@@ -856,7 +1277,7 @@ GONFLETTE.registerGame({
       const [a, b, cc, d] = V.M;
       setM(c, sx, sy);
       c.fillStyle = "rgba(59,31,58,.2)"; capsuleH(c, x + (a * 4 + b * 7), y + (cc * 4 + d * 7), h, PT); c.fill();
-      c.save(); c.translate(x, y); c.scale(1 - 0.16 * p.sq, 1 + 0.32 * p.sq);
+      c.save(); c.translate(x, y); c.scale(1, 1 - 0.22 * p.sq); // écrasée dans son épaisseur : la longueur (zone de frappe) ne change pas
       capsuleH(c, 0, 0, h, PT); c.fillStyle = COLORS[s]; c.fill();
       c.save(); capsuleH(c, 0, 0, h, PT); c.clip();
       c.fillStyle = "rgba(255,255,255,.3)"; c.fillRect(-h / 2, -PT / 2 + 5, h, 7);
@@ -919,7 +1340,7 @@ GONFLETTE.registerGame({
     }
 
     /* ================= Boucle d'affichage ================= */
-    let raf = 0, lastFrame = 0, alive = true, prevPh = null, prevSc = [0, 0], prevCdN = 0, endShownAt = 0, playSeen = 0, chipSig = ["", ""];
+    let lastView = null, raf = 0, lastFrame = 0, alive = true, prevPh = null, prevSc = [0, 0], prevCdN = 0, endShownAt = 0, playSeen = 0, chipSig = ["", ""];
     function updateChips(v) {
       for (let s = 0; s < 2; s++) {
         const list = v.e.filter(e => e.side === s);
@@ -950,12 +1371,13 @@ GONFLETTE.registerGame({
       if (!alive) return;
       raf = requestAnimationFrame(frame);
       const now = ts / 1000;
-      const dt = lastFrame ? clamp(now - lastFrame, 0, 0.05) : 0;
+      const rawDt = lastFrame ? clamp(now - lastFrame, 0, 1) : 0, dt = Math.min(rawDt, 0.05);
       lastFrame = now;
       FX.time += dt;
       if (!V.w) layout();
       if (!V.w) return;
-      const v = computeView(nowS());
+      if (api.isHost) hostLoop(); else { clientAdvance(); maybeSend(); }
+      const v = view(dt, rawDt, now); lastView = v;
       // clavier : déplace ma cible
       if (mySeat >= 0 && held.size) {
         let dir = 0;
@@ -970,11 +1392,8 @@ GONFLETTE.registerGame({
         }
       }
       if (v) {
-        // événements ponctuels synchronisés sur l'image affichée
-        const tooOld = v.latestT - 0.6;
-        while (evQueue.length && (evQueue[0][1] * TICK <= v.rt || evQueue[0][1] * TICK < tooOld)) fireEvent(evQueue.shift());
-        // ma raquette, prédite localement
-        if (mySeat >= 0) { stepPad(me, localT, vHas(v, "invert", mySeat), v.h[mySeat], dt); v.px[mySeat] = me.x; }
+        // événements ponctuels joués quand l'image affichée atteint leur tick
+        while (evQueue.length && evReady(evQueue[0], v.Pk)) fireEvent(evQueue.shift());
         // changements discrets
         if (v.ph === "c") {
           const n = Math.max(1, Math.ceil(v.cd / (v.sc[0] + v.sc[1] === 0 ? 1.2 : 0.7)));
@@ -993,7 +1412,7 @@ GONFLETTE.registerGame({
           FX.over = true; matchOver = true; endShownAt = now + 0.7;
           endEl.querySelector("h2 span").textContent = name(v.w);
           endEl.querySelector("h2 span").style.setProperty("--wc", COLORS[v.w]);
-          endEl.querySelector(".pg-fin").textContent = `${v.sc[v.w]} – ${v.sc[1 - v.w]}`;
+          endEl.querySelector(".pg-fin").textContent = `${v.rawSc[v.w]} – ${v.rawSc[1 - v.w]}`;
           endEl.querySelector(".pg-tease").textContent = v.ff ? `Victoire par forfait : ${name(1 - v.w)} a quitté la table !` : (mySeat === v.w ? "Bravo, champion de la fête foraine ! " : "") + (TEASES[v.tz] || TEASES[0]);
           announce(`${name(v.w)} gagne la partie !`);
         }
@@ -1033,6 +1452,7 @@ GONFLETTE.registerGame({
       if (FX.flash) { FX.flash.t += dt; if (FX.flash.t > FX.flash.life) FX.flash = null; }
       FX.shake *= Math.exp(-dt * 7); if (FX.shake < 0.2) FX.shake = 0;
       draw(v);
+      if (v && dbg.onFrame) dbg.onFrame({ph: v.ph, sc: v.sc.slice(), balls: v.balls.map(b => [b.id, b.x, b.y]), px: v.px.slice(), h: v.h.slice(), e: v.e.map(e => e.type + ":" + e.side)});
     }
     function draw(v) {
       const c = ctx;
@@ -1110,14 +1530,14 @@ GONFLETTE.registerGame({
     layout();
     raf = requestAnimationFrame(frame);
     if (api.isHost) { lastHT = performance.now(); publish(); hostTimer = setInterval(hostLoop, 8); }
-    if (mySeat >= 0) { lastSent = -1; queueSend(); }
 
     // Petit crochet de test (inoffensif) : statistiques et accélérateurs pour les tests automatisés.
     const dbg = {
       seat: mySeat, isHost: api.isHost,
       stats: () => Object.assign({rate: stats.t0 ? stats.pubs / ((performance.now() - stats.t0) / 1000) : 0}, stats),
-      view: () => { const v = computeView(nowS()); return v && {ph: v.ph, sc: v.sc.slice(), balls: v.balls.length, bl: v.balls.map(b => [Math.round(b.x), Math.round(b.y), b.vy]), px: v.px.map(x => Math.round(x)), e: v.e.map(e => e.type + ":" + e.side), bn: v.bn && v.bn.type}; },
-      host: api.isHost ? () => ({ph: H.ph, sc: H.sc.slice(), pads: H.pads.map(p => Math.round(p.x)), balls: H.balls.map(b => [Math.round(b.x), Math.round(b.y)]), targets: targets.slice(), effects: H.effects.map(e => e.type + ":" + e.side)}) : null,
+      view: () => { const v = lastView; return v && {ph: v.ph, sc: v.sc.slice(), balls: v.balls.length, bl: v.balls.map(b => [Math.round(b.x), Math.round(b.y), b.vy]), px: v.px.map(x => Math.round(x)), e: v.e.map(e => e.type + ":" + e.side), bn: v.bn && v.bn.type, D: TR.map(t => Math.round(t.D * 1000)), lead: Math.round(C.lead * 1000)}; },
+      host: api.isHost ? () => ({ph: H.ph, sc: H.sc.slice(), pads: H.pads.map(p => Math.round(p.x)), balls: H.balls.map(b => [Math.round(b.x), Math.round(b.y)]), tags: H.tag.map(t => H.k - t), effects: H.effects.map(e => e.type + ":" + e.side)}) : null,
+      onFrame: null,
       forceGoal: s => { if (!api.isHost) return false; forceGoalReq = s; return true; },
       drop: type => { if (!api.isHost || !BONUS[type]) return false; dropReq = type; return true; },
       target: () => localT,
@@ -1131,7 +1551,6 @@ GONFLETTE.registerGame({
         cancelAnimationFrame(raf);
         if (hostTimer) clearInterval(hostTimer);
         if (finishTimer) clearTimeout(finishTimer);
-        if (sendTimer) clearTimeout(sendTimer);
         window.removeEventListener("keydown", onKeyDown);
         window.removeEventListener("keyup", onKeyUp);
         window.removeEventListener("blur", onBlur);

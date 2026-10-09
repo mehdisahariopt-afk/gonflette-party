@@ -11,7 +11,7 @@
 
   const SKINS = ["#f6d2b8", "#eebe98", "#d9a27a", "#b97b54", "#8d5a3b", "#5e3a26"];
   const HAIR_COLORS = ["#25201f", "#6b4226", "#c8562b", "#e3bb4f", "#dcd8d0", "#d6337a", "#2f7fd6"];
-  const HAIR_STYLES = [["court", "Court"], ["crete", "Crête"], ["queue", "Queue"], ["afro", "Afro"], ["chignon", "Chignon"], ["chauve", "Chauve"]];
+  const HAIR_STYLES = [["court", "Court"], ["crete", "Crête"], ["queue", "Queue"], ["afro", "Afro"], ["chignon", "Chignon"], ["chauve", "Chauve"], ["dreads", "Dreads"], ["manbun", "Man bun"], ["degrade", "Afro dégradée"]];
   const CLOTH = ["#e63946", "#f4a261", "#ffd166", "#2a9d8f", "#264653", "#8338ec", "#ff006e", "#3a86ff", "#111111", "#f1faee"];
   const TOPS = [["nu", "Torse nu"], ["debardeur", "Débardeur"], ["singlet", "Justaucorps"]];
   const ACCS = [["aucun", "Rien"], ["bandeau", "Bandeau"], ["casquette", "Casquette"], ["lunettes", "Lunettes"], ["moustache", "Moustache"], ["barbe", "Barbe"], ["ceinture", "Ceinture"]];
@@ -47,7 +47,7 @@
     epique: {name: "Épique", color: "#b14dff", p: .10, price: 350, dup: 120},
     legendaire: {name: "Légendaire", color: "#ffb703", p: .02, price: 800, dup: 300}
   };
-  const SLOTS = [["tete", "Tête", "🧢"], ["visage", "Visage", "🕶️"], ["cou", "Cou", "📿"], ["main", "Main", "🏋️"], ["arme", "Armes", "🔫"], ["poignets", "Poignets", "🧽"], ["taille", "Taille", "🩲"], ["pieds", "Pieds", "🩴"], ["peau", "Peau", "🖋️"], ["dos", "Dos", "🦸"], ["aura", "Aura", "✨"]];
+  const SLOTS = [["tete", "Tête", "🧢"], ["animal", "Compagnons", "🐾"], ["haut", "Tenues", "👕"], ["taille", "Taille", "🩳"], ["pieds", "Chaussures", "👟"], ["visage", "Visage", "🕶️"], ["cou", "Cou", "📿"], ["main", "Main", "🏋️"], ["arme", "Armes", "🔫"], ["poignets", "Poignets", "⌚"], ["peau", "Peau", "🖋️"], ["dos", "Dos", "🦸"], ["aura", "Aura", "✨"]];
   const ITEMS = [
     ["bandana", "tete", "Bandana Rambo", "commun", "Pour survivre à n'importe quelle séance de jambes. Ou pas."],
     ["eponge", "tete", "Bandeau éponge", "commun", "Absorbe 2 litres de sueur à l'heure."],
@@ -142,7 +142,68 @@
     ["minigun", "arme", "Minigun à confettis", "legendaire", "Ratatata ! 6 000 confettis à la minute."],
     ["carquois", "dos", "Carquois à ventouses", "commun", "Plein de flèches qui font pouic."],
     ["fourreau", "dos", "Katana dans le dos", "rare", "Le style ninja, version fin de séance."],
-    ["roquette", "dos", "Lance-roquettes", "legendaire", "Sur l'épaule, comme un sac de sport. Boum !"]
+    ["roquette", "dos", "Lance-roquettes", "legendaire", "Sur l'épaule, comme un sac de sport. Boum !"],
+    // --- collection « Swag » : tenues complètes, bas, chaussures, bling-bling
+    ["hoodie", "haut", "Sweat à capuche", "commun", "Capuche, cordons, poche kangourou : la panoplie Rocky."],
+    ["maillot", "haut", "Maillot de foot n°10", "commun", "Le numéro des artistes. Et des gros mollets."],
+    ["crop", "haut", "Crop top « GAINS »", "commun", "Pour montrer des abdos. Les vôtres, de préférence."],
+    ["chemhaw", "haut", "Chemise hawaïenne", "rare", "Ouverte jusqu'au nombril, évidemment."],
+    ["surv80", "haut", "Survêtement 80s", "rare", "Bruissant, brillant, fluo : l'aérobic n'est jamais mort."],
+    ["kimono", "haut", "Kimono de judo", "rare", "Ceinture noire de développé couché."],
+    ["filet", "haut", "Débardeur filet", "rare", "Aération maximale, pudeur minimale."],
+    ["smoking", "haut", "Smoking et nœud pap'", "epique", "Tenue de gala obligatoire pour la remise du trophée."],
+    ["luchador", "haut", "Tenue de luchador", "epique", "Masque, collants à flammes et prise du suplex."],
+    ["jogging", "taille", "Jogging gris", "commun", "Le pantalon officiel du jour de jambes (et du canapé)."],
+    ["shortbain", "taille", "Short de bain pastèque", "commun", "Juteux, frais, et très, très voyant."],
+    ["legging", "taille", "Legging léopard", "rare", "Rugissement garanti à la presse à cuisses."],
+    ["kilt", "taille", "Kilt écossais", "epique", "Highland Games, catégorie lancer de tronc."],
+    ["retro", "pieds", "Baskets montantes rétro", "commun", "Style 1985, maintien de cheville béton."],
+    ["fluos", "pieds", "Baskets fluo", "commun", "Visibles depuis l'espace."],
+    ["claquettes", "pieds", "Claquettes-chaussettes", "commun", "Le summum du confort. Et du style, selon vous."],
+    ["crampons", "pieds", "Crampons de foot", "commun", "Chaussettes hautes et protège-tibias compris."],
+    ["mocassins", "pieds", "Mocassins et chaussettes blanches", "commun", "Le style tonton au mariage de la cousine."],
+    ["powerlift", "pieds", "Chaussures d'haltéro", "rare", "Talon en bois, squat de légende."],
+    ["crocs", "pieds", "Crocs à breloques", "rare", "Douze breloques, zéro honte."],
+    ["boxe", "pieds", "Bottines de boxe", "rare", "Légères comme un papillon, lourdes comme une enclume."],
+    ["talons", "pieds", "Talons aiguilles", "rare", "12 cm de talon, 120 kg de muscles."],
+    ["pantoufles", "pieds", "Pantoufles lapin", "rare", "Séance du dimanche matin, en peignoir."],
+    ["moonboot", "pieds", "Moon boots", "rare", "Un petit pas pour l'homme, un grand pas pour la gonflette."],
+    ["led", "pieds", "Baskets lumineuses", "epique", "Chaque pas est une boîte de nuit."],
+    ["cowboyor", "pieds", "Santiags en or", "epique", "Yeehaw, version lingot."],
+    ["bob", "tete", "Bob de pêcheur", "commun", "Pêche aux gains, été comme hiver."],
+    ["bonnet", "tete", "Bonnet à pompon", "commun", "Pour la séance en extérieur. En décembre."],
+    ["durag", "tete", "Durag", "commun", "Les vagues, c'est dans les cheveux."],
+    ["snapback", "tete", "Snapback dorée", "rare", "L'étiquette reste sur la visière. Obligatoire."],
+    ["cretefluo", "tete", "Crête fluo", "rare", "Punk's not dead. Vos biceps non plus."],
+    ["lunstar", "visage", "Lunettes étoiles", "commun", "La star de la salle, c'est vous."],
+    ["grillz", "visage", "Grillz en diamant", "epique", "Un sourire à 100 000 carats."],
+    ["casque", "cou", "Casque audio", "rare", "Playlist « PR ou hôpital »."],
+    ["chainexxl", "cou", "Chaîne XXL « GAINS »", "legendaire", "Plus lourde qu'un disque de 20. C'est le but."],
+    ["bagues", "poignets", "Bagues bling", "rare", "Un diamant par phalange."],
+    ["montre", "poignets", "Montre en or", "epique", "Toujours l'heure de la séance."],
+    ["sacsport", "dos", "Sac de sport", "commun", "Contient : serviette, shaker et trois chaussettes orphelines."],
+    ["boombox", "main", "Boombox", "rare", "Le son à fond, comme vos séries."],
+    // --- compagnons : ils suivent leur maître partout (à côté des pieds, ou sur l'épaule)
+    ["chihua", "animal", "Chihuahua en survêtement", "commun", "Tremble de rage. Ou de froid. Personne ne sait."],
+    ["chatjuge", "animal", "Chat qui juge", "commun", "Il a vu votre squat. Il n'a rien dit. C'est pire."],
+    ["tortue", "animal", "Tortue haltérophile", "commun", "Lentement mais sûrement. Surtout lentement."],
+    ["poulet", "animal", "Poulet « skip leg day »", "commun", "Pecs en béton, pilons en allumettes."],
+    ["pigeon", "animal", "Pigeon de la plage", "commun", "Lunettes de soleil, frite volée : le roi de Muscle Beach."],
+    ["crabe", "animal", "Crabe culturiste", "commun", "Que des pinces, jamais de jambes."],
+    ["lapin", "animal", "Lapin pliométrique", "commun", "Box jumps toute la journée."],
+    ["bulldog", "animal", "Bulldog bodybuildé", "rare", "Bandana, mâchoire carrée, jamais sauté un jour de bras."],
+    ["perroquet", "animal", "Perroquet coach", "rare", "Perché sur l'épaule, il ne connaît qu'un mot : GAINS !"],
+    ["hamster", "animal", "Hamster dans sa roue", "rare", "Cardio illimité, zéro jour de repos."],
+    ["pingouin", "animal", "Pingouin du vestiaire", "rare", "Toujours en tenue de soirée, même sous la douche."],
+    ["alpaga", "animal", "Alpaga zen", "rare", "Crache sur ceux qui ne rangent pas leurs poids."],
+    ["golden", "animal", "Golden retriever au frisbee", "rare", "Le meilleur partenaire : il rapporte tout, même vos haltères."],
+    ["raton", "animal", "Raton laveur voleur de barres", "rare", "Votre barre protéinée ? Quelle barre protéinée ?"],
+    ["panda", "animal", "Panda en prise de masse", "epique", "Bambou au petit-déj, bambou au goûter, bambou au dîner."],
+    ["requinl", "animal", "Requin en laisse", "epique", "Il a sa bouée, vous avez vos bras : chacun ses flotteurs."],
+    ["poulpe", "animal", "Poulpe aux 8 haltères", "epique", "Huit bras, huit curls. Record de la salle."],
+    ["dragon", "animal", "Mini-dragon", "legendaire", "Crache du feu sur les échauffements bâclés."],
+    ["licorne", "animal", "Licorne arc-en-ciel", "legendaire", "Aussi rare qu'un jour de jambes réussi."],
+    ["trex", "animal", "T-rex aux petits bras", "legendaire", "Roi des dinosaures, incapable de faire une pompe."]
   ].map(([id, s, n, r, d]) => ({id, s, n, r, d, price: RARITIES[r].price}));
   const ITEM = {};
   ITEMS.forEach(i => ITEM[i.id] = i);
@@ -388,6 +449,341 @@
     }}
   };
 
+  /* ---------- collection « Swag » : outils de motifs ----------
+     Pas de clipPath ni de <pattern> (les id se marchent dessus entre avatars, et l'avatar finit aussi en <img>, en canvas
+     et en texture 3D) : on échantillonne la forme en polygone et on ne garde que les motifs qui tombent dedans. */
+  function polyOf(d) {
+    const tk = String(d).match(/[MLQZ]|-?\d*\.?\d+/g) || [], P = [];
+    let i = 0, cmd = "M", cur = [0, 0];
+    while (i < tk.length) {
+      const t = tk[i];
+      if (/[MLQZ]/.test(t)) { cmd = t; i++; continue; }
+      if (cmd === "Q") {
+        const c = [+tk[i], +tk[i + 1]], e = [+tk[i + 2], +tk[i + 3]];
+        for (let k = 1; k <= 8; k++) { const u = k / 8; P.push([(1 - u) * (1 - u) * cur[0] + 2 * (1 - u) * u * c[0] + u * u * e[0], (1 - u) * (1 - u) * cur[1] + 2 * (1 - u) * u * c[1] + u * u * e[1]]); }
+        cur = e; i += 4;
+      } else { cur = [+tk[i], +tk[i + 1]]; P.push(cur); i += 2; }
+    }
+    return P;
+  }
+  function inPoly(P, x, y) {
+    let c = false;
+    for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > y) !== (P[j][1] > y) && x < (P[j][0] - P[i][0]) * (y - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) c = !c;
+    return c;
+  }
+  // segments de droites (x0,y0)->(x1,y1) gardés seulement à l'intérieur du polygone (marge mg)
+  function clipLines(P, lines, mg) {
+    let d = "";
+    const ok = (x, y) => inPoly(P, x, y) && (!mg || (inPoly(P, x + mg, y) && inPoly(P, x - mg, y) && inPoly(P, x, y + mg) && inPoly(P, x, y - mg)));
+    for (const [x0, y0, x1, y1] of lines) {
+      const n = Math.max(2, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 2));
+      let run = null;
+      for (let k = 0; k <= n; k++) {
+        const x = x0 + (x1 - x0) * k / n, y = y0 + (y1 - y0) * k / n;
+        if (ok(x, y)) { if (!run) { d += `M${f(x)} ${f(y)}`; run = 1; } else if (k === n || !ok(x0 + (x1 - x0) * (k + 1) / n, y0 + (y1 - y0) * (k + 1) / n)) d += `L${f(x)} ${f(y)}`; }
+        else run = null;
+      }
+    }
+    return d;
+  }
+  // points d'une grille (décalée une ligne sur deux) qui tombent dans le polygone
+  function gridIn(P, step, mg) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const [x, y] of P) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+    const out = [];
+    for (let y = y0 + step * .5, r = 0; y < y1; y += step, r++) for (let x = x0 + (r % 2 ? step * .5 : 0); x < x1; x += step)
+      if (inPoly(P, x, y) && inPoly(P, x + mg, y) && inPoly(P, x - mg, y) && inPoly(P, x, y + mg) && inPoly(P, x, y - mg)) out.push([x, y, r]);
+    return out;
+  }
+  // rosette de léopard (centre fauve + deux arcs sombres)
+  // pts = [[x, y, k], …] → deux chemins (centres fauves + arcs sombres) pour rester léger
+  const leoSpots = pts => { let a = "", b = ""; for (const [x, y, k] of pts) { a += `M${f(x - 2 * k)} ${f(y)}a${f(2 * k)} ${f(1.6 * k)} 0 1 0 ${f(4 * k)} 0a${f(2 * k)} ${f(1.6 * k)} 0 1 0 ${f(-4 * k)} 0`; b += `M${f(x - 3.4 * k)} ${f(y - .4 * k)}q${f(.6 * k)} ${f(-3 * k)} ${f(4 * k)} ${f(-2.8 * k)}M${f(x + 3.6 * k)} ${f(y + .2 * k)}q${f(-.2 * k)} ${f(3 * k)} ${f(-3.8 * k)} ${f(2.8 * k)}`; }
+    return pts.length ? `<path d="${a}" fill="#b5651d"/><path d="${b}" stroke="#3a2210" stroke-width="1.7" fill="none" stroke-linecap="round"/>` : ""; };
+  const bz = (a, c, b, t) => [(1 - t) * (1 - t) * a[0] + 2 * (1 - t) * t * c[0] + t * t * b[0], (1 - t) * (1 - t) * a[1] + 2 * (1 - t) * t * c[1] + t * t * b[1]];
+  // animations SMIL discrètes (figées sur la 1re image en canvas / 3D)
+  const AN = {
+    rot: (vals, x, y, dur, inner, kt) => `<g><animateTransform attributeName="transform" type="rotate" values="${vals.map(v => v + " " + f(x) + " " + f(y)).join(";")}"${kt ? ` keyTimes="${kt}"` : ""} dur="${dur}s" repeatCount="indefinite"/>${inner}</g>`,
+    tr: (vals, dur, inner, kt) => `<g><animateTransform attributeName="transform" type="translate" values="${vals.join(";")}"${kt ? ` keyTimes="${kt}"` : ""} dur="${dur}s" repeatCount="indefinite"/>${inner}</g>`,
+    op: (vals, dur, inner, kt) => `<g opacity="${vals.split(";")[0]}"><animate attributeName="opacity" values="${vals}"${kt ? ` keyTimes="${kt}"` : ""} dur="${dur}s" repeatCount="indefinite"/>${inner}</g>`,
+    // œil qui cligne (pupille + reflet)
+    eye: (x, y, r, dur, col) => `<g transform="translate(${f(x)} ${f(y)})"><g><animateTransform attributeName="transform" type="scale" values="1 1;1 1;1 .12;1 1" keyTimes="0;.93;.965;1" dur="${dur || 4.2}s" repeatCount="indefinite"/><circle r="${f(r)}" fill="${col || INK}"/><circle cx="${f(r * .32)}" cy="${f(-r * .34)}" r="${f(r * .4)}" fill="#fff"/></g></g>`
+  };
+
+  /* ---------- tenues (emplacement « haut ») : elles remplacent le haut choisi dans l'éditeur ----------
+     Priorité : tenue de la boutique > haut de l'éditeur (look.top / topColor).
+     Bas : objet « bas » de l'emplacement taille (jogging, kilt, slips…) > pantalon de la tenue > short de l'éditeur. */
+  const HAUTS = {
+    hoodie: {c: "#6b7380", c2: "#4b525d", sl: "long", neck: "crew", hood: 1},
+    maillot: {c: "#2f6fdc", c2: "#fff", sl: "short", neck: "v", tight: 1},
+    crop: {c: "#ff5fa2", c2: "#fff", sl: "short", neck: "crew", crop: 1, tight: 1},
+    chemhaw: {c: "#ff7b54", c2: "#c94f2c", sl: "short", open: 1},
+    surv80: {c: "#7b2fd6", c2: "#19c6b8", sl: "long", neck: "col", pants: {c: "#7b2fd6", st: "#19c6b8", full: 1}},
+    kimono: {c: "#fbfbf6", c2: "#dcdcd2", sl: "wide", wrap: 1, pants: {c: "#fbfbf6", end: .74, full: 1}},
+    filet: {c: "#1d1420", strap: .45, mesh: 1},
+    smoking: {c: "#2b2f5c", c2: "#fff", sl: "long", tux: 1, pants: {c: "#2b2f5c", st: "#4f558f", full: 1}},
+    luchador: {nu: 1, mask: 1, pants: {c: "#14a35a", luc: 1, tight: 1, full: 1}}
+  };
+  // bas de l'emplacement « taille » (remplacent le short, et le pantalon d'une tenue)
+  const BOTTOMS = {leopard: {}, slipor: {}, hawai: {}, jogging: {c: "#9aa1aa", full: 1, baggy: 1, cuff: "#7f8690"},
+    shortbain: {c: "#86e3b5", melon: 1}, legging: {c: "#eaa53c", full: 1, tight: 1, leo: 1}, kilt: {kilt: 1}};
+
+  /* ---------- compagnons (emplacement « animal ») ----------
+     Repère local : sol en y = 0, l'animal monte vers les y négatifs, centré en x = 0 (largeur w, hauteur h).
+     Ils restent à côté des pieds (à droite) avec une taille presque fixe à l'écran : quand le maître grossit, la bête
+     rapetisse dans le cadre du SVG. Le perroquet se pose sur l'épaule. */
+  const PET_FUR = {tan: "#d9a066", gris: "#8d99ae"};
+  const PETS = {
+    chihua: {w: 54, h: 60, draw: (T, u) => u.tr(["0 0", ".6 0", "0 0", "-.6 0", "0 0"], .28,
+      T.LI("M9 -8q13 -1 11 -14", PET_FUR.tan, 3)
+      + T.P("M-12 -2Q-15 -22 -6 -27H6Q15 -22 12 -2Z", "#ff5fa2") + T.L("M0 -25V-3", "#fff", 1.4) + T.L("M-11 -15q-2 6 -1 12M11 -15q2 6 1 12", "#fff", 2)
+      + T.E(-5, -1.8, 4.2, 3, PET_FUR.tan) + T.E(5, -1.8, 4.2, 3, PET_FUR.tan)
+      + T.P("M-8 -41L-25 -59L-3 -46Z", PET_FUR.tan) + T.P("M-9 -43L-20 -54L-6 -46Z", "#ffb3c7", 0) + T.P("M8 -41L25 -59L3 -46Z", PET_FUR.tan) + T.P("M9 -43L20 -54L6 -46Z", "#ffb3c7", 0)
+      + T.P("M-9 -26Q0 -21 9 -26L8 -22Q0 -18 -8 -22Z", "#d63c80", .6)
+      + T.E(0, -36, 12.5, 11, PET_FUR.tan) + T.E(0, -29.8, 6, 4.2, "#f0c896", 0)
+      + T.C(-5.2, -37.5, 4.6, "#fff", .6) + T.C(5.2, -37.5, 4.6, "#fff", .6) + u.eye(-4.6, -37.3, 2.7, 3.7) + u.eye(4.6, -37.3, 2.7, 3.7)
+      + T.E(0, -31.6, 2, 1.5, INK, 0) + T.L("M-2.2 -28.4q2.2 1.6 4.4 0", INK, 1.1))},
+    bulldog: {w: 64, h: 52, draw: (T, u) =>
+      u.rot([-18, 18, -18], 18, -8, .45, T.E(21, -9, 4.5, 3.4, "#c8a27c"))
+      + T.P("M-20 -2Q-24 -24 -12 -30H12Q24 -24 20 -2Z", "#c8a27c") + T.P("M-9 -4Q-10 -20 0 -24Q10 -20 9 -4Z", "#f4ede1", 0)
+      + [-1, 1].map(d => T.E(d * 14, -13, 8, 11.5, "#c8a27c") + T.L(`M${d * 9} -16q${d * 5} -5 ${d * 10} 0`, "#9b7552", 1.3) + T.E(d * 14, -2.4, 7.5, 3.6, "#f4ede1")).join("")
+      + T.P("M-15 -26Q0 -19 15 -26L0 -12Z", "#e63946") + T.C(-6, -23, 1.2, "#fff", 0) + T.C(3, -21, 1.2, "#fff", 0) + T.C(0, -16, 1.2, "#fff", 0) + T.C(7, -24, 1.2, "#fff", 0)
+      + T.P("M-14 -44q-9 -6 -12 2q4 3 9 3z", "#8a6a4a") + T.P("M14 -44q9 -6 12 2q-4 3 -9 3z", "#8a6a4a")
+      + T.E(0, -36, 17, 12.5, "#c8a27c") + T.E(0, -29.5, 10.5, 6.6, "#f4ede1", 0) + T.L("M-6 -44.5q6 -3 12 0", "#8a6a4a", 1.3)
+      + u.eye(-7, -38, 2.3) + u.eye(7, -38, 2.3) + T.L("M-11.5 -42.5l7 2.2M11.5 -42.5l-7 2.2", INK, 2)
+      + T.E(0, -33.5, 3.6, 2.3, INK, 0) + T.P("M-8.5 -28Q0 -21 8.5 -28Q0 -25 -8.5 -28Z", "#a8805c", .8)
+      + T.P("M-6.5 -27.6l1.6 -3.6l1.6 3.6Z", "#fff", .5) + T.P("M6.5 -27.6l-1.6 -3.6l-1.6 3.6Z", "#fff", .5)},
+    chatjuge: {w: 52, h: 58, draw: (T, u) =>
+      u.rot([-5, 9, -5], 12, -4, 2.8, T.LI("M11 -4q15 -1 15 -15q0 -10 -6 -13", PET_FUR.gris, 5))
+      + T.P("M-13 -1Q-17 -27 -7 -31H7Q17 -27 13 -1Z", PET_FUR.gris) + T.E(0, -12, 6.5, 9, "#d5dbe5", 0)
+      + T.E(-5, -1.8, 4, 2.8, "#d5dbe5") + T.E(5, -1.8, 4, 2.8, "#d5dbe5")
+      + T.P("M-12 -41L-13 -57L-3 -47Z", PET_FUR.gris) + T.P("M-11 -43L-11.5 -53L-5 -47Z", "#ffb3c7", 0) + T.P("M12 -41L13 -57L3 -47Z", PET_FUR.gris) + T.P("M11 -43L11.5 -53L5 -47Z", "#ffb3c7", 0)
+      + T.E(0, -38, 13.5, 11.5, PET_FUR.gris) + T.E(0, -32.6, 5.6, 3.6, "#d5dbe5", 0)
+      + [-1, 1].map(d => T.E(d * 5.5, -38.6, 3.9, 3.1, "#ffd23f", .6) + T.R(d * 5.5 - .9, -40.5, 1.8, 4, .9, INK, 0)
+        + AN.tr(["0 0", "0 0", "0 1.2", "0 0"], 5.2, T.P(`M${d * 5.5 - 4.8} -38.8H${d * 5.5 + 4.8}V-43H${d * 5.5 - 4.8}Z`, PET_FUR.gris, 0) + T.L(`M${d * 5.5 - 4.6} -38.8H${d * 5.5 + 4.6}`, INK, 1.5), "0;.8;.88;1")).join("")
+      + T.L("M-9.5 -45l7 1.2M2.5 -44.6l7 -2.2", INK, 1.4)
+      + T.P("M-1.6 -34.6h3.2l-1.6 1.8z", "#ff8fb0", .5) + T.L("M-3 -31h6", INK, 1.2) + T.L("M-6 -33l-9 -1M-6 -31.5l-9 1.5M6 -33l9 -1M6 -31.5l9 1.5", INK, .7)},
+    perroquet: {w: 34, h: 40, perch: 1, draw: (T, u) =>
+      T.P("M-3 -7L-7 15L-1 13L2 17L5 -5Z", "#2f6fdc") + T.L("M1 -4L1 14", "#e63946", 1.6)
+      + T.P("M-8 -6Q-11 -24 0 -28Q11 -24 8 -6Q0 0 -8 -6Z", "#e63946")
+      + T.P("M2 -22Q12 -16 8 -2Q1 -6 0 -14Z", "#2f6fdc") + T.P("M2.6 -20Q8 -17 8.2 -12L2.4 -14Z", "#ffd23f", 0)
+      + T.L("M-4 -1v3M3 -1v3", "#7a7a85", 2.2) + T.L("M-6 2.4h4M1 2.4h4", "#7a7a85", 1.6)
+      + AN.rot([0, -9, 0, 0], -1, -24, 1.6, T.C(-1, -31, 8.5, "#e63946") + T.E(-4, -31, 4.4, 4, "#fff", 0) + u.eye(-4, -31.5, 1.8, 3.4)
+        + T.P("M-8 -34Q-15.5 -34 -14.5 -24Q-12.5 -28 -7.5 -27.6Z", "#f1e6d0") + T.P("M-8 -27.6Q-12 -25 -10 -23Q-7 -24 -6.2 -27.6Z", INK, 0), "0;.3;.6;1")
+      + AN.op("0;0;1;1;0", 5, T.R(1, -63, 42, 15, 6, "#fff", .8) + T.P("M6 -48.6L3 -42L12 -48.6Z", "#fff", .8) + T.R(5.5, -49.6, 7, 2, 0, "#fff", 0)
+        + `<text x="22" y="-52.4" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="10" fill="#e63946">GAINS !</text>`, "0;.42;.46;.92;1")},
+    hamster: {w: 58, h: 58, draw: (T, u) => {
+      let sp = "";
+      for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8; sp += `M${f(Math.cos(a) * 19)} ${f(-28 + Math.sin(a) * 19)}L${f(Math.cos(a) * 23.5)} ${f(-28 + Math.sin(a) * 23.5)}`; }
+      return T.R(-21, -3.5, 42, 4, 2, "#6b7480") + T.LI("M-15 -1L0 -28L15 -1", "#9aa5b1", 3.2) + T.C(0, -28, 24, "#fff4dd", 1.1)
+        + AN.rot([0, -360], 0, -28, 1.4, T.L(sp, "#c9a46a", 2.2) + T.L("M-23.5 -28H23.5M0 -51.5V-4.5", "#ff9f1c", 1.4, ` opacity=".55"`))
+        + T.C(0, -28, 24, "none", 1.1) + T.C(0, -28, 3, "#9aa5b1")
+        + AN.tr(["0 0", "0 -1.2", "0 0"], .2, T.L("M-4 -6l-3 2M3 -6l-3 2", "#e88a9a", 1.6)
+          + T.E(0, -12.5, 10.5, 7.8, "#f2a65a") + T.E(-2, -10.4, 6.4, 4.6, "#fff2dc", 0) + T.C(3.6, -19.4, 2.7, "#f2a65a") + T.C(-3.6, -19.8, 2.7, "#f2a65a")
+          + T.C(-6.8, -11.4, 2.4, "#ffb3c7", 0) + u.eye(-5, -14.5, 1.6, 3) + T.C(-10, -13, 1, INK, 0))
+        + T.L("M12 -10h6M13 -15h5", "#fff", 1.4);
+    }},
+    tortue: {w: 58, h: 60, draw: (T, u) =>
+      T.E(-7, -2.2, 5.5, 3, "#5cb85c") + T.E(7, -2.2, 5.5, 3, "#5cb85c")
+      + T.E(0, -17, 16.5, 15.5, "#3f8f3f") + T.L("M-15 -22l4 3M15 -22l-4 3M-15 -11l4 -1M15 -11l-4 -1", "#2d6b2d", 1.6)
+      + T.E(0, -16, 11, 13.5, "#f4d35e") + T.L("M-10 -20h20M-11 -13h22M0 -29V-3", "#c9a227", 1.2)
+      + AN.tr(["0 0", "0 -3.5", "0 0"], 1.7, T.LI("M-9 -25L-14 -45M9 -25L14 -45", "#5cb85c", 3.4) + T.LI("M-23 -47H23", "#c9d1d8", 2)
+        + T.R(-26, -53, 5.5, 12, 1.6, "#2b2b33") + T.R(20.5, -53, 5.5, 12, 1.6, "#2b2b33") + T.R(-21, -51, 3, 8, 1, "#e63946", .5) + T.R(18, -51, 3, 8, 1, "#e63946", .5))
+      + T.C(0, -35, 8, "#5cb85c") + u.eye(-3, -36, 1.6) + u.eye(3, -36, 1.6) + T.L("M-2.4 -31.6q2.4 1.6 4.8 0", INK, 1.1) + T.L("M-7.6 -38.6q7.6 -3.4 15.2 0", "#e63946", 2.4)
+      + T.P("M9 -40q2.4 3.4 0 4.6q-2.4 -1.2 0 -4.6z", "#8fd3ff", .6)},
+    poulet: {w: 50, h: 62, draw: (T, u) =>
+      AN.tr(["0 0", ".5 0", "0 0", "-.5 0", "0 0"], .22, T.L("M-4 -19V-1M4 -19V-1", "#f2a33a", 1.7)) + T.L("M-4 -1l-4 1.4M-4 -1v1.8M-4 -1l3.4 1.4M4 -1l-3.4 1.4M4 -1v1.8M4 -1l4 1.4", "#f2a33a", 1.3)
+      + T.P("M12 -28q9 -6 7 -15q-4 4 -9 6z", "#fff")
+      + [-1, 1].map(d => AN.rot([0, d * 8, 0], d * 12, -37, 1.1, T.P(`M${d * 11} -35Q${d * 25} -38 ${d * 23} -51Q${d * 18} -50 ${d * 15} -45Q${d * 15} -41 ${d * 10} -41Z`, "#fff") + T.L(`M${d * 20} -49l${d * -2} 4`, "#c9cbd1", 1.2))).join("")
+      + T.P("M-14 -22Q-18 -41 -6 -44H6Q18 -41 14 -22Q0 -13 -14 -22Z", "#fff") + T.L("M-9 -36q4.5 4 9 1q4.5 3 9 -1M-3 -28h6M-3 -24h6", "#c9cbd1", 1.3)
+      + T.C(0, -50, 7.5, "#fff") + T.P("M-4 -56q-2 -6 2 -5q1 -5 4 -2q3 -3 3 2q2 2 -1 5Z", "#e63946") + T.L("M-7 -53.4q7 -2.4 14 0", "#2fa8ff", 2)
+      + T.P("M-3 -49L0 -45.2L3 -49Z", "#f2a33a") + T.E(0, -43.6, 1.8, 2.6, "#e63946", .6) + u.eye(-3, -51.2, 1.4) + u.eye(3, -51.2, 1.4) + T.L("M-5.4 -54.2l3.4 1.2M5.4 -54.2l-3.4 1.2", INK, 1.2)},
+    pigeon: {w: 50, h: 44, draw: (T, u) =>
+      T.L("M-2 -7v7M5 -7v7", "#e88a9a", 1.7) + T.L("M-2 0l-3 .6M5 0l-3 .6", "#e88a9a", 1.3)
+      + T.P("M13 -16L26 -11L24 -5L11 -10Z", "#6f7584") + T.E(3, -14, 14, 9.5, "#a7adba")
+      + T.P("M0 -18Q12 -22 20 -12Q10 -8 2 -11Z", "#8a90a0") + T.L("M8 -17l3 5M13 -17l3 5", INK, 1.3)
+      + AN.tr(["0 0", "-2.6 0", "0 0", "0 0"], .9, T.E(-7, -20, 6, 7, "#7c8a9e") + T.P("M-12.4 -20q4 -4 9 -1q-2 5 -8 5z", "#3ccf8e", 0) + T.P("M-11 -16.6q3 -2 7 0q-3 3 -7 0z", "#b14dff", 0)
+        + T.C(-9, -28, 6.5, "#a7adba") + T.P("M-15 -28.4L-20.4 -26.6L-15 -25.4Z", "#3b3f47") + T.E(-14.2, -28.6, 1.4, 1, "#fff", 0)
+        + T.R(-15.4, -31.4, 7.6, 3.6, 1.2, INK, 0) + T.L("M-8 -30.4h3", INK, 1) + T.L("M-17 -30.6l1 -.2", "#fff", .6)
+        + `<g transform="rotate(-18 -21 -26)">${T.R(-30, -27.4, 11, 2.8, .6, "#ffd23f", .6)}</g>`, "0;.25;.5;1")},
+    crabe: {w: 72, h: 46, draw: (T, u) =>
+      [-1, 1].map(d => [0, 1, 2].map(i => T.LI(`M${d * 10} ${-9 + i * 3}l${d * 8} ${3 + i}l${d * 3} 4`, "#e63946", 1.8)).join("")
+        + T.LI(`M${d * 14} -14Q${d * 24} -15 ${d * 24} -26`, "#e63946", 4) + T.E(d * 21.5, -20, 4.6, 5.6, "#e63946")
+        + T.P(`M${d * 20} -28Q${d * 31} -30 ${d * 33} -38Q${d * 26} -34 ${d * 21} -33Z`, "#e63946")
+        + AN.rot([0, d * -16, 0, 0], d * 22, -31, 1.1, T.P(`M${d * 21} -31Q${d * 19} -45 ${d * 30} -47Q${d * 35} -41 ${d * 31.5} -37Q${d * 27} -36 ${d * 24} -32Z`, "#e63946"), "0;.15;.3;1")).join("")
+      + T.E(0, -11, 17, 9.5, "#e63946") + T.E(-5, -14.5, 6, 2.4, "#ff8a8f", 0)
+      + T.L("M-5 -19v-6M5 -19v-6", INK, 1.5) + T.C(-5, -27, 3.4, "#fff", .7) + T.C(5, -27, 3.4, "#fff", .7) + u.eye(-4.6, -27, 1.6) + u.eye(5.4, -27, 1.6)
+      + T.L("M-4 -9q4 3 8 0", INK, 1.2)},
+    lapin: {w: 46, h: 66, draw: (T, u) => u.tr(["0 0", "0 0", "0 -7", "0 0"],
+      1.8, T.C(12, -9, 4.2, "#fff") + T.E(-8, -2.6, 7, 3.2, "#f4f4f8") + T.E(8, -2.6, 7, 3.2, "#f4f4f8")
+      + T.E(0, -15, 12.5, 13, "#f4f4f8") + T.E(0, -13, 7, 8, "#fff", 0)
+      + [-1, 1].map(d => AN.rot([0, d * 7, 0], d * 4, -42, 2.6, T.P(`M${d * 1.6} -42Q${d * 0} -66 ${d * 6.5} -66Q${d * 12} -64 ${d * 8.4} -42Z`, "#f4f4f8") + T.P(`M${d * 3.6} -45Q${d * 3} -61 ${d * 6.4} -61Q${d * 9} -60 ${d * 7} -45Z`, "#ffb3c7", 0))).join("")
+      + T.C(0, -36, 10.5, "#f4f4f8") + u.eye(-4, -37, 1.8) + u.eye(4, -37, 1.8) + T.C(-6.6, -33.4, 2, "#ffc7d9", 0) + T.C(6.6, -33.4, 2, "#ffc7d9", 0)
+      + T.P("M-1.5 -33.4h3l-1.5 1.6z", "#ff8fb0", .5) + T.R(-1.5, -31, 3, 2.4, .5, "#fff", .5) + T.L("M-10 -40.6q10 -3.4 20 0", "#ff2e88", 2.6)
+      + T.P("M-7 -21L6 -17L-1 -12Z", "#ff8c1a", .8) + T.L("M-7 -21l-3 -3M-7 -21l-1 -4", "#3fae5a", 1.6), "0;.6;.75;1")},
+    alpaga: {w: 50, h: 68, draw: (T, u) =>
+      T.R(-10, -16, 5, 16, 2, "#e2cfa9") + T.R(10, -16, 5, 16, 2, "#e2cfa9") + T.R(-4, -16, 5, 16, 2, "#f3e3c3") + T.R(15, -16, 5, 16, 2, "#f3e3c3")
+      + T.C(19, -25, 3.6, "#f3e3c3") + T.C(-6, -22, 8, "#f3e3c3") + T.C(4, -25, 9, "#f3e3c3") + T.C(13, -21, 8, "#f3e3c3") + T.E(4, -19.5, 15, 6.5, "#f3e3c3")
+      + T.E(4, -21, 13, 7, "#f3e3c3", 0) + T.P("M-5 -29Q4 -33 14 -29L13 -19Q4 -17 -4 -19Z", "#e63946") + T.L("M-4.6 -25Q4 -28 13.4 -25M-4.4 -21.4Q4 -24 13.2 -21.4", "#ffd23f", 1.5)
+      + T.R(-15, -51, 9, 27, 4.5, "#f3e3c3")
+      + AN.rot([0, 3, 0], -10, -46, 3.2, T.P("M-9 -59l1.5 -7l3 6z", "#f3e3c3") + T.P("M-14 -59l.5 -7l3.5 6z", "#f3e3c3") + T.E(-12, -52, 7.5, 6.5, "#f3e3c3")
+        + T.C(-11, -59, 4.6, "#fff8e6") + T.C(-15, -58, 3.6, "#fff8e6") + T.C(-7.5, -57.5, 3.4, "#fff8e6")
+        + AN.tr(["0 0", "0 .8", "0 0"], .5, T.E(-17, -48.8, 4.6, 3.6, "#e8d2a8")) + u.eye(-14, -53, 1.5) + T.L("M-16 -54.6l-1 -1.2M-14 -55l0 -1.6", INK, .8) + T.L("M-20.4 -47.6q2 1 4 0", INK, 1))},
+    panda: {w: 56, h: 58, draw: (T, u) =>
+      T.E(-11, -5, 7, 5.5, "#2b2b33") + T.E(11, -5, 7, 5.5, "#2b2b33") + T.C(-11, -5, 2.4, "#6b6b77", 0) + T.C(11, -5, 2.4, "#6b6b77", 0)
+      + T.E(0, -19, 16.5, 15, "#fafafa")
+      + `<g transform="rotate(25 -14 -22)">${T.E(-14, -22, 5.6, 8.6, "#2b2b33")}</g>`
+      + T.R(14, -50, 5, 36, 2.2, "#6cbf4a") + T.L("M14.4 -40h4.2M14.4 -28h4.2", "#3f8f3f", 1.4) + T.P("M19 -46q8 -4 10 -10q-7 1 -10 6z", "#6cbf4a", .8)
+      + `<g transform="rotate(-25 12 -24)">${T.E(12, -24, 5.6, 8.6, "#2b2b33")}</g>`
+      + T.C(-10, -49, 4.6, "#2b2b33") + T.C(10, -49, 4.6, "#2b2b33")
+      + T.C(0, -38, 13.5, "#fafafa")
+      + `<g transform="rotate(-20 -5.5 -38.6)">${T.E(-5.5, -38.6, 3.8, 5, "#2b2b33", 0)}</g><g transform="rotate(20 5.5 -38.6)">${T.E(5.5, -38.6, 3.8, 5, "#2b2b33", 0)}</g>`
+      + u.eye(-5.2, -39, 1.7, 4, "#fff") + u.eye(5.2, -39, 1.7, 4, "#fff")
+      + T.E(0, -33, 2.4, 1.6, "#2b2b33", 0) + AN.tr(["0 0", "0 .9", "0 0"], .6, T.L("M-2.4 -30.4q2.4 1.6 4.8 0", INK, 1.1))},
+    pingouin: {w: 44, h: 56, draw: (T, u) => AN.rot([-4, 4, -4], 0, 0, 1.3,
+      T.E(-5, -1.6, 5, 2.4, "#ff9f1c") + T.E(5, -1.6, 5, 2.4, "#ff9f1c")
+      + T.P("M-12 -32Q-20 -22 -17 -12Q-12 -20 -11 -26Z", "#2b2b33")
+      + AN.rot([0, -32, 0, 0], 11, -30, 1.3, T.P("M12 -32Q20 -22 17 -12Q12 -20 11 -26Z", "#2b2b33"), "0;.25;.5;1")
+      + T.E(0, -24, 13.5, 22, "#2b2b33") + T.E(0, -20, 9.5, 16.5, "#fafafa", 0)
+      + T.C(-4.2, -38, 3.2, "#fff", 0) + T.C(4.2, -38, 3.2, "#fff", 0) + u.eye(-4, -38, 1.8) + u.eye(4, -38, 1.8)
+      + T.C(-7.6, -34, 1.8, "#ff8fb0", 0) + T.C(7.6, -34, 1.8, "#ff8fb0", 0) + T.P("M-3.5 -34L0 -29.6L3.5 -34Z", "#ff9f1c", .8)
+      + T.P("M-10 -29Q0 -25 10 -29L10 -25Q0 -21 -10 -25Z", "#e63946", .8) + T.P("M5 -26l3 10l4 -2l-3 -9z", "#e63946", .8))},
+    requinl: {w: 64, h: 54, leash: [9, -13.5], draw: (T, u) => {
+      const ring = (arc, w2, col, ex) => `<path d="${arc}" fill="none" stroke="${col}" stroke-width="${w2}"${ex || ""}/>`;
+      const full = "M-27 -10A27 9.5 0 1 0 27 -10A27 9.5 0 1 0 -27 -10", front = "M-27 -10A27 9.5 0 0 0 27 -10";
+      return AN.tr(["0 0", "0 -2", "0 0"], 1.9, ring(full, 14, INK) + ring(full, 9, "#ff7b00") + ring(full, 9, "#fff", ` stroke-dasharray="10 12"`)
+        + T.P("M-12 -10Q-14 -40 0 -44Q14 -40 12 -10Z", "#7d8fa6") + T.P("M-7 -10Q-8 -28 0 -30Q8 -28 7 -10Z", "#eef2f6", 0)
+        + T.P("M-3 -42L2 -55L6 -41Z", "#7d8fa6") + T.P("M-12 -20L-21 -13L-11 -14Z", "#7d8fa6") + T.P("M12 -20L21 -13L11 -14Z", "#7d8fa6")
+        + u.eye(-5, -33, 1.9) + u.eye(5, -33, 1.9) + T.L("M-8.4 -37.4l5 1.6M8.4 -37.4l-5 1.6", INK, 1.5)
+        + T.P("M-8 -26Q0 -18 8 -26Q0 -23 -8 -26Z", "#fff", .9) + T.L("M-6.4 -25.2l1.6 2l1.6 -1.8l1.6 2.2l1.6 -2.2l1.6 2.2l1.6 -1.8l1.6 2", INK, .7)
+        + T.L("M-11 -14q11 4 22 0", "#e63946", 2.6) + T.C(9, -13.5, 2, "#c9d1d8", .6)
+        + ring(front, 14, INK) + ring(front, 9, "#ff7b00") + ring(front, 9, "#fff", ` stroke-dasharray="10 12"`));
+    }},
+    dragon: {w: 64, h: 64, draw: (T, u) => AN.tr(["0 0", "0 -3.4", "0 0"], 1.6,
+      T.LI("M7 -6Q24 -4 22 -17", "#8f5bff", 4) + T.P("M20 -16l1.4 -8l5.6 5.4z", "#8f5bff")
+      + [-1, 1].map(d => AN.rot([0, d * -20, 0], d * 6, -28, .6, T.P(`M${d * 5} -30Q${d * 16} -50 ${d * 29} -47Q${d * 24} -41 ${d * 26} -34Q${d * 20} -35 ${d * 18} -28Q${d * 12} -30 ${d * 7} -24Z`, "#c4a6ff") + T.L(`M${d * 8} -29L${d * 26} -44M${d * 10} -27L${d * 19} -30`, "#8f5bff", 1.2))).join("")
+      + T.E(-6, -3, 4.6, 3, "#8f5bff") + T.E(6, -3, 4.6, 3, "#8f5bff") + T.E(0, -17, 11, 13, "#8f5bff") + T.E(0, -15, 6.5, 9.4, "#ffd23f", 0) + T.L("M-5 -19h10M-5.6 -14h11.2M-5 -9h10", "#e0a800", 1)
+      + T.L("M-9 -22l-4 5M9 -22l4 5", "#8f5bff", 3)
+      + T.P("M-3 -44l-2.6 -9l6 6.6z", "#ffd23f") + T.P("M5 -45l1 -9l4 7.4z", "#ffd23f") + T.E(1, -37, 11, 9.5, "#8f5bff") + T.E(-6, -33.6, 6.4, 4.6, "#8f5bff")
+      + T.E(-5, -33.6, 5, 3.2, "#8f5bff", 0) + u.eye(-1, -39.6, 2.1) + T.C(-10, -35, .9, INK, 0) + T.L("M-9 -31q4 2 8 0", INK, 1.1) + T.P("M-3 -30.6l1 2.4l1 -2.4z", "#fff", .5)
+      + AN.op("0;0;1;0", 3, T.P("M-12 -35q-8 -5 -13 1q4 -1 6 2q-5 2 -2.6 5.4q5 -4 9.6 -6.6z", "#ff7b00", .8) + T.P("M-13 -34q-4 -2 -7 1q3 0 4 2z", "#ffd23f", 0), "0;.6;.7;1")
+      + star(17, -54, 3.2, "#fff6a8"))},
+    licorne: {w: 66, h: 72, draw: (T, u) => {
+      const rb = ["#ff3b3b", "#ff9f1c", "#ffe14d", "#3ccf5e", "#2fa8ff", "#8f5bff"];
+      return rb.map((c, i) => T.LI(`M${f(18 + i * .6)} ${f(-31 + i * 1.8)}Q${f(31 + i * 2.2)} ${f(-26 + i * 2.4)} ${f(25 + i * 2.6)} ${f(-9 + i * .6)}`, c, 2.6)).join("")
+        + [-10, -3, 11, 18].map((x, i) => T.R(x, -18, 5, 18, 2, i % 2 ? "#f2f2fa" : "#fff") + T.R(x, -4.4, 5, 4.4, 1, "#f5c518")).join("")
+        + T.E(5, -24, 18, 10.5, "#fff") + T.P("M-12 -28Q-14 -44 -10 -51L-2 -49Q-4 -38 0 -28Z", "#fff")
+        + rb.map((c, i) => T.C(-3 + i * .7, -54 + i * 4.4, 3.4, c, .6)).join("")
+        + `<g transform="rotate(-24 -12 -50)">${T.E(-13, -50, 8.6, 6.6, "#fff")}</g>` + T.E(-19.5, -46.4, 4.6, 4, "#ffeef7")
+        + T.P("M-11 -56L-8.4 -71L-5.6 -56Z", "#f5c518") + T.L("M-10.4 -59.4l4 -1M-9.8 -63.4l3 -1M-9.2 -67l2 -.8", "#c99a1e", .9)
+        + T.P("M-6 -55l1 -6.4l3.4 5z", "#fff") + u.eye(-12.6, -51, 1.7) + T.L("M-14.6 -52.6l-1.2 -1.2M-13 -53l-.6 -1.6", INK, .8) + T.C(-21, -46.6, .8, INK, 0) + T.L("M-21.4 -44q1.6 1 3.2 0", INK, .9)
+        + AN.op("1;.15;1", 1.5, star(-26, -60, 3.4, "#ffe14d") + star(24, -44, 2.8, "#fff6a8")) + AN.op(".15;1;.15", 1.5, star(-24, -30, 2.6, "#fff6a8") + star(14, -54, 3, "#ffe14d"));
+    }},
+    poulpe: {w: 66, h: 56, draw: (T, u) => {
+      let t = "";
+      for (let i = 0; i < 6; i++) { const x0 = -11 + i * 4.4, k = (i - 2.5); t += T.LI(`M${f(x0)} -22Q${f(x0 + k * 4)} -10 ${f(x0 + k * 7)} -4q${f(k * 1.6)} 2.6 ${f(k * 3)} 0`, "#ff6ad5", 4.4); }
+      const db = d => T.LI(`M${d * 21} -46V-38`, "#c9d1d8", 1.4) + T.R(d * 21 - 4, -49, 8, 4, 1.2, "#2b2b33", .7) + T.R(d * 21 - 4, -38, 8, 4, 1.2, "#2b2b33", .7);
+      return AN.rot([-3, 3, -3], 0, -22, 1.6, t)
+        + [-1, 1].map(d => AN.rot([0, d * 22, 0], d * 12, -27, 1.4, T.LI(`M${d * 12} -27Q${d * 24} -27 ${d * 23} -40`, "#ff6ad5", 4.4) + db(d), d < 0 ? "" : "")).join("")
+        + T.P("M-15 -23Q-18 -51 0 -51Q18 -51 15 -23Q0 -17 -15 -23Z", "#ff6ad5") + T.C(-7, -44, 2, "#ffb0ec", 0) + T.C(6, -46, 2.6, "#ffb0ec", 0) + T.C(9, -38, 1.6, "#ffb0ec", 0)
+        + T.L("M-15 -38.6q15 -5 30 0", "#3ccf8e", 2.6)
+        + T.C(-5.5, -31.5, 4, "#fff", .7) + T.C(5.5, -31.5, 4, "#fff", .7) + u.eye(-5, -31.2, 2.2) + u.eye(6, -31.2, 2.2) + T.L("M-3 -25.4q3 2 6 0", INK, 1.2);
+    }},
+    golden: {w: 60, h: 58, draw: (T, u) =>
+      u.rot([-22, 22, -22], 12, -9, .42, T.LI("M12 -9q13 -4 17 -18", "#e8a24a", 5))
+      + T.P("M-13 -1Q-17 -25 -7 -29H7Q17 -25 13 -1Z", "#e8a24a") + T.P("M-7 -26Q0 -14 7 -26Q4 -15 0 -11Q-4 -15 -7 -26Z", "#f6c879", 0)
+      + T.E(-6, -2, 4.6, 3, "#f6c879") + T.E(6, -2, 4.6, 3, "#f6c879")
+      + T.E(0, -37, 11.5, 10.5, "#e8a24a") + T.P("M-8 -45Q-18 -42 -15.6 -27Q-10.4 -29 -7.6 -37Z", "#c98232") + T.P("M8 -45Q18 -42 15.6 -27Q10.4 -29 7.6 -37Z", "#c98232")
+      + T.E(0, -31, 6.6, 4.6, "#f6c879") + T.E(0, -34, 2.3, 1.7, INK, 0) + u.eye(-4.5, -39, 1.8) + u.eye(4.5, -39, 1.8)
+      + T.E(0, -26.6, 13, 3.6, "#ff2e63") + T.E(0, -27.2, 9, 1.8, "#ff7a96", 0)},
+    raton: {w: 58, h: 54, draw: (T, u) => {
+      const tl = "M11 -6q14 0 16 -14q1 -8 -4 -10";
+      return AN.rot([-7, 8, -7], 12, -6, 1.5, T.L(tl, INK, 9) + T.L(tl, "#8d8f96", 6) + T.L(tl, "#2b2b33", 6, ` stroke-dasharray="3 4"`))
+        + T.P("M-12 -1Q-16 -25 -6 -29H6Q16 -25 12 -1Z", "#8d8f96") + T.E(0, -12, 6, 8, "#c9cbd1", 0) + T.E(-5, -2, 4, 2.6, "#3b3f47") + T.E(5, -2, 4, 2.6, "#3b3f47")
+        + T.R(-10, -21, 20, 7.4, 1.6, "#e63946", .8) + `<text x="0" y="-15.4" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="5" fill="#fff">PROT</text>` + T.C(-10, -17.4, 3, "#3b3f47", .7) + T.C(10, -17.4, 3, "#3b3f47", .7)
+        + T.P("M-11 -42l-2 -9l7.4 4z", "#8d8f96") + T.P("M11 -42l2 -9l-7.4 4z", "#8d8f96")
+        + T.E(0, -36, 12.5, 10.5, "#8d8f96") + T.E(0, -30.6, 6, 4.4, "#f1f1f4", 0)
+        + T.P("M-12 -38Q-6 -43 0 -38.4Q6 -43 12 -38Q10 -33 5 -34Q0 -36 -5 -34Q-10 -33 -12 -38Z", "#2b2b33", 0) + T.L("M-9 -42.4q4 -2 7 0M2 -42.4q4 -2 7 0", "#f1f1f4", 1.5)
+        + T.C(-5, -37.6, 2.3, "#fff", 0) + T.C(5, -37.6, 2.3, "#fff", 0)
+        + AN.tr(["-.8 0", "-.8 0", ".8 0", ".8 0", "-.8 0"], 3.4, T.C(-5, -37.6, 1.3, INK, 0) + T.C(5, -37.6, 1.3, INK, 0), "0;.4;.5;.9;1")
+        + T.E(0, -32.4, 2, 1.4, INK, 0) + T.L("M-2 -29.4q3 1 5 -1", INK, 1);
+    }},
+    trex: {w: 70, h: 70, draw: (T, u) =>
+      T.LI("M-31 -4H-15", "#c9d1d8", 2) + T.R(-35, -11, 6, 13, 1.6, "#2b2b33") + T.R(-17, -11, 6, 13, 1.6, "#2b2b33")
+      + T.P("M8 -24Q30 -18 35 -2Q24 -8 6 -10Z", "#5cb85c")
+      + T.P("M-2 -19Q-6 -6 -7 -1H4Q6 -10 7 -19Z", "#4a9d4a") + T.P("M6 -21Q13 -8 9 -1H20Q21 -12 17 -23Z", "#5cb85c")
+      + T.E(4, -28, 13, 14, "#5cb85c") + T.E(-1, -26, 7, 10, "#c8e6a0", 0) + T.P("M12 -40l3 -4l1 5zM16 -35l4 -3l0 5zM19 -29l4 -2l-1 4z", "#3f8f3f", .6)
+      + T.P("M-4 -48L7 -48L11 -36L-2 -36Z", "#5cb85c", 0)
+      + T.R(-22, -63, 29, 16, 7, "#5cb85c") + T.R(-21, -50.4, 22, 6.4, 3, "#5cb85c") + T.L("M-19 -50.2l1.4 2l1.4 -2l1.4 2l1.4 -2l1.4 2l1.4 -2l1.4 2l1.4 -2l1.4 2", "#fff", 1.1)
+      + u.eye(-6, -57.6, 2.1) + T.L("M-9.6 -61.6l6.4 1.4", INK, 1.5) + T.C(-19, -58, .9, INK, 0) + T.L("M-8 -53l5 -.6", INK, .8)
+      + AN.rot([0, -28, 0], -5, -35, .45, T.LI("M-5 -35l-5 3l-1.6 -2.4", "#5cb85c", 2.2)) + AN.rot([0, 24, 0], -2, -33, .5, T.LI("M-2 -33l-4.4 3.6l-1 -2.6", "#4a9d4a", 2.2))}
+  };
+
+
+  /* ---------- chaussures « Swag » : profil, talon côté intérieur, pointe vers l'extérieur ----------
+     o = {L, fx, fy (semelle), frx (demi-longueur du pied), m, CW (mollet), skin, d (côté), kx (cheville), cw} */
+  const SW_INK = 3;
+  const shoePath = (d, w) => `<path d="${d}" fill="${w}" stroke="${INK}" stroke-width="${SW_INK}" stroke-linejoin="round"/>`;
+  function sneaker(o, top, up, sole, solH, soleInner) {
+    const {d, kx, cw, fx, fy, frx} = o, hx = kx - d * (cw + 3), tx = fx + d * (frx + 2), sy = fy + 5;
+    return shoePath(`M${f(hx)} ${f(top)}L${f(kx + d * (cw + 2))} ${f(top)}Q${f(kx + d * (cw + 3))} ${f(fy - 7)} ${f(fx + d * frx * .3)} ${f(fy - 8)}Q${f(tx + d * 2)} ${f(fy - 7)} ${f(tx)} ${f(sy - solH)}L${f(hx)} ${f(sy - solH)}Z`, up)
+      + `<path d="M${f(hx - d)} ${f(sy - solH)}L${f(tx + d * 1.5)} ${f(sy - solH)}Q${f(tx + d * 3.5)} ${f(sy - solH * .4)} ${f(tx)} ${f(sy + 1)}L${f(hx - d)} ${f(sy + 1)}Z" fill="${sole}" stroke="${INK}" stroke-width="${SW_INK}" stroke-linejoin="round">${soleInner || ""}</path>`;
+  }
+  // tige de botte / chaussette : du point t (entre genou et cheville) jusqu'à la cheville
+  function shaft(o, t, extra, col, cap) {
+    const a = lerp(o.L.knee, o.L.ank, t), b = [o.L.ank[0], o.L.ank[1] + 2], w = o.CW + extra, dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l;
+    return `<path d="M${pt(a)}L${pt(b)}" stroke="${INK}" stroke-width="${f(w + 6)}"/><path d="M${pt(a)}L${pt(b)}" stroke="${col}" stroke-width="${f(w)}"/>`
+      + `<path d="M${f(a[0] + nx * (w / 2 + 3))} ${f(a[1] + ny * (w / 2 + 3))}L${f(a[0] - nx * (w / 2 + 3))} ${f(a[1] - ny * (w / 2 + 3))}" stroke="${cap || INK}" stroke-width="${cap ? 4 : 2.6}"/>`;
+  }
+  const along = (o, t, k) => { const a = lerp(o.L.knee, o.L.ank, t); return [a[0], a[1] + (k || 0)]; };
+  const SHOES2 = {
+    fluos: o => sneaker(o, o.fy - 10, "#d7ff1f", "#ff2e88", 4.5)
+      + `<path d="M${f(o.kx - o.d * o.cw)} ${f(o.fy - 3)}Q${f(o.fx)} ${f(o.fy - 9)} ${f(o.fx + o.d * o.frx * .9)} ${f(o.fy - 2)}" stroke="#ff2e88" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M${f(o.kx + o.d * (o.cw * .4 + 2))} ${f(o.fy - 9)}l${f(o.d * 4)} 2.4M${f(o.kx + o.d * (o.cw * .4 + 5))} ${f(o.fy - 7.6)}l${f(o.d * 4)} 2.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>`,
+    retro: o => { const top = o.L.ank[1] - 10 - 3 * o.m;
+      return sneaker(o, top, "#fbfbf7", "#e9e1cf", 4) + `<path d="M${f(o.kx - o.d * (o.cw + 3))} ${f(top + 1.4)}L${f(o.kx + o.d * (o.cw + 2))} ${f(top + 1.4)}" stroke="#e63946" stroke-width="3.4"/>`
+        + `<path d="M${f(o.kx - o.d * (o.cw + 1))} ${f(o.fy - 1)}Q${f(o.kx + o.d * o.cw * .3)} ${f(o.fy - 2)} ${f(o.fx + o.d * o.frx * .7)} ${f(o.fy - 9)}Q${f(o.kx + o.d * o.cw * .2)} ${f(o.fy - 6)} ${f(o.kx - o.d * (o.cw + 1))} ${f(o.fy - 6)}Z" fill="#e63946" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>`
+        + `<path d="M${f(o.kx + o.d * o.cw * .2)} ${f(top + 6)}h${f(o.d * 4)}M${f(o.kx + o.d * o.cw * .3)} ${f(top + 10)}h${f(o.d * 4)}" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>`; },
+    claquettes: o => [shaft(o, .5, 4, "#fbfbf7")
+      + `<path d="M${f(along(o, .6)[0] - (o.CW / 2 + 2))} ${f(along(o, .6)[1])}h${f(o.CW + 4)}M${f(along(o, .68)[0] - (o.CW / 2 + 2))} ${f(along(o, .68)[1])}h${f(o.CW + 4)}" stroke="#2f6fdc" stroke-width="2.4"/>`,
+      `<ellipse cx="${f(o.fx)}" cy="${f(o.fy - 1)}" rx="${f(o.frx)}" ry="6" fill="#fbfbf7" stroke="${INK}" stroke-width="2.8"/><ellipse cx="${f(o.fx)}" cy="${f(o.fy + 4.4)}" rx="${f(o.frx + 3)}" ry="3.4" fill="#2b2b33" stroke="${INK}" stroke-width="2.6"/>`
+      + `<path d="M${f(o.fx - o.frx * .55)} ${f(o.fy + 3)}L${f(o.fx - o.frx * .5)} ${f(o.fy - 6)}L${f(o.fx + o.frx * .5)} ${f(o.fy - 6)}L${f(o.fx + o.frx * .55)} ${f(o.fy + 3)}Z" fill="#2b2b33" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/><path d="M${f(o.fx - 4)} ${f(o.fy - 5)}l-1 7M${f(o.fx)} ${f(o.fy - 5)}v7M${f(o.fx + 4)} ${f(o.fy - 5)}l1 7" stroke="#fff" stroke-width="1.6"/>`],
+    crampons: o => [shaft(o, .1, 4, "#e63946", "#fff") + [.22, .3].map(t => `<path d="M${f(along(o, t)[0] - o.CW / 2 - 2)} ${f(along(o, t)[1])}h${f(o.CW + 4)}" stroke="#fff" stroke-width="2.2"/>`).join(""),
+      sneaker(o, o.fy - 10, "#1d1d29", "#1d1d29", 3)
+      + `<path d="M${f(o.kx - o.d * o.cw)} ${f(o.fy - 2)}Q${f(o.fx)} ${f(o.fy - 8)} ${f(o.fx + o.d * o.frx)} ${f(o.fy - 3)}" stroke="#b6ff3b" stroke-width="2.6" fill="none" stroke-linecap="round"/>`
+      + [-.6, 0, .6].map(k => `<rect x="${f(o.fx + k * o.frx - 1.6)}" y="${f(o.fy + 5)}" width="3.2" height="3.4" rx="1" fill="#e6e6ea" stroke="${INK}" stroke-width="1.2"/>`).join("")],
+    mocassins: o => [shaft(o, .48, 3, "#fbfbf7"), sneaker(o, o.fy - 7, "#7a3f1d", "#3b2414", 2.6)
+      + `<path d="M${f(o.kx + o.d * (o.cw * .2))} ${f(o.fy - 6)}q${f(o.d * 6)} 2.4 ${f(o.d * 11)} -1" stroke="#3b2414" stroke-width="2.2" fill="none"/><circle cx="${f(o.kx + o.d * (o.cw * .2 + 6))}" cy="${f(o.fy - 3.6)}" r="1.8" fill="#f5c518" stroke="${INK}" stroke-width=".8"/>`],
+    powerlift: o => { const {d, kx, cw, fx, fy, frx} = o, hx = kx - d * (cw + 3), tx = fx + d * (frx + 2);
+      return sneaker(o, fy - 12, "#2f6fdc", "#2f6fdc", 3) + shoePath(`M${f(hx - d)} ${f(fy + 1)}L${f(kx + d * (cw + 2))} ${f(fy + 3)}L${f(tx)} ${f(fy + 4)}L${f(tx)} ${f(fy + 6)}L${f(hx - d)} ${f(fy + 6)}Z`, "#c98a4b")
+        + `<path d="M${f(hx)} ${f(fy + 3.4)}L${f(kx + d * cw)} ${f(fy + 4.6)}" stroke="#8a5a2b" stroke-width="1.2"/><path d="M${f(kx - d * (cw + 2))} ${f(fy - 8)}L${f(kx + d * (cw + 6))} ${f(fy - 6)}" stroke="#fbfbf7" stroke-width="4.2"/><path d="M${f(kx - d * (cw + 2))} ${f(fy - 8)}L${f(kx + d * (cw + 6))} ${f(fy - 6)}" stroke="${INK}" stroke-width="1" stroke-dasharray="2 1.4"/>`; },
+    crocs: o => { const {d, kx, cw, fx, fy, frx} = o, hx = kx - d * (cw + 2.5), tx = fx + d * (frx + 3), cols = ["#ff2e88", "#ffd23f", "#2fa8ff"];
+      let c = shoePath(`M${f(hx)} ${f(fy - 9)}Q${f(kx)} ${f(fy - 15)} ${f(fx + d * frx * .4)} ${f(fy - 11)}Q${f(tx + d * 5)} ${f(fy - 8)} ${f(tx + d)} ${f(fy + 4)}L${f(hx)} ${f(fy + 4)}Z`, "#7bd389")
+        + `<path d="M${f(hx - d)} ${f(fy + 2)}H${f(tx + d)}" stroke="#4fa765" stroke-width="2.4"/><path d="M${f(hx + d * 1.5)} ${f(fy - 8)}Q${f(hx - d * 5)} ${f(fy - 2)} ${f(hx + d * 2)} ${f(fy + 1)}" stroke="${INK}" stroke-width="2.4" fill="none"/>`;
+      for (let i = 0; i < 4; i++) c += `<circle cx="${f(fx - d * 2 + d * i * frx * .32)}" cy="${f(fy - 9 + i * 1.4)}" r="1.1" fill="#3e8a54"/>`;
+      for (let i = 0; i < 3; i++) c += `<circle cx="${f(kx + d * (cw * .3 + i * 4.6))}" cy="${f(fy - 4 + (i % 2) * 2.4)}" r="2.3" fill="${cols[i]}" stroke="${INK}" stroke-width="1.1"/>`;
+      return c; },
+    boxe: o => { const top = along(o, .4);
+      let c = shaft(o, .4, 6, "#d62828", "#fff");
+      for (let i = 0; i < 4; i++) { const q = lerp(top, o.L.ank, .15 + i * .2); c += `<path d="M${f(q[0] - o.CW * .22)} ${f(q[1] - 2)}L${f(q[0] + o.CW * .22)} ${f(q[1] + 2)}M${f(q[0] + o.CW * .22)} ${f(q[1] - 2)}L${f(q[0] - o.CW * .22)} ${f(q[1] + 2)}" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`; }
+      return [c, sneaker(o, o.L.ank[1] - 4, "#d62828", "#fbfbf7", 2.6)]; },
+    talons: o => { const {d, kx, cw, fx, fy, frx} = o, bx = kx - d * (cw + 1), tx = fx + d * (frx + 3), sx = bx + d * 3;
+      return `<ellipse cx="${f(fx)}" cy="${f(fy - 5)}" rx="${f(frx * .8)}" ry="4.6" fill="${o.skin}" stroke="${INK}" stroke-width="2.6" transform="rotate(${d * 14} ${f(fx)} ${f(fy - 5)})"/>`
+        + shoePath(`M${f(bx)} ${f(fy - 15)}Q${f(kx + d * cw * .4)} ${f(fy - 6)} ${f(fx + d * frx * .5)} ${f(fy - 3)}Q${f(tx + d * 2)} ${f(fy - 1)} ${f(tx)} ${f(fy + 6)}L${f(fx + d * frx * .3)} ${f(fy + 6)}Q${f(kx + d * cw * .3)} ${f(fy + 2)} ${f(bx)} ${f(fy - 6)}Z`, "#e63946")
+        + `<path d="M${f(sx)} ${f(fy - 6)}L${f(sx + d * 1.4)} ${f(fy + 6)}" stroke="${INK}" stroke-width="5" stroke-linecap="round"/><path d="M${f(sx)} ${f(fy - 6)}L${f(sx + d * 1.4)} ${f(fy + 6)}" stroke="#e63946" stroke-width="2" stroke-linecap="round"/>`
+        + `<path d="M${f(fx + d * frx * .4)} ${f(fy)}q${f(d * 4)} 0 ${f(d * 8)} 3" stroke="#ff8a8f" stroke-width="1.6" fill="none"/>`; },
+    pantoufles: o => { const {d, fx, fy, frx} = o, ex = fx + d * frx * .45;
+      return `<path d="M${f(ex - d * 2)} ${f(fy - 6)}Q${f(ex - d * 6)} ${f(fy - 24)} ${f(ex - d * 1)} ${f(fy - 25)}Q${f(ex + d * 3)} ${f(fy - 18)} ${f(ex + d * 2)} ${f(fy - 6)}Z" fill="#ffc2dc" stroke="${INK}" stroke-width="2.4"/><path d="M${f(ex + d * 2)} ${f(fy - 6)}Q${f(ex + d * 5)} ${f(fy - 22)} ${f(ex + d * 10)} ${f(fy - 22)}Q${f(ex + d * 11)} ${f(fy - 14)} ${f(ex + d * 6)} ${f(fy - 5)}Z" fill="#ffc2dc" stroke="${INK}" stroke-width="2.4"/>`
+        + `<ellipse cx="${f(fx + d * 2)}" cy="${f(fy)}" rx="${f(frx + 5)}" ry="8.5" fill="#ffc2dc" stroke="${INK}" stroke-width="3"/><ellipse cx="${f(fx - d * frx * .4)}" cy="${f(fy - 4)}" rx="${f(frx * .5)}" ry="3.6" fill="#fff" stroke="${INK}" stroke-width="1.8"/>`
+        + `<circle cx="${f(ex + d * 2)}" cy="${f(fy - 2)}" r="1.5" fill="${INK}"/><circle cx="${f(ex + d * 7)}" cy="${f(fy - 2)}" r="1.5" fill="${INK}"/><circle cx="${f(ex + d * 5.4)}" cy="${f(fy + 1.6)}" r="1.6" fill="#ff5d8a"/>`; },
+    moonboot: o => { const {d, fx, fy, frx} = o, t0 = along(o, .5);
+      let c = `<ellipse cx="${f(fx + d * 1)}" cy="${f(fy - 2)}" rx="${f(frx + 5)}" ry="9" fill="#dfe3ea" stroke="${INK}" stroke-width="3"/><path d="M${f(fx - frx - 6)} ${f(fy + 4)}H${f(fx + frx + 7)}" stroke="${INK}" stroke-width="6" stroke-linecap="round"/><path d="M${f(fx - frx - 6)} ${f(fy + 4)}H${f(fx + frx + 7)}" stroke="#ff7b00" stroke-width="2.6" stroke-linecap="round"/>`;
+      let sh = shaft(o, .5, 12, "#dfe3ea");
+      for (let i = 1; i < 4; i++) { const q = lerp(t0, o.L.ank, i / 4); sh += `<path d="M${f(q[0] - o.CW / 2 - 5)} ${f(q[1])}q${f(o.CW / 2 + 5)} 3 ${f(o.CW + 10)} 0" stroke="#a9b0bc" stroke-width="1.6" fill="none"/>`; }
+      return [sh, c + `<path d="M${f(o.kx + d * 2)} ${f(fy - 9)}l${f(d * 6)} 3M${f(o.kx + d * 2)} ${f(fy - 5)}l${f(d * 6)} -3" stroke="#e63946" stroke-width="1.8" stroke-linecap="round"/>`]; },
+    led: o => sneaker(o, o.fy - 10, "#fbfbf7", "#ff2e88", 5.5, `<animate attributeName="fill" values="#ff2e88;#3ae0ff;#39ff7a;#ffd23f;#ff2e88" dur="1.4s" repeatCount="indefinite"/>`)
+      + `<ellipse cx="${f(o.fx)}" cy="${f(o.fy + 6)}" rx="${f(o.frx + 8)}" ry="3.2" fill="#ff2e88" opacity=".45"><animate attributeName="fill" values="#ff2e88;#3ae0ff;#39ff7a;#ffd23f;#ff2e88" dur="1.4s" repeatCount="indefinite"/></ellipse>`
+      + `<path d="M${f(o.kx - o.d * o.cw)} ${f(o.fy - 4)}Q${f(o.fx)} ${f(o.fy - 9)} ${f(o.fx + o.d * o.frx * .8)} ${f(o.fy - 4)}" stroke="#2fa8ff" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
+  };
+
   function svg(look, xp, opts = {}) {
     look = Object.assign({}, DEFAULT_LOOK, look || {});
     const m = opts.m != null ? opts.m : muscle(xp);
@@ -399,7 +795,13 @@
     // peaux de la boutique : remplacent la couleur de peau
     const SKIN_FX = {doree: "#e9b824", marbre: "#ecebe4", fluo: "#ff8a1f", coupsoleil: "#f4836c"};
     const ink = "#1d1420", skin = SKIN_FX[eq.peau] || look.skin, skin2 = shade(skin, .86);
-    if (eq.visage === "catcheur" || eq.tete === "bonnetbain" || eq.tete === "disco") look.hair = "chauve"; // cagoule / bonnet / perruque par-dessus
+    // tenue (boutique) > haut de l'éditeur ; bas de la boutique > pantalon de la tenue > short de l'éditeur
+    const HT = HAUTS[eq.haut] || null, topK = HT ? (HT.nu ? "nu" : "shop") : look.top;
+    const PT = BOTTOMS[eq.taille] || (HT && HT.pants) || null;
+    const lucha = !!(HT && HT.mask) && eq.visage !== "catcheur";
+    // sous un chapeau, l'afro dégradée (high-top) devient une coupe courte
+    if (look.hair === "degrade" && (["casqenv", "viking", "bonnetbain", "disco", "bob", "bonnet", "snapback"].includes(eq.tete) || look.acc === "casquette")) look.hair = "court";
+    if (eq.visage === "catcheur" || eq.tete === "bonnetbain" || eq.tete === "disco" || eq.tete === "durag" || eq.tete === "cretefluo" || lucha) look.hair = "chauve"; // cagoule / bonnet / perruque par-dessus
     const kb = gr.b, kp = gr.p, kd = gr.d, kj = gr.j;
     const ramp = Math.min(1, m * 4); // les groupes se voient même chez les petits gabarits
 
@@ -423,10 +825,11 @@
     const hw = Math.max(SW + UA0 + 10, 62);
     const bust = opts.view === "bust";
     const vb = bust ? `${f(100 - hw)} ${f(headY - headR - 18)} ${f(hw * 2)} ${f(hw * 2)}` : "-45 -12 290 280";
+    let vbOut = vb;
     // cadre utile pour les armes (le buste coupe sous les pectoraux : l'arme y est brandie, poing levé)
     const wbox = bust ? [100 - hw + 2, headY - headR - 16, 100 + hw - 2, headY - headR - 20 + hw * 2] : null;
     const bustArm = bust && pose === "idle" && !!(eq.arme && WEAPONS[eq.arme]);
-    let s = `<svg class="av" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">`;
+    let s = "";
     // ombre au sol (doit rester le premier élément : scene3d la retire)
     s += `<ellipse cx="100" cy="258" rx="${f(28 + 40 * m)}" ry="7" fill="rgba(0,0,0,.28)"/>`;
 
@@ -501,6 +904,11 @@
         o += pl.svg;
         dosFx = {def: BACKW[eq.dos], pl};
       }
+      if (eq.dos === "sacsport") {
+        const d = back ? -1 : 1, bw2 = 40 + 12 * m, bh2 = 24 + 5 * m, x0 = cx + d * (W + 10 + 8 * m), y0 = 150;
+        if (back) o += `<path d="M${f(cx + SW * .55)} ${f(trapTop + 6)}L${f(x0)} ${f(y0)}" stroke="${ink}" stroke-width="9" stroke-linecap="round"/><path d="M${f(cx + SW * .55)} ${f(trapTop + 6)}L${f(x0)} ${f(y0)}" stroke="#2f6fdc" stroke-width="5.4" stroke-linecap="round"/>`;
+        o += `<rect x="${f(x0 - bw2 / 2)}" y="${f(y0)}" width="${f(bw2)}" height="${f(bh2)}" rx="${f(bh2 * .45)}" fill="#2f6fdc" stroke="${ink}" stroke-width="3.4"/><path d="M${f(x0 - bw2 / 2 + 6)} ${f(y0 + 3)}V${f(y0 + bh2 - 3)}M${f(x0 + bw2 / 2 - 6)} ${f(y0 + 3)}V${f(y0 + bh2 - 3)}" stroke="#1f4fa8" stroke-width="3"/><path d="M${f(x0 - bw2 * .25)} ${f(y0 + bh2 * .62)}q${f(bw2 * .25)} ${f(-bh2 * .5)} ${f(bw2 * .5)} ${f(-bh2 * .2)}" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M${f(x0 - bw2 * .35)} ${f(y0 + 4)}H${f(x0 + bw2 * .35)}" stroke="${ink}" stroke-width="1.6" stroke-dasharray="2 2"/>`;
+      }
       if (eq.dos === "jetpack") {
         for (const d of [-1, 1]) {
           const x = cx + d * (SW * .62 + 4), tw = 12 + 5 * m, top = trapTop - 26, bot = 168;
@@ -530,14 +938,28 @@
       }
     }
 
+    // dreads : mèches qui tombent derrière la tête (de face) ou sur la nuque (de dos)
+    const dreadLocs = bk => {
+      const hc0 = look.hairColor, r0 = headR, out = [];
+      if (bk) for (let i = -3; i <= 3; i++) out.push([[cx + i * r0 * .24, headY - r0 * .2], [cx + i * r0 * .3, yS - 6 + Math.abs(i) * 2 + (i % 2 ? 6 : 0)]]);
+      else for (const d of [-1, 1]) for (let j = 0; j < 4; j++) out.push([[cx + d * r0 * (.45 + j * .15), headY - r0 * (.75 - j * .22)], [cx + d * (r0 * .8 + j * 4 + 4), headY + r0 + 8 + j * 5 - (j === 3 ? 6 : 0)]]);
+      let o = "";
+      for (const w of [7.5, 4.6]) for (const [a, b] of out) o += `<path d="M${pt(a)}Q${f((a[0] + b[0]) / 2 + (b[0] - a[0]) * .3)} ${f((a[1] + b[1]) / 2)} ${pt(b)}" stroke="${w > 5 ? ink : hc0}" stroke-width="${w}" fill="none" stroke-linecap="round"/>`;
+      for (const [a, b] of out) o += `<path d="M${pt(a)}Q${f((a[0] + b[0]) / 2 + (b[0] - a[0]) * .3)} ${f((a[1] + b[1]) / 2)} ${pt(b)}" stroke="${shade(hc0, 1.6)}" stroke-width="4.6" fill="none" stroke-dasharray="1.4 5" opacity=".55"/>`;
+      return o;
+    };
+    const duragTails = bk => { const x0 = bk ? cx - 3 : cx + headR * .55, y0 = headY - headR * .1; let o = ""; for (const [dx, l] of [[0, 1], [7, .85]]) o += `<path d="M${f(x0 + dx)} ${f(y0)}Q${f(x0 + dx + (bk ? 2 : 8))} ${f(y0 + 30)} ${f(x0 + dx + (bk ? -2 : 6))} ${f(y0 + (yS - y0 + 14) * l)}l6 -2Q${f(x0 + dx + (bk ? 6 : 14))} ${f(y0 + 30)} ${f(x0 + dx + 6)} ${f(y0)}Z" fill="#2c2f7a" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/>`; return o; };
     // ---- coiffure arrière (afro, queue) / mulet / perruque disco
     const discoWig = () => { const R = headR + 20 + 4 * m, cy = headY - 8, cols = ["#ff2e88", "#ffd23f", "#3ccf8e", "#2fa8ff", "#b14dff"]; let o = `<circle cx="${cx}" cy="${f(cy)}" r="${f(R)}" fill="${cols[0]}" stroke="${ink}" stroke-width="4"/>`; for (let i = 1; i < 5; i++) o += `<circle cx="${cx}" cy="${f(cy)}" r="${f(R * (1 - i * .16))}" fill="${cols[i]}"/>`; for (let i = 0; i < 9; i++) o += star(cx + Math.cos(i * 2.2) * R * .78, cy + Math.sin(i * 2.2) * R * .78, 4, "#fff"); return o; };
     if (!back && eq.tete === "disco") s += discoWig();
     if (!back && look.hair === "afro") s += `<circle cx="100" cy="${f(headY - 4)}" r="${f(headR + 13)}" fill="${look.hairColor}" stroke="${ink}" stroke-width="4"/>`;
     if (!back && look.hair === "queue") s += `<path d="M${f(cx + headR * .6)} ${f(headY - headR * .4)} q 26 6 20 46 q -10 -6 -24 -28 z" fill="${look.hairColor}" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
+    if (!back && look.hair === "dreads") s += dreadLocs(false);
+    if (!back && look.hair === "manbun") s += `<circle cx="${f(cx + headR * .12)}" cy="${f(headY - headR - 3)}" r="${f(8 + headR * .08)}" fill="${look.hairColor}" stroke="${ink}" stroke-width="3.5"/>`;
+    if (!back && eq.tete === "durag") s += duragTails(false);
 
     // ---- jambes
-    const legs = [], spread = Math.max(0, TW - (10 + 25 * m)) * .5;
+    const legs = [], spread = Math.max(0, TW - (10 + 25 * m)) * .5, shoes = [], footX = {};
     for (const d of [-1, 1]) {
       let hip = [cx + d * (H - 9 - 3 * m + spread), 172], knee = [cx + d * (H - 7 + 2 * m + spread * 1.1), 212], ank = [cx + d * (H - 9 + spread * .8), 245], toe = false;
       if (pose === "leg" && d === 1) { knee = [hip[0] + 16 + 8 * m + TW * .15, 206]; ank = [knee[0] - 3, 240]; toe = true; }
@@ -566,26 +988,73 @@
         if (m < .35 && !bigLegs) s += `<circle cx="${f(L.knee[0])}" cy="${f(L.knee[1])}" r="${f(7.5 - 6 * m)}" fill="${skin}" stroke="${ink}" stroke-width="3"/>`;
       }
       const fy = L.toe ? L.ank[1] + 7 : 251, fx = L.ank[0] + L.d * 5, frx = 12 + 4 * m;
-      let shoe = "";
+      let shoe = "", shoePre = "";
       if (eq.pieds === "tongs") {
         shoe = `<ellipse cx="${f(fx)}" cy="${f(fy + 3)}" rx="${f(frx + 2)}" ry="4" fill="#2fa8ff" stroke="${ink}" stroke-width="3"/><ellipse cx="${f(fx)}" cy="${f(fy - 1)}" rx="${f(frx - 1)}" ry="5" fill="${skin}" stroke="${ink}" stroke-width="2.6"/><path d="M${f(fx - frx * .6)} ${f(fy + 1)}L${f(fx + L.d * frx * .35)} ${f(fy - 5)}L${f(fx + frx * .6)} ${f(fy + 1)}" stroke="#ffd23f" stroke-width="3.2" fill="none" stroke-linejoin="round"/>`;
       } else if (eq.pieds === "palmes") {
         const tip = fx + L.d * (frx + 30 + 6 * m);
         shoe = `<path d="M${f(fx - L.d * frx * .6)} ${f(fy - 6)}L${f(tip)} ${f(fy - 10)}Q${f(tip + L.d * 4)} ${f(fy + 2)} ${f(tip)} ${f(fy + 8)}L${f(fx - L.d * frx * .6)} ${f(fy + 6)}Z" fill="#ffd23f" stroke="${ink}" stroke-width="3.2" stroke-linejoin="round"/><path d="M${f(fx + L.d * 8)} ${f(fy - 5)}L${f(tip - L.d * 4)} ${f(fy - 4)}M${f(fx + L.d * 8)} ${f(fy + 4)}L${f(tip - L.d * 4)} ${f(fy + 3)}" stroke="#e0a800" stroke-width="2.4"/><ellipse cx="${f(fx - L.d * 2)}" cy="${f(fy)}" rx="${f(frx * .8)}" ry="7" fill="#2fa8ff" stroke="${ink}" stroke-width="3"/>`;
-      } else if (eq.pieds === "cowboy") {
-        const kx = L.ank[0], top = L.ank[1] - 26 - 4 * m, bw = CW / 2 + 5;
-        shoe = `<path d="M${f(kx - bw)} ${f(top)}L${f(kx + bw)} ${f(top)}L${f(kx + bw - 1)} ${f(fy - 4)}L${f(fx + L.d * (frx + 4))} ${f(fy - 2)}Q${f(fx + L.d * (frx + 8))} ${f(fy + 5)} ${f(fx + L.d * frx)} ${f(fy + 5)}L${f(kx - L.d * bw)} ${f(fy + 5)}L${f(kx - L.d * bw)} ${f(fy + 9)}L${f(kx - L.d * (bw - 7))} ${f(fy + 9)}L${f(kx - bw + 1)} ${f(fy - 2)}Z" fill="#8a4b20" stroke="${ink}" stroke-width="3.2" stroke-linejoin="round"/><path d="M${f(kx - bw + 3)} ${f(top + 8)}q${f(bw - 3)} 8 ${f(2 * bw - 6)} 0" stroke="#f5c518" stroke-width="2.4" fill="none"/>${star(kx - L.d * bw - 2, fy + 3, 4, "#d9dde3")}`;
+      } else if (eq.pieds === "cowboy" || eq.pieds === "cowboyor") {
+        const kx = L.ank[0], top = L.ank[1] - 26 - 4 * m, bw = CW / 2 + 5, gold = eq.pieds === "cowboyor";
+        shoe = `<path d="M${f(kx - bw)} ${f(top)}L${f(kx + bw)} ${f(top)}L${f(kx + bw - 1)} ${f(fy - 4)}L${f(fx + L.d * (frx + 4))} ${f(fy - 2)}Q${f(fx + L.d * (frx + 8))} ${f(fy + 5)} ${f(fx + L.d * frx)} ${f(fy + 5)}L${f(kx - L.d * bw)} ${f(fy + 5)}L${f(kx - L.d * bw)} ${f(fy + 9)}L${f(kx - L.d * (bw - 7))} ${f(fy + 9)}L${f(kx - bw + 1)} ${f(fy - 2)}Z" fill="${gold ? "#f5c518" : "#8a4b20"}" stroke="${ink}" stroke-width="3.2" stroke-linejoin="round"/><path d="M${f(kx - bw + 3)} ${f(top + 8)}q${f(bw - 3)} 8 ${f(2 * bw - 6)} 0" stroke="${gold ? "#fff3a0" : "#f5c518"}" stroke-width="2.4" fill="none"/>${star(kx - L.d * bw - 2, fy + 3, 4, gold ? "#fff" : "#d9dde3")}`;
+        if (gold) shoe += `<path d="M${f(kx - bw * .5)} ${f(top + 14)}q${f(bw * .5)} 6 ${f(bw)} 0" stroke="#b8860b" stroke-width="1.8" fill="none"/>` + star(kx + bw * .35, top + 6, 3.2, "#fff") + star(fx + L.d * frx * .5, fy - 1, 2.6, "#fff");
       } else if (eq.pieds === "rollers") {
         shoe = `<path d="M${f(fx - frx)} ${f(fy + 3)}L${f(fx - frx)} ${f(fy - 16)}Q${f(fx)} ${f(fy - 20)} ${f(fx + L.d * 2)} ${f(fy - 12)}L${f(fx + frx + 2)} ${f(fy - 4)}Q${f(fx + frx + 4)} ${f(fy + 3)} ${f(fx + frx)} ${f(fy + 3)}Z" fill="#fff" stroke="${ink}" stroke-width="3.2" stroke-linejoin="round"/><path d="M${f(fx - frx)} ${f(fy - 8)}H${f(fx + 4)}" stroke="#ff2e88" stroke-width="4"/>`;
         for (let i = 0; i < 3; i++) shoe += `<circle cx="${f(fx - frx * .7 + i * frx * .7)}" cy="${f(fy + 8)}" r="5" fill="#ff2e88" stroke="${ink}" stroke-width="2.4"/><circle cx="${f(fx - frx * .7 + i * frx * .7)}" cy="${f(fy + 8)}" r="1.6" fill="#fff"/>`;
-      } else shoe = `<ellipse cx="${f(fx)}" cy="${f(fy)}" rx="${f(frx)}" ry="7" fill="#f4f1ea" stroke="${ink}" stroke-width="3.5"/><path d="M${f(fx - 10)} ${f(fy + 2)}h${f(20 + 6 * m)}" stroke="#d6337a" stroke-width="2.5"/>`;
-      s += L.toe ? `<g transform="rotate(${L.d * 18} ${f(fx)} ${f(fy)})">${shoe}</g>` : shoe;
+      } else if (SHOES2[eq.pieds]) { const r = SHOES2[eq.pieds]({L, fx, fy, frx, m, CW, skin, d: L.d, kx: L.ank[0], cw: CW / 2}); if (Array.isArray(r)) { shoePre = r[0]; shoe = r[1]; } else shoe = r; }
+      else shoe = `<ellipse cx="${f(fx)}" cy="${f(fy)}" rx="${f(frx)}" ry="7" fill="#f4f1ea" stroke="${ink}" stroke-width="3.5"/><path d="M${f(fx - 10)} ${f(fy + 2)}h${f(20 + 6 * m)}" stroke="#d6337a" stroke-width="2.5"/>`;
+      footX[L.d] = fx + L.d * (frx + 8 + (eq.pieds === "palmes" ? 30 + 6 * m : eq.pieds === "pantoufles" || eq.pieds === "moonboot" ? 5 : 0));
+      shoes.push(shoePre + (L.toe ? `<g transform="rotate(${L.d * 18} ${f(fx)} ${f(fy)})">${shoe}</g>` : shoe));
     }
+    // pantalon (tenue ou bas de la boutique) : par-dessus les jambes, sous les chaussures
+    const pantsW = PT && PT.full ? [TW + (PT.baggy ? 8 : PT.tight ? 1.5 : 4), CW + (PT.baggy ? 9 : PT.tight ? 1.5 : 4)] : null;
+    if (pantsW) {
+      const [wT, wC] = pantsW, end = PT.end || .86, segs = legs.map(L => ({L, a: L.hip, b: L.knee, c: lerp(L.knee, L.ank, end)}));
+      for (const g of segs) s += `<path d="M${pt(g.a)}L${pt(g.b)}" stroke="${ink}" stroke-width="${f(wT + 6)}" stroke-linecap="round"/><path d="M${pt(g.b)}L${pt(g.c)}" stroke="${ink}" stroke-width="${f(wC + 6)}"/>`;
+      for (const g of segs) s += `<path d="M${pt(g.a)}L${pt(g.b)}" stroke="${PT.c}" stroke-width="${f(wT)}" stroke-linecap="round"/><path d="M${pt(g.b)}L${pt(g.c)}" stroke="${PT.c}" stroke-width="${f(wC)}"/>`;
+      for (const g of segs) {
+        const d = g.L.d, dx = g.c[0] - g.b[0], dy = g.c[1] - g.b[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l;
+        const hem = (q, w) => `<path d="M${f(q[0] + nx * w)} ${f(q[1] + ny * w)}L${f(q[0] - nx * w)} ${f(q[1] - ny * w)}" stroke="${ink}" stroke-width="2.6" stroke-linecap="round"/>`;
+        if (PT.st) s += `<path d="M${f(g.a[0] + d * (wT / 2 - 3.5))} ${f(g.a[1] + 4)}L${f(g.b[0] + d * (wT / 2 - 3.5))} ${f(g.b[1])}L${f(g.c[0] + d * (wC / 2 - 3))} ${f(g.c[1])}" stroke="${PT.st}" stroke-width="3.2" fill="none" stroke-linejoin="round"/>`;
+        if (PT.leo) { const L2 = []; [[g.a, g.b, wT, [.22, .46, .7, .93]], [g.b, g.c, wC, [.2, .55, .88]]].forEach(([p0, p1, w, ts]) => ts.forEach((t, i) => {
+          for (const o of i % 2 ? [-.22, .18] : [-.05, .3]) { const q = lerp(p0, p1, t); L2.push([q[0] + o * w * d, q[1] + (o > 0 ? 2 : -1), Math.min(1.25, .7 + w / 60)]); }
+        })); s += leoSpots(L2); }
+        if (PT.cuff) { const q0 = lerp(g.b, g.c, .8); s += `<path d="M${pt(q0)}L${pt(g.c)}" stroke="${ink}" stroke-width="${f(wC + 9)}"/><path d="M${pt(q0)}L${pt(g.c)}" stroke="${PT.cuff}" stroke-width="${f(wC + 3)}"/>` + hem(q0, wC / 2 + 4.5) + hem(g.c, wC / 2 + 4.5); }
+        else s += hem(g.c, wC / 2 + 3);
+        if (PT.luc) { // flammes dorées en bas des collants
+          let fl = "";
+          const n = 3, w0 = wC + 1;
+          for (let i = 0; i < n; i++) { const t = (i + .5) / n, bx = g.c[0] - nx * (w0 / 2) + nx * w0 * t, by = g.c[1] - ny * (w0 / 2) + ny * w0 * t, h = (i % 2 ? 10 : 15) + 4 * m; fl += `M${f(bx - w0 / n / 2)} ${f(by - 1)}Q${f(bx - 1)} ${f(by - h * .5)} ${f(bx + 1)} ${f(by - h)}Q${f(bx + 1)} ${f(by - h * .4)} ${f(bx + w0 / n / 2)} ${f(by - 1)}Z`; }
+          s += `<path d="${fl}" fill="#ffd23f" stroke="#e85d04" stroke-width="1.6" stroke-linejoin="round"/>`;
+        }
+      }
+    }
+    s += shoes.join("");
     // short (ou slip de la boutique)
     const shortY = 194 + 4 * m;
-    const shortsCol = eq.taille === "leopard" ? "#e9a33b" : eq.taille === "slipor" ? "#f5c518" : eq.taille === "hawai" ? "#13a89e" : look.shorts;
+    const shortsCol = eq.taille === "leopard" ? "#e9a33b" : eq.taille === "slipor" ? "#f5c518" : eq.taille === "hawai" ? "#13a89e" : PT && PT.c ? PT.c : look.shorts;
     const SX = H + TW * .45 + 3 + spread;
-    s += `<path d="M${f(cx - H - 3)} 165 L${f(cx - SX)} ${f(shortY)} L${f(cx - 3)} ${f(shortY)} L${cx} ${f(shortY - 12)} L${f(cx + 3)} ${f(shortY)} L${f(cx + SX)} ${f(shortY)} L${f(cx + H + 3)} 165 Z" fill="${shortsCol}" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
+    const shortD = `M${f(cx - H - 3)} 165 L${f(cx - SX)} ${f(shortY)} L${f(cx - 3)} ${f(shortY)} L${cx} ${f(shortY - 12)} L${f(cx + 3)} ${f(shortY)} L${f(cx + SX)} ${f(shortY)} L${f(cx + H + 3)} 165 Z`;
+    if (PT && PT.kilt) {
+      // kilt écossais : jupe plissée à carreaux (motif découpé dans la forme) + sporran devant
+      const hem = Math.max(shortY + 12, 206 + 2 * m), KX = SX + 9, kd = `M${f(cx - H - 4)} 162 L${f(cx - KX)} ${f(hem)} L${f(cx + KX)} ${f(hem)} L${f(cx + H + 4)} 162 Z`, P = polyOf(kd);
+      const ln = (c, w, lines) => `<path d="${clipLines(P, lines)}" stroke="${c}" stroke-width="${w}" fill="none" opacity=".85"/>`;
+      const V = [], Hh = [], V2 = [], H2 = [];
+      for (let x = cx - KX; x <= cx + KX; x += 11) { V.push([x, 158, x, hem + 2]); V2.push([x + 5, 158, x + 5, hem + 2]); }
+      for (let y = 168; y <= hem; y += 11) { Hh.push([cx - KX - 4, y, cx + KX + 4, y]); H2.push([cx - KX - 4, y + 5, cx + KX + 4, y + 5]); }
+      s += `<path d="${kd}" fill="#b3202a" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>` + ln("#1f4d2b", 4, V) + ln("#1f4d2b", 4, Hh) + ln("#ffd23f", 1, V2) + ln("#ffd23f", 1, H2);
+      for (let i = 1; i < 6; i++) { const t = i / 6; s += `<path d="M${f(cx - H - 4 + (2 * H + 8) * t)} 170L${f(cx - KX + 2 * KX * t)} ${f(hem)}" stroke="${ink}" stroke-width="1.4" opacity=".45"/>`; }
+      s += `<path d="M${f(cx - H - 4)} 163H${f(cx + H + 4)}" stroke="${ink}" stroke-width="8"/><path d="M${f(cx - H - 4)} 163H${f(cx + H + 4)}" stroke="#3b2414" stroke-width="5"/>`;
+      if (!back) s += `<path d="M${f(cx - 8 - 2 * m)} 168h${f(16 + 4 * m)}v${f(10 + 2 * m)}q${f(-8 - 2 * m)} 8 ${f(-16 - 4 * m)} 0z" fill="#f4ecdc" stroke="${ink}" stroke-width="2.6" stroke-linejoin="round"/><path d="M${f(cx - 4)} ${f(180 + 2 * m)}v6M${cx} ${f(181 + 2 * m)}v7M${f(cx + 4)} ${f(180 + 2 * m)}v6" stroke="${ink}" stroke-width="2.4" stroke-linecap="round"/><circle cx="${cx}" cy="171.5" r="2" fill="#f5c518" stroke="${ink}" stroke-width="1"/>`;
+    } else s += `<path d="${shortD}" fill="${shortsCol}" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
+    if (pantsW) for (const L of legs) { // on efface l'ourlet du short sur le pantalon
+      const k0 = L.knee[1] - L.hip[1] || 1, a = lerp(L.hip, L.knee, (shortY - 5 - L.hip[1]) / k0), b = lerp(L.hip, L.knee, (shortY + 5 - L.hip[1]) / k0);
+      s += `<path d="M${pt(a)}L${pt(b)}" stroke="${PT.c}" stroke-width="${f(pantsW[0] - 1)}"/>`;
+    }
+    if (PT && PT.leo) s += leoSpots(gridIn(polyOf(shortD), 9, 3).map(([x, y]) => [x, y, 1]));
+    if (PT && PT.melon) {
+      for (const [x, y] of gridIn(polyOf(shortD), 11, 4.5)) s += `<path d="M${f(x - 4.4)} ${f(y - 1.6)}a4.4 4.4 0 0 0 8.8 0z" fill="#ff4d6d" stroke="#2f9e44" stroke-width="1.8" stroke-linejoin="round"/><circle cx="${f(x - 1.4)}" cy="${f(y)}" r=".8" fill="${ink}"/><circle cx="${f(x + 1.6)}" cy="${f(y + .2)}" r=".8" fill="${ink}"/>`;
+    }
     if (eq.taille === "leopard") {
       let sp = "";
       for (let row = 0; row < 2; row++) for (let i = -2; i <= 2; i++) {
@@ -658,10 +1127,11 @@
         det.push(a + `</g>`);
       }
     }
-    if (look.top === "nu") s += det.join("");
+    const openTop = !!(HT && (HT.crop || HT.mesh || HT.open));
+    if (topK === "nu" || openTop) s += det.join("");
 
     // vêtement du haut
-    if (look.top !== "nu") {
+    if (topK !== "nu" && !HT) {
       const c = look.topColor, strap = look.top === "singlet" ? .32 : .5;
       const tp = `M${f(cx - neckH - 4)} ${f(nkTop + 6)} L${f(cx - SW * strap - 6)} ${f(yS - 2 - 6 * m)} Q${f(cx - SW * strap)} ${f(yS + 22)} ${f(cx - SW + 7 - lat * .7)} ${f(yS + 36)} Q${f(cx - (W + 4 + 16 * m + lat * .5))} ${f(yS + 50)} ${f(cx - W - 1)} 152 L${f(cx - H - 2)} 174 L${f(cx + H + 2)} 174 L${f(cx + W + 1)} 152 Q${f(cx + W + 4 + 16 * m + lat * .5)} ${f(yS + 50)} ${f(cx + SW - 7 + lat * .7)} ${f(yS + 36)} Q${f(cx + SW * strap)} ${f(yS + 22)} ${f(cx + SW * strap + 6)} ${f(yS - 2 - 6 * m)} L${f(cx + neckH + 4)} ${f(nkTop + 6)} Q${cx} ${f(back ? nkTop + 14 : yS + 20)} ${f(cx - neckH - 4)} ${f(nkTop + 6)} Z`;
       s += `<path d="${tp}" fill="${c}" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
@@ -669,7 +1139,85 @@
       if (look.top === "singlet") s += `<path d="M${f(cx - W - 1)} 160 L${f(cx + W + 1)} 160" stroke="#fff" stroke-width="4" opacity=".7"/>`;
       if (m > 1.05 || (pd > 8 && !back)) s += `<path d="M${f(cx - SW * .3)} ${f(yS + 18)}l6 6-4 5 7 5M${f(cx + SW * .25)} ${f(yS + 40)}l-5 5 5 5" stroke="${ink}" stroke-width="2.4" fill="none"/>`; // tissu qui craque
     }
-    if (eq.peau === "coupsoleil" && look.top === "nu" && !back) s += `<path d="M${f(cx - SW * .42)} ${f(yS - 4)}Q${f(cx - SW * .45)} ${f(yS + 22)} ${f(cx - SW * .62)} ${f(yS + 36)}M${f(cx + SW * .42)} ${f(yS - 4)}Q${f(cx + SW * .45)} ${f(yS + 22)} ${f(cx + SW * .62)} ${f(yS + 36)}" stroke="#fff3e6" stroke-width="${f(6 + 4 * m)}" fill="none" stroke-linecap="round" opacity=".9"/>`;
+    if (HT && !HT.nu) {
+      // ---- tenue de la boutique (remplace le haut de l'éditeur)
+      const c = HT.c, c2 = HT.c2 || shade(c, .8);
+      const side = d => ({nk: [cx + d * (neckH + 4), nkTop + 6], sh: [cx + d * (SW * (HT.strap || 1) + 6), yS - 2 - 6 * m], sc: [cx + d * SW * (HT.strap || 1), yS + 22], ap: [cx + d * (SW - 7 + lat * .7), yS + 36], c3: [cx + d * (W + 4 + 16 * m + lat * .5), yS + 50], wa: [cx + d * (W + 1), 152], hp: [cx + d * (H + 2), 174]});
+      const a = side(-1), b = side(1);
+      // forme du haut : encolure ronde (crew), en V (vY), ou ourlet court (crop)
+      const shirtD = (neckY, vNeck, hemY) => {
+        let low;
+        if (hemY) {
+          let lo = 0, hi = 1;
+          for (let i = 0; i < 20; i++) { const t = (lo + hi) / 2; if (bz(a.ap, a.c3, a.wa, t)[1] < hemY) lo = t; else hi = t; }
+          low = `Q${pt(lerp(a.ap, a.c3, lo))} ${pt(bz(a.ap, a.c3, a.wa, lo))} Q${cx} ${f(hemY + 4)} ${pt(bz(b.ap, b.c3, b.wa, lo))} Q${pt(lerp(b.ap, b.c3, lo))} ${pt(b.ap)}`;
+        } else low = `Q${pt(a.c3)} ${pt(a.wa)} L${pt(a.hp)} L${pt(b.hp)} L${pt(b.wa)} Q${pt(b.c3)} ${pt(b.ap)}`;
+        return `M${pt(a.nk)} L${pt(a.sh)} Q${pt(a.sc)} ${pt(a.ap)} ${low} Q${pt(b.sc)} ${pt(b.sh)} L${pt(b.nk)} ${vNeck && !back ? `L${cx} ${f(neckY)} L${pt(a.nk)}` : `Q${cx} ${f(back ? nkTop + 14 : neckY)} ${pt(a.nk)}`} Z`;
+      };
+      const fill = (d, col, sw) => `<path d="${d}" fill="${col}" stroke="${ink}" stroke-width="${sw || 4}" stroke-linejoin="round"/>`;
+      const txt = (t, x, y, fs, col) => `<text x="${f(x)}" y="${f(y)}" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="${f(fs)}" fill="${col}" stroke="${ink}" stroke-width="${f(1.4 + fs * .05)}" paint-order="stroke" stroke-linejoin="round">${t}</text>`;
+      const crack = () => m > 1.05 && !back ? `<path d="M${f(cx - SW * .3)} ${f(yS + 18)}l6 6-4 5 7 5M${f(cx + SW * .25)} ${f(yS + 40)}l-5 5 5 5" stroke="${ink}" stroke-width="2.4" fill="none"/>` : "";
+      const vB = yS + 50 + 8 * m; // bas du décolleté (chemise ouverte, smoking)
+      if (eq.haut === "hoodie") {
+        s += fill(shirtD(nkTop + 14), c) + `<g opacity=".4">${det.join("")}</g>`;
+        if (!back) {
+          const pw = W * .75 + 6;
+          s += `<path d="M${f(cx - pw)} 166L${f(cx - pw * .78)} 140Q${cx} 135 ${f(cx + pw * .78)} 140L${f(cx + pw)} 166Z" fill="${c}" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/><path d="M${f(cx - pw * .78)} 141L${f(cx - pw * .92)} 162M${f(cx + pw * .78)} 141L${f(cx + pw * .92)} 162" stroke="${c2}" stroke-width="3"/>`;
+          for (const d of [-1, 1]) s += `<path d="M${f(cx + d * 5)} ${f(nkTop + 12)}q${f(d * 2)} ${f(9 + 2 * m)} ${f(d * 1)} ${f(17 + 4 * m)}" stroke="#f4f4f8" stroke-width="2.2" fill="none" stroke-linecap="round"/><rect x="${f(cx + d * 6 - 1.6)}" y="${f(nkTop + 28 + 4 * m)}" width="3.2" height="5" rx="1" fill="#c9d1d8" stroke="${ink}" stroke-width="1"/>`;
+        }
+        s += `<path d="M${f(cx - H - 2)} 168H${f(cx + H + 2)}" stroke="${c2}" stroke-width="3"/>`;
+      } else if (eq.haut === "maillot" || eq.haut === "crop") {
+        const crop = eq.haut === "crop", hemY = crop ? Math.min(yS + 38 + 6 * m, 146) : 0;
+        s += fill(shirtD(crop ? nkTop + 14 : yS + 14, !crop, hemY), c) + `<g opacity=".5">${det.join("")}</g>`;
+        if (!back && !crop) s += `<path d="M${pt(a.nk)}L${cx} ${f(yS + 14)}L${pt(b.nk)}" stroke="${c2}" stroke-width="3.4" fill="none" stroke-linejoin="round"/>`;
+        if (crop) s += (!back ? txt("GAINS", cx, yS + 30 + 6 * m, Math.min(9 + 7 * m, SW * .3), c2) : "");
+        else s += txt("10", cx, back ? yS + 38 + 4 * m : yS + 42 + 8 * m, back ? 18 + 12 * m : 13 + 9 * m, c2);
+        s += crack();
+      } else if (eq.haut === "chemhaw") {
+        const half = d => { const q = side(d), o = side(-d); return `M${pt(q.nk)} L${pt(q.sh)} Q${pt(q.sc)} ${pt(q.ap)} Q${pt(q.c3)} ${pt(q.wa)} L${pt(q.hp)} L${f(cx - d * 2)} 174 L${f(cx - d * 2)} ${f(vB)} Q${f(cx + d * SW * .26)} ${f(yS + 26)} ${pt(q.nk)} Z`; };
+        const parts = back ? [shirtD(nkTop + 14)] : [half(-1), half(1)], fcol = ["#ffd23f", "#fff", "#ff2e88"];
+        for (const d of parts) {
+          s += fill(d, c);
+          const byCol = ["", "", ""]; let leaf = "";
+          for (const [x, y, r] of gridIn(polyOf(d), 15, 4.5)) { byCol[(r + Math.round(x / 15)) % 3] += `M${f(x - 2.7)} ${f(y)}a2.7 2.7 0 1 0 5.4 0a2.7 2.7 0 1 0 -5.4 0`; leaf += `M${f(x + 4)} ${f(y + 2)}q4 1 6 5`; }
+          byCol.forEach((p2, i) => { if (p2) s += `<path d="${p2}" fill="#c94f2c" stroke="${fcol[i]}" stroke-width="4" stroke-dasharray="2.6 1"/>`; });
+          if (leaf) s += `<path d="${leaf}" stroke="#2f9e44" stroke-width="1.6" fill="none"/>`;
+        }
+        if (!back) {
+          for (const d of [-1, 1]) s += `<path d="M${pt(side(d).nk)}L${f(cx + d * (neckH + 13 + 4 * m))} ${f(nkTop + 17)}L${f(cx + d * SW * .25)} ${f(yS + 26)}Z" fill="${c2}" stroke="${ink}" stroke-width="2.6" stroke-linejoin="round"/>`;
+          for (let y = vB + 6; y < 170; y += 9) s += `<circle cx="${f(cx + 1)}" cy="${f(y)}" r="1.8" fill="#fff6dc" stroke="${ink}" stroke-width="1"/>`;
+        }
+      } else if (eq.haut === "surv80") {
+        const d0 = shirtD(nkTop + 14), P = polyOf(d0);
+        s += fill(d0, c) + `<g opacity=".35">${det.join("")}</g>`;
+        s += `<path d="${clipLines(P, [[cx - SW - 20, yS + 40, cx + SW + 20, yS + 16]], 5)}" stroke="${c2}" stroke-width="9" fill="none"/><path d="${clipLines(P, [[cx - SW - 20, yS + 50, cx + SW + 20, yS + 26]], 3)}" stroke="#ff2e88" stroke-width="3" fill="none"/>`;
+        s += `<path d="M${f(cx - neckH - 6)} ${f(nkTop + 3)}Q${cx} ${f(nkTop + 12)} ${f(cx + neckH + 6)} ${f(nkTop + 3)}" stroke="${ink}" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M${f(cx - neckH - 6)} ${f(nkTop + 3)}Q${cx} ${f(nkTop + 12)} ${f(cx + neckH + 6)} ${f(nkTop + 3)}" stroke="${c2}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+        if (!back) s += `<path d="M${cx} ${f(nkTop + 12)}V173" stroke="${ink}" stroke-width="2" stroke-dasharray="2 1.6"/><rect x="${f(cx - 2)}" y="${f(nkTop + 13)}" width="4" height="7" rx="1.4" fill="#c9d1d8" stroke="${ink}" stroke-width="1.2"/>`;
+        s += `<path d="M${f(cx - H - 2)} 168H${f(cx + H + 2)}" stroke="${c2}" stroke-width="3.4"/>`;
+      } else if (eq.haut === "kimono") {
+        const vy = yS + 40 + 8 * m;
+        s += fill(shirtD(vy, true), c) + `<g opacity=".3">${det.join("")}</g>`;
+        if (!back) s += `<path d="M${pt(a.nk)}L${f(cx + 4)} ${f(vy + 3)}" stroke="${ink}" stroke-width="10" stroke-linecap="round"/><path d="M${pt(a.nk)}L${f(cx + 4)} ${f(vy + 3)}" stroke="${c2}" stroke-width="6" stroke-linecap="round"/><path d="M${pt(b.nk)}L${f(cx - 7)} ${f(vy + 10)}L${f(cx - 10)} 150" stroke="${ink}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M${pt(b.nk)}L${f(cx - 7)} ${f(vy + 10)}L${f(cx - 10)} 150" stroke="${c2}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
+        s += `<rect x="${f(cx - W - 5)}" y="146" width="${f(2 * W + 10)}" height="10" rx="3" fill="#1d1d24" stroke="${ink}" stroke-width="2.6"/>`;
+        if (!back) s += `<path d="M${f(cx - 3)} 154l-7 18l6 1zM${f(cx + 3)} 154l6 17l6 -2z" fill="#1d1d24" stroke="${ink}" stroke-width="2" stroke-linejoin="round"/><rect x="${f(cx - 6)}" y="144.5" width="12" height="13" rx="3" fill="#1d1d24" stroke="#5c5466" stroke-width="1.6"/>`;
+      } else if (eq.haut === "filet") {
+        const d0 = shirtD(yS + 20), P = polyOf(d0), L1 = [], L2 = [];
+        for (let k = -260; k < 260; k += 8) { L1.push([cx + k - 80, yS - 40, cx + k + 80, yS + 120]); L2.push([cx + k + 80, yS - 40, cx + k - 80, yS + 120]); }
+        s += `<path d="${d0}" fill="${c}" fill-opacity=".12"/><path d="${clipLines(P, L1)}${clipLines(P, L2)}" stroke="${c}" stroke-width="1.8" fill="none"/><path d="${d0}" fill="none" stroke="${ink}" stroke-width="5" stroke-linejoin="round"/><path d="${d0}" fill="none" stroke="#3b3346" stroke-width="2" stroke-linejoin="round"/>`;
+      } else if (eq.haut === "smoking") {
+        s += fill(shirtD(nkTop + 14), "#fbfbf7") + `<g opacity=".35">${det.join("")}</g>`;
+        if (back) s += fill(shirtD(nkTop + 14), c);
+        else {
+          const half = d => { const q = side(d); return `M${pt(q.nk)} L${pt(q.sh)} Q${pt(q.sc)} ${pt(q.ap)} Q${pt(q.c3)} ${pt(q.wa)} L${pt(q.hp)} L${f(cx - d * 3)} 176 L${f(cx - d * 2)} ${f(vB)} Q${f(cx + d * SW * .22)} ${f(yS + 30)} ${pt(q.nk)} Z`; };
+          for (const d of [-1, 1]) s += fill(half(d), c) + `<path d="M${pt(side(d).nk)}Q${f(cx + d * SW * .22)} ${f(yS + 30)} ${f(cx + d * 1)} ${f(vB)}" stroke="#4f558f" stroke-width="5" fill="none"/><path d="M${pt(side(d).nk)}Q${f(cx + d * SW * .22)} ${f(yS + 30)} ${f(cx + d * 1)} ${f(vB)}" stroke="${ink}" stroke-width="1.4" fill="none" transform="translate(${-d * 2.4} 0)"/>`;
+          for (let i = 0; i < 3; i++) s += `<circle cx="${cx}" cy="${f(nkTop + 24 + i * (vB - nkTop - 28) / 3)}" r="1.8" fill="${ink}"/>`;
+          s += `<path d="M${f(cx - SW * .52)} ${f(yS + 26)}l${f(4 + 2 * m)} -6l${f(3 + 2 * m)} 6z" fill="#fff" stroke="${ink}" stroke-width="1.6" stroke-linejoin="round"/>`;
+          const y = nkTop + 12, k = 1 + m * .3;
+          s += `<path d="M${cx} ${f(y)}L${f(cx - 12 * k)} ${f(y - 6 * k)}L${f(cx - 12 * k)} ${f(y + 6 * k)}ZM${cx} ${f(y)}L${f(cx + 12 * k)} ${f(y - 6 * k)}L${f(cx + 12 * k)} ${f(y + 6 * k)}Z" fill="#111" stroke="${ink}" stroke-width="2.4" stroke-linejoin="round"/><rect x="${f(cx - 3.5)}" y="${f(y - 4)}" width="7" height="8" rx="2" fill="#111" stroke="#4a4a5e" stroke-width="1.4"/>`;
+        }
+      }
+    }
+    if (eq.peau === "coupsoleil" && topK === "nu" && !back) s += `<path d="M${f(cx - SW * .42)} ${f(yS - 4)}Q${f(cx - SW * .45)} ${f(yS + 22)} ${f(cx - SW * .62)} ${f(yS + 36)}M${f(cx + SW * .42)} ${f(yS - 4)}Q${f(cx + SW * .45)} ${f(yS + 22)} ${f(cx + SW * .62)} ${f(yS + 36)}" stroke="#fff3e6" stroke-width="${f(6 + 4 * m)}" fill="none" stroke-linecap="round" opacity=".9"/>`;
     if (eq.peau === "marbre") s += `<path d="M${f(cx - SW * .5)} ${f(yS + 8)}q10 14 4 28t12 30M${f(cx + SW * .35)} ${f(yS + 30)}q-8 10 0 22t-6 26M${f(cx - 6)} ${f(yS + 50)}q8 6 4 18" stroke="#9a9ca3" stroke-width="1.6" fill="none" opacity=".75"/>`;
     if (look.acc === "ceinture") s += `<rect x="${f(cx - W - 5)}" y="148" width="${f(W * 2 + 10)}" height="17" rx="4" fill="#5a3418" stroke="${ink}" stroke-width="3.5"/><rect x="${cx - 7}" y="150" width="14" height="13" rx="2" fill="#e3bb4f" stroke="${ink}" stroke-width="2.5"/>`;
 
@@ -736,6 +1284,21 @@
       const y = nkTop + 12, x = cx;
       s += `<path d="M${x} ${f(y)}L${f(x - 15)} ${f(y - 8)}L${f(x - 15)} ${f(y + 8)}ZM${x} ${f(y)}L${f(x + 15)} ${f(y - 8)}L${f(x + 15)} ${f(y + 8)}Z" fill="#111" stroke="${ink}" stroke-width="2.6" stroke-linejoin="round"/><rect x="${f(x - 4)}" y="${f(y - 5)}" width="8" height="10" rx="2" fill="#e63946" stroke="${ink}" stroke-width="2"/>`;
     }
+    if (!back && eq.cou === "chainexxl") {
+      const cy2 = yS + 52 + 8 * m, cp = `M${f(cx - neckH - 3)} ${f(nkTop + 10)}Q${cx} ${f(cy2)} ${f(cx + neckH + 3)} ${f(nkTop + 10)}`, by = .5 * (nkTop + 10) + .5 * cy2;
+      const pw = 30 + 14 * m, ph = 13 + 5 * m;
+      s += `<path d="${cp}" stroke="${ink}" stroke-width="11" fill="none"/><path d="${cp}" stroke="#f5c518" stroke-width="7.4" fill="none"/><path d="${cp}" stroke="#b8860b" stroke-width="7.4" fill="none" stroke-dasharray="2.2 3.2"/>`;
+      s += `<rect x="${f(cx - pw / 2)}" y="${f(by)}" width="${f(pw)}" height="${f(ph)}" rx="3" fill="#f5c518" stroke="${ink}" stroke-width="3"/><rect x="${f(cx - pw / 2 + 2.6)}" y="${f(by + 2.6)}" width="${f(pw - 5.2)}" height="${f(ph - 5.2)}" rx="1.6" fill="none" stroke="#fff6c9" stroke-width="1.4" stroke-dasharray="1.6 1.6"/>`
+        + `<text x="${cx}" y="${f(by + ph * .78)}" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="${f(ph * .72)}" fill="#8a6200">GAINS</text>` + star(cx + pw / 2 - 1, by + 1, 4, "#fff") + AN.op("0;1;0", 1.8, star(cx - pw / 2 + 3, by + ph - 2, 3.4, "#fff"));
+    }
+    if (eq.cou === "casque") {
+      const ox = neckH + 8 + 2 * m, cy3 = nkTop + 11, cw2 = 10 + 3 * m, ch = 15 + 3 * m;
+      s += `<path d="M${f(cx - ox)} ${f(cy3)}Q${cx} ${f(back ? nkTop + 22 : nkTop - 2)} ${f(cx + ox)} ${f(cy3)}" stroke="${ink}" stroke-width="7" fill="none"/><path d="M${f(cx - ox)} ${f(cy3)}Q${cx} ${f(back ? nkTop + 22 : nkTop - 2)} ${f(cx + ox)} ${f(cy3)}" stroke="#f4f4f8" stroke-width="4" fill="none"/>`;
+      for (const d of [-1, 1]) s += `<rect x="${f(cx + d * ox - cw2 / 2)}" y="${f(cy3 - ch / 2)}" width="${f(cw2)}" height="${f(ch)}" rx="${f(cw2 * .45)}" fill="#3ae0ff" stroke="${ink}" stroke-width="3" transform="rotate(${d * -18} ${f(cx + d * ox)} ${f(cy3)})"/><circle cx="${f(cx + d * ox)}" cy="${f(cy3)}" r="${f(cw2 * .22)}" fill="#fff" opacity=".8"/>`;
+      if (!back) s += `<path d="M${f(cx + ox)} ${f(cy3 + ch / 2)}q4 14 -6 ${f(24 + 6 * m)}" stroke="${ink}" stroke-width="1.8" fill="none"/>`;
+    }
+    // sac de sport : bandoulière en travers du torse (le sac est derrière, voir dosItem)
+    if (!back && eq.dos === "sacsport") s += `<path d="M${f(cx - SW * .55)} ${f(trapTop + 6)}L${f(cx + W + 4)} 160" stroke="${ink}" stroke-width="9" stroke-linecap="round"/><path d="M${f(cx - SW * .55)} ${f(trapTop + 6)}L${f(cx + W + 4)} 160" stroke="#2f6fdc" stroke-width="5.4" stroke-linecap="round"/><rect x="${f(cx - SW * .2 - 4)}" y="${f(trapTop + 6 + (160 - trapTop) * .25 - 4)}" width="8" height="8" rx="1.6" fill="#c9d1d8" stroke="${ink}" stroke-width="1.6"/>`;
     // ---- bras
     const arms = [];
     for (const d of [-1, 1]) {
@@ -777,7 +1340,7 @@
         s += `<path d="M${f(b[0] - 4)} ${f(b[1] - b[2] * .5)}q6 6 0 12q-5 6 3 12" stroke="#6d8fd0" stroke-width="2.4" fill="none" opacity="${f(o)}" stroke-linecap="round"/>`;
         if (popeye) { const c = fore(A); s += `<path d="M${f(c[0] - 3)} ${f(c[1] - c[2] * .5)}q5 5 0 10q-4 5 2 9" stroke="#6d8fd0" stroke-width="2.2" fill="none" opacity="${f(o)}" stroke-linecap="round"/>`; }
       }
-      if (look.acc === "bandeau" && !eq.poignets) s += `<rect x="${f(A.Hd[0] - FA * .55)}" y="${f((A.E[1] + A.Hd[1]) / 2 + (A.Hd[1] - A.E[1]) * .25 - 4)}" width="${f(FA * 1.1)}" height="8" rx="3" fill="${look.topColor}" stroke="${ink}" stroke-width="2"/>`;
+      if (look.acc === "bandeau" && !eq.poignets && !(HT && HT.sl && HT.sl !== "short")) s += `<rect x="${f(A.Hd[0] - FA * .55)}" y="${f((A.E[1] + A.Hd[1]) / 2 + (A.Hd[1] - A.E[1]) * .25 - 4)}" width="${f(FA * 1.1)}" height="8" rx="3" fill="${look.topColor}" stroke="${ink}" stroke-width="2"/>`;
       // tatouages
       const ang = Math.atan2(A.E[1] - A.J[1], A.E[0] - A.J[0]) * 180 / Math.PI;
       if (eq.peau === "tribal" && A.d === -1) {
@@ -788,6 +1351,27 @@
         const c = lerp(A.J, A.E, .5), k = Math.max(.55, UA / 30);
         s += `<g transform="translate(${pt(c)}) scale(${f(k)})"><path d="M0 4C-9 -3 -8 -11 -3 -11Q0 -11 0 -7Q0 -11 3 -11C8 -11 9 -3 0 4Z" fill="#e63946" stroke="${ink}" stroke-width="1.5"/><rect x="-11" y="-6" width="22" height="7" rx="1" fill="#fff7d6" stroke="${ink}" stroke-width="1.2"/><text x="0" y="-0.6" font-size="5.4" font-family="Anton,Impact,sans-serif" text-anchor="middle" fill="${ink}">MAMAN</text></g>`;
       }
+      // manches de la tenue (par-dessus le bras, sous les poignets)
+      if (HT && HT.sl) {
+        const c = HT.c, c2 = HT.c2 || shade(c, .8), ux = (A.E[0] - A.J[0]) / (Math.hypot(A.E[0] - A.J[0], A.E[1] - A.J[1]) || 1), uy = (A.E[1] - A.J[1]) / (Math.hypot(A.E[0] - A.J[0], A.E[1] - A.J[1]) || 1);
+        const J0 = [A.J[0] - ux * UA * .2, A.J[1] - uy * UA * .2];
+        const seg = (p, q, w, col, cap) => `<path d="M${pt(p)}L${pt(q)}" stroke="${col}" stroke-width="${f(w)}"${cap ? ` stroke-linecap="${cap}"` : ""}/>`;
+        const hemL = (p, q, w, col, sw) => { const dx = q[0] - p[0], dy = q[1] - p[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l * w, ny = dx / l * w; return `<path d="M${f(q[0] + nx)} ${f(q[1] + ny)}L${f(q[0] - nx)} ${f(q[1] - ny)}" stroke="${col}" stroke-width="${sw || 2.6}" stroke-linecap="round"/>`; };
+        if (HT.sl === "short") {
+          const S = lerp(A.J, A.E, .52), w = UA + 5;
+          s += `<circle cx="${f(J0[0])}" cy="${f(J0[1])}" r="${f(w / 2 + 3)}" fill="${ink}"/>` + seg(J0, S, w + 6, ink) + `<circle cx="${f(J0[0])}" cy="${f(J0[1])}" r="${f(w / 2)}" fill="${c}"/>` + seg(J0, S, w, c) + hemL(J0, S, w / 2 + 3);
+          if (eq.haut === "maillot") s += hemL(J0, lerp(J0, S, .9), w / 2, c2, 3);
+          if (eq.haut === "chemhaw") for (const [t, o, k] of [[.35, -.22, "#fff"], [.7, .2, "#ffd23f"]]) { const q = lerp(J0, S, t), x = q[0] + o * w * A.d, y = q[1]; for (let i = 0; i < 5; i++) s += `<circle cx="${f(x + Math.cos(i * 1.257) * 2.7)}" cy="${f(y + Math.sin(i * 1.257) * 2.7)}" r="2.2" fill="${k}"/>`; s += `<circle cx="${f(x)}" cy="${f(y)}" r="1.3" fill="#c94f2c"/>`; }
+        } else {
+          const wide = HT.sl === "wide", W2 = lerp(A.E, A.Hd, wide ? .55 : .74), wu = UA + (wide ? 8 : 6), wf = FA + (wide ? Math.max(8, 16 - 6 * m) : 5);
+          s += `<circle cx="${f(J0[0])}" cy="${f(J0[1])}" r="${f(wu / 2 + 3)}" fill="${ink}"/>` + seg(J0, A.E, wu + 6, ink, "round") + seg(A.E, W2, wf + 6, ink) + `<circle cx="${f(b[0])}" cy="${f(b[1])}" r="${f(b[2] + 5)}" fill="${ink}"/>`;
+          s += `<circle cx="${f(J0[0])}" cy="${f(J0[1])}" r="${f(wu / 2)}" fill="${c}"/>` + seg(J0, A.E, wu, c, "round") + seg(A.E, W2, wf, c) + `<circle cx="${f(b[0])}" cy="${f(b[1])}" r="${f(b[2] + 2)}" fill="${c}"/>`;
+          if (eq.haut === "surv80") s += `<path d="M${pt(J0)}L${pt(A.E)}L${pt(W2)}" stroke="${c2}" stroke-width="3.4" fill="none" stroke-linejoin="round" transform="translate(${f(A.d * 3)} 0)"/>`;
+          if (!wide) { const W1 = lerp(A.E, A.Hd, .64); s += seg(W1, W2, wf, c2) + hemL(A.E, W1, wf / 2 + 3, ink, 2.2) + hemL(A.E, W2, wf / 2 + 3); }
+          else s += hemL(A.E, W2, wf / 2 + 3);
+          s += `<circle cx="${f(A.Hd[0])}" cy="${f(A.Hd[1])}" r="${f(handR)}" fill="${ink}"/><circle cx="${f(A.Hd[0])}" cy="${f(A.Hd[1])}" r="${f(handR - 2.5)}" fill="${skin}"/>`;
+        }
+      }
       // poignets
       const w0 = lerp(A.E, A.Hd, .68), w1 = lerp(A.E, A.Hd, .84);
       if (eq.poignets === "pognet") s += `<path d="M${pt(w0)}L${pt(w1)}" stroke="${ink}" stroke-width="${f(FA + 8)}"/><path d="M${pt(w0)}L${pt(w1)}" stroke="#fdfdfd" stroke-width="${f(FA + 3)}"/><path d="M${pt(lerp(w0, w1, .5))}L${pt(lerp(w0, w1, .62))}" stroke="#e63946" stroke-width="${f(FA + 3)}"/>`;
@@ -796,12 +1380,17 @@
         const mid = lerp(w0, w1, .5), dx = -(w1[1] - w0[1]), dy = w1[0] - w0[0], l = Math.hypot(dx, dy) || 1;
         for (let i = -1; i <= 1; i++) s += `<circle cx="${f(mid[0] + dx / l * i * FA * .32)}" cy="${f(mid[1] + dy / l * i * FA * .32)}" r="${f(1.6 + FA * .05)}" fill="#e8ecf2" stroke="${ink}" stroke-width="1"/>`;
       }
+      if (eq.poignets === "montre" && A.d === -1) {
+        const q0 = lerp(A.E, A.Hd, .62), q1 = lerp(A.E, A.Hd, .76), mid = lerp(q0, q1, .5), rr = 4 + FA * .13;
+        s += `<path d="M${pt(q0)}L${pt(q1)}" stroke="${ink}" stroke-width="${f(FA + 8)}"/><path d="M${pt(q0)}L${pt(q1)}" stroke="#f5c518" stroke-width="${f(FA + 4)}"/><path d="M${pt(q0)}L${pt(q1)}" stroke="#b8860b" stroke-width="${f(FA + 4)}" stroke-dasharray="1.4 2.4"/>`
+          + `<circle cx="${f(mid[0])}" cy="${f(mid[1])}" r="${f(rr + 2)}" fill="#f5c518" stroke="${ink}" stroke-width="2.4"/><circle cx="${f(mid[0])}" cy="${f(mid[1])}" r="${f(rr)}" fill="#fffdf2"/><path d="M${f(mid[0])} ${f(mid[1])}v${f(-rr * .7)}M${f(mid[0])} ${f(mid[1])}h${f(rr * .55)}" stroke="${ink}" stroke-width="1.3" stroke-linecap="round"/>` + star(mid[0] + rr + 2, mid[1] - rr - 1, 3, "#fff");
+      }
       if (eq.poignets === "gants") {
         const gr2 = handR + 6;
         s += `<path d="M${pt(lerp(A.E, A.Hd, .72))}L${pt(A.Hd)}" stroke="${ink}" stroke-width="${f(FA + 10)}"/><path d="M${pt(lerp(A.E, A.Hd, .74))}L${pt(A.Hd)}" stroke="#fff" stroke-width="${f(FA + 5)}"/>`;
         s += `<circle cx="${f(A.Hd[0])}" cy="${f(A.Hd[1])}" r="${f(gr2)}" fill="#d62828" stroke="${ink}" stroke-width="3.5"/><ellipse cx="${f(A.Hd[0] - gr2 * .3)}" cy="${f(A.Hd[1] - gr2 * .35)}" rx="${f(gr2 * .32)}" ry="${f(gr2 * .2)}" fill="#fff" opacity=".55"/>`;
       }
-      if (eq.peau === "huile") s += `<ellipse cx="${f(b[0] - b[2] * .3)}" cy="${f(b[1] - b[2] * .35)}" rx="${f(b[2] * .32)}" ry="${f(b[2] * .16)}" fill="#fff" opacity=".75" transform="rotate(-30 ${f(b[0] - b[2] * .3)} ${f(b[1] - b[2] * .35)})"/><circle cx="${f(A.J[0])}" cy="${f(A.J[1] - UA * .2)}" r="${f(2 + UA * .08)}" fill="#fff" opacity=".8"/>`;
+      if (eq.peau === "huile" && !(HT && HT.sl && HT.sl !== "short")) s += `<ellipse cx="${f(b[0] - b[2] * .3)}" cy="${f(b[1] - b[2] * .35)}" rx="${f(b[2] * .32)}" ry="${f(b[2] * .16)}" fill="#fff" opacity=".75" transform="rotate(-30 ${f(b[0] - b[2] * .3)} ${f(b[1] - b[2] * .35)})"/><circle cx="${f(A.J[0])}" cy="${f(A.J[1] - UA * .2)}" r="${f(2 + UA * .08)}" fill="#fff" opacity=".8"/>`;
     }
     // ---- objet tenu dans la main droite (côté d = 1)
     if (eq.main) {
@@ -818,6 +1407,14 @@
       } else if (eq.main === "shakerm") {
         const sw2 = 11 * k + 4, top = hy3 - handR - 46 * k;
         it = `<path d="M${f(hx3 - sw2)} ${f(top + 12)}H${f(hx3 + sw2)}L${f(hx3 + sw2 * .85)} ${f(hy3 + handR * .6)}H${f(hx3 - sw2 * .85)}Z" fill="#ff8fc8" stroke="${ink}" stroke-width="2.8" stroke-linejoin="round"/><rect x="${f(hx3 - sw2 - 2)}" y="${f(top)}" width="${f(sw2 * 2 + 4)}" height="13" rx="4" fill="#2b2b33" stroke="${ink}" stroke-width="2.6"/><rect x="${f(hx3 - 3)}" y="${f(top - 8)}" width="6" height="9" rx="2" fill="#2b2b33" stroke="${ink}" stroke-width="2"/><text x="${f(hx3)}" y="${f(top + 30 * k)}" font-size="${f(7 * k + 2)}" font-family="Anton,Impact,sans-serif" text-anchor="middle" fill="${ink}">XXL</text>`;
+      } else if (eq.main === "boombox") {
+        const bw = 44 * k + 12, bh = 24 * k + 8, top = hy3 + handR * .2, x0 = Math.min(hx3 - bw / 2, 230 - bw), sr = bh * .32;
+        it = `<path d="M${f(x0 + bw * .2)} ${f(top + 3)}Q${f(x0 + bw * .2)} ${f(hy3 - handR * .5)} ${f(hx3)} ${f(hy3 - handR * .5)}Q${f(x0 + bw * .8)} ${f(hy3 - handR * .5)} ${f(x0 + bw * .8)} ${f(top + 3)}" stroke="${ink}" stroke-width="6" fill="none"/><path d="M${f(x0 + bw * .2)} ${f(top + 3)}Q${f(x0 + bw * .2)} ${f(hy3 - handR * .5)} ${f(hx3)} ${f(hy3 - handR * .5)}Q${f(x0 + bw * .8)} ${f(hy3 - handR * .5)} ${f(x0 + bw * .8)} ${f(top + 3)}" stroke="#9aa5b1" stroke-width="3" fill="none"/>`
+          + `<path d="M${f(x0 + bw * .85)} ${f(top + 2)}l${f(10 * k + 4)} ${f(-16 * k - 6)}" stroke="${ink}" stroke-width="1.8"/>`
+          + `<rect x="${f(x0)}" y="${f(top)}" width="${f(bw)}" height="${f(bh)}" rx="4" fill="#c9d1d8" stroke="${ink}" stroke-width="3"/>`
+          + [x0 + bh * .48, x0 + bw - bh * .48].map(x => `<circle cx="${f(x)}" cy="${f(top + bh * .55)}" r="${f(sr + 1.6)}" fill="#2b2b33" stroke="${ink}" stroke-width="1.6"/><circle cx="${f(x)}" cy="${f(top + bh * .55)}" r="${f(sr * .45)}" fill="#6b7480"/>`).join("")
+          + `<rect x="${f(hx3 - bw * .15)}" y="${f(top + bh * .3)}" width="${f(bw * .3)}" height="${f(bh * .45)}" rx="1.6" fill="#3b3f47" stroke="${ink}" stroke-width="1.4"/><rect x="${f(hx3 - bw * .12)}" y="${f(top + 2.4)}" width="${f(bw * .24)}" height="2.6" fill="#ff2e88"/>`
+          + AN.tr(["0 0", "3 -10"], 1.6, AN.op("1;0", 1.6, `<text x="${f(x0 + bw + 2)}" y="${f(top + 2)}" font-size="${f(9 + 4 * k)}" fill="#ffd23f" stroke="${ink}" stroke-width=".8">♪</text><text x="${f(x0 - 8)}" y="${f(top + 8)}" font-size="${f(8 + 3 * k)}" fill="#7fe7ff" stroke="${ink}" stroke-width=".8">♫</text>`));
       } else if (eq.main === "trophee") {
         const cw = 13 * k + 4, top = hy3 - handR - 40 * k;
         it = `<path d="M${f(hx3 - 3)} ${f(top + 26 * k)}V${f(hy3 + handR)}M${f(hx3 + 3)} ${f(top + 26 * k)}V${f(hy3 + handR)}" stroke="${ink}" stroke-width="3"/><rect x="${f(hx3 - 3)}" y="${f(top + 24 * k)}" width="6" height="${f(hy3 + handR - top - 24 * k)}" fill="#f5c518"/>`;
@@ -854,24 +1451,44 @@
       }
     }
     if (!wfx && dosFx && eq.dos === "fourreau") wfx = fxOf(dosFx.def, dosFx.pl);
+    if (eq.poignets === "bagues") for (const A of arms) for (let i = -1; i <= 1; i++) {
+      const x = A.Hd[0] + i * handR * .48, y = A.Hd[1] + handR * .12 + Math.abs(i) * handR * .06;
+      s += `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(handR * .16 + .6)}" ry="${f(handR * .3)}" fill="none" stroke="${ink}" stroke-width="${f(2.4 + handR * .08)}"/><ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(handR * .16 + .6)}" ry="${f(handR * .3)}" fill="none" stroke="#f5c518" stroke-width="${f(1 + handR * .06)}"/>` + (i === 0 ? star(x, y - handR * .3, 2.4 + handR * .12, "#bfefff") : "");
+    }
     if (eq.peau === "marbre") for (const A of arms) { const c = lerp(A.J, A.E, .45); s += `<path d="M${f(c[0] - 4)} ${f(c[1] - UA * .3)}q6 6 1 12t5 12" stroke="#9a9ca3" stroke-width="1.5" fill="none" opacity=".75"/>`; }
     if (eq.peau === "doree") for (const A of arms) { const c = lerp(A.J, A.E, .5); s += star(c[0] - UA * .15, c[1] - UA * .2, 4 + UA * .08, "#fff8c2"); }
     if (back) s += dosItem();
     if (eq.peau === "huile" && !back) s += `<ellipse cx="${f(cx - SW * .32)}" cy="${f(yS + 20 + pd * .4)}" rx="${f(4 + SW * .1)}" ry="3" fill="#fff" opacity=".6"/><ellipse cx="${f(cx + SW * .32)}" cy="${f(yS + 20 + pd * .4)}" rx="${f(4 + SW * .1)}" ry="3" fill="#fff" opacity=".6"/>`;
 
+    // capuche du sweat (sous la tête)
+    if (HT && HT.hood) {
+      const hw2 = neckH + 14 + 4 * m;
+      s += back ? `<path d="M${f(cx - neckH - 10 - 3 * m)} ${f(nkTop + 2)}Q${f(cx - hw2 - 4)} ${f(yS + 24 + 4 * m)} ${cx} ${f(yS + 32 + 6 * m)}Q${f(cx + hw2 + 4)} ${f(yS + 24 + 4 * m)} ${f(cx + neckH + 10 + 3 * m)} ${f(nkTop + 2)}Z" fill="${HT.c}" stroke="${ink}" stroke-width="3.5" stroke-linejoin="round"/><path d="M${f(cx - neckH - 4)} ${f(nkTop + 8)}Q${cx} ${f(yS + 20 + 4 * m)} ${f(cx + neckH + 4)} ${f(nkTop + 8)}" stroke="${HT.c2}" stroke-width="3" fill="none"/>`
+        : `<path d="M${f(cx - neckH - 2)} ${f(nkTop + 12)}Q${f(cx - hw2 - 4)} ${f(nkTop + 8)} ${f(cx - hw2)} ${f(nkTop - 8)}Q${cx} ${f(nkTop - 24 - 4 * m)} ${f(cx + hw2)} ${f(nkTop - 8)}Q${f(cx + hw2 + 4)} ${f(nkTop + 8)} ${f(cx + neckH + 2)} ${f(nkTop + 12)}Z" fill="${HT.c}" stroke="${ink}" stroke-width="3.5" stroke-linejoin="round"/><path d="M${f(cx - hw2 + 5)} ${f(nkTop - 4)}Q${f(cx - neckH - 4)} ${f(nkTop + 6)} ${f(cx - neckH)} ${f(nkTop + 10)}M${f(cx + hw2 - 5)} ${f(nkTop - 4)}Q${f(cx + neckH + 4)} ${f(nkTop + 6)} ${f(cx + neckH)} ${f(nkTop + 10)}" stroke="${HT.c2}" stroke-width="2.6" fill="none"/>`;
+    }
     // ---- tête
     const hx = cx, hy = headY, r = headR;
     s += `<circle cx="${f(hx - r + 1)}" cy="${f(hy + 3)}" r="5.5" fill="${skin}" stroke="${ink}" stroke-width="3.5"/><circle cx="${f(hx + r - 1)}" cy="${f(hy + 3)}" r="5.5" fill="${skin}" stroke="${ink}" stroke-width="3.5"/>`;
     s += `<circle cx="${hx}" cy="${f(hy)}" r="${f(r)}" fill="${skin}" stroke="${ink}" stroke-width="4.5"/>`;
-    if (eq.visage === "catcheur") {
-      s += `<path d="M${f(hx - r - 1)} ${f(hy + r * .35)}A${f(r + 1)} ${f(r + 1)} 0 1 1 ${f(hx + r + 1)} ${f(hy + r * .35)}Q${hx} ${f(hy + r * .15)} ${f(hx - r - 1)} ${f(hy + r * .35)}Z" fill="#8338ec" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
-      if (back) s += `<path d="M${hx} ${f(hy - r * .7)}V${f(hy + r * .3)}" stroke="#ffd23f" stroke-width="3" stroke-dasharray="4 3"/>`;
+    if (eq.visage === "catcheur" || lucha) {
+      // cagoule de catcheur (violette) ou masque de luchador (vert et or, flammes rouges autour des yeux)
+      const [mc, tc, ec] = lucha ? ["#14a35a", "#ffd23f", "#e63946"] : ["#8338ec", "#ffd23f", "#fff"];
+      s += `<path d="M${f(hx - r - 1)} ${f(hy + r * .35)}A${f(r + 1)} ${f(r + 1)} 0 1 1 ${f(hx + r + 1)} ${f(hy + r * .35)}Q${hx} ${f(hy + r * .15)} ${f(hx - r - 1)} ${f(hy + r * .35)}Z" fill="${mc}" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
+      if (back) s += `<path d="M${hx} ${f(hy - r * .7)}V${f(hy + r * .3)}" stroke="${tc}" stroke-width="3" stroke-dasharray="4 3"/>`;
       else {
-        s += `<path d="M${hx} ${f(hy - r)}L${f(hx - 5)} ${f(hy - r * .55)}H${f(hx + 5)}Z" fill="#ffd23f" stroke="${ink}" stroke-width="2"/>`;
-        for (const d of [-1, 1]) s += `<path d="M${f(hx + d * 2)} ${f(hy - r * .2)}Q${f(hx + d * r * .75)} ${f(hy - r * .55)} ${f(hx + d * r * .78)} ${f(hy + r * .05)}Q${f(hx + d * r * .4)} ${f(hy + r * .22)} ${f(hx + d * 2)} ${f(hy - r * .2)}Z" fill="#fff" stroke="#ffd23f" stroke-width="2.6" stroke-linejoin="round"/>`;
+        s += `<path d="M${hx} ${f(hy - r)}L${f(hx - 5)} ${f(hy - r * .55)}H${f(hx + 5)}Z" fill="${tc}" stroke="${ink}" stroke-width="2"/>`;
+        for (const d of [-1, 1]) {
+          if (lucha) s += `<path d="M${f(hx + d * 3)} ${f(hy - r * .3)}Q${f(hx + d * r * .5)} ${f(hy - r * .9)} ${f(hx + d * r * .9)} ${f(hy - r * .55)}Q${f(hx + d * r * .7)} ${f(hy - r * .45)} ${f(hx + d * r * .95)} ${f(hy - r * .2)}Q${f(hx + d * r * .75)} ${f(hy - r * .15)} ${f(hx + d * r * .85)} ${f(hy + r * .15)}Q${f(hx + d * r * .4)} ${f(hy + r * .3)} ${f(hx + d * 3)} ${f(hy - r * .3)}Z" fill="${tc}" stroke="${ink}" stroke-width="2.2" stroke-linejoin="round"/>`;
+          s += `<path d="M${f(hx + d * 2)} ${f(hy - r * .2)}Q${f(hx + d * r * .75)} ${f(hy - r * .55)} ${f(hx + d * r * .78)} ${f(hy + r * .05)}Q${f(hx + d * r * .4)} ${f(hy + r * .22)} ${f(hx + d * 2)} ${f(hy - r * .2)}Z" fill="${ec}" stroke="${lucha ? ink : tc}" stroke-width="${lucha ? 2 : 2.6}" stroke-linejoin="round"/>`;
+          if (lucha) s += `<path d="M${f(hx + d * 4)} ${f(hy - r * .14)}Q${f(hx + d * r * .62)} ${f(hy - r * .38)} ${f(hx + d * r * .64)} ${f(hy + r * .02)}Q${f(hx + d * r * .36)} ${f(hy + r * .12)} ${f(hx + d * 4)} ${f(hy - r * .14)}Z" fill="#fff"/>`;
+        }
       }
     }
     const hc = look.hairColor;
+    // afro dégradée (high-top) : bloc plat sur le dessus, côtés rasés
+    const hiTop = () => { const t = hy - r - 15 - 2 * m; let o = `<path d="M${f(hx - r * .84)} ${f(hy - r * .28)}L${f(hx - r * .98)} ${f(t + 7)}Q${f(hx - r)} ${f(t)} ${f(hx - r * .7)} ${f(t)}H${f(hx + r * .7)}Q${f(hx + r)} ${f(t)} ${f(hx + r * .98)} ${f(t + 7)}L${f(hx + r * .84)} ${f(hy - r * .28)}Q${hx} ${f(hy - r * .6)} ${f(hx - r * .84)} ${f(hy - r * .28)}Z" fill="${hc}" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/><path d="M${f(hx - r * .94)} ${f(hy - r * .1)}q-2 6 0 12M${f(hx + r * .94)} ${f(hy - r * .1)}q2 6 0 12" stroke="${hc}" stroke-width="3" opacity=".45" stroke-linecap="round"/>`;
+      for (let i = 0; i < 9; i++) o += `<path d="M${f(hx - r * .6 + (i % 5) * r * .3 + (i > 4 ? r * .15 : 0))} ${f(t + 5 + (i > 4 ? 7 : 0))}q2 -2 4 0" stroke="${shade(hc, 1.9)}" stroke-width="1.4" fill="none" opacity=".55" stroke-linecap="round"/>`;
+      return o; };
     if (back) {
       // vue de dos : cheveux à l'arrière du crâne, pas de visage
       if (look.hair === "afro") s += `<circle cx="100" cy="${f(headY - 4)}" r="${f(headR + 13)}" fill="${hc}" stroke="${ink}" stroke-width="4"/>`;
@@ -880,6 +1497,10 @@
       if (look.hair === "chignon") s += `<circle cx="${hx}" cy="${f(hy - r * .2)}" r="11" fill="${hc}" stroke="${ink}" stroke-width="4"/>`;
       if (look.hair === "crete") s += `<path d="M${f(hx - 9)} ${f(hy - r + 4)}l-4 -20 9 8 4 -22 6 21 8 -16 -2 29z" fill="${hc}" stroke="${ink}" stroke-width="3.5" stroke-linejoin="round"/><path d="M${hx} ${f(hy - r)}V${f(hy + r * .8)}" stroke="${hc}" stroke-width="7"/>`;
       if (look.hair === "chauve") s += `<ellipse cx="${f(hx + r * .3)}" cy="${f(hy - r * .55)}" rx="${f(r * .3)}" ry="${f(r * .13)}" fill="#fff" opacity=".5"/>`;
+      if (look.hair === "dreads") s += dreadLocs(true);
+      if (look.hair === "manbun") s += `<circle cx="${hx}" cy="${f(hy - r * .25)}" r="${f(8 + r * .08)}" fill="${hc}" stroke="${ink}" stroke-width="3.5"/><path d="M${f(hx - 6)} ${f(hy - r * .25 + 6)}q6 3 12 0" stroke="${shade(hc, 1.8)}" stroke-width="2.4" fill="none"/>`;
+      if (look.hair === "degrade") s += hiTop();
+      if (eq.tete === "durag") s += duragTails(true);
       if (eq.tete === "mulet") s += `<path d="M${f(hx - r * .9)} ${f(hy + r * .2)}Q${f(hx - r - 6)} ${f(hy + r + 16)} ${f(hx - neckH - 10)} ${f(yS + 6)}L${f(hx + neckH + 10)} ${f(yS + 6)}Q${f(hx + r + 6)} ${f(hy + r + 16)} ${f(hx + r * .9)} ${f(hy + r * .2)}Z" fill="${hc}" stroke="${ink}" stroke-width="3.5" stroke-linejoin="round"/>`;
       if (look.acc === "bandeau" || eq.tete === "bandana" || eq.tete === "eponge") {
         const col = eq.tete === "eponge" ? "#fdfdfd" : eq.tete === "bandana" ? "#d62828" : look.topColor;
@@ -898,6 +1519,9 @@
       else if (eq.visage === "aviateur") {
         s += `<path d="M${f(hx - r * .9)} ${f(ey - 5)}h${f(r * 1.8)}" stroke="#c99a1e" stroke-width="2.4"/>`;
         for (const d of [-1, 1]) { const x = hx + d * r * .42; s += `<path d="M${f(x - r * .34)} ${f(ey - 6)}h${f(r * .68)}q0 ${f(r * .48)} ${f(-r * .34)} ${f(r * .48)}q${f(-r * .34)} 0 ${f(-r * .34)} ${f(-r * .48)}z" fill="#3b2d55" stroke="#c99a1e" stroke-width="2.4" stroke-linejoin="round"/><path d="M${f(x - r * .22)} ${f(ey - 3)}l${f(r * .14)} ${f(r * .2)}" stroke="#ffb3e6" stroke-width="2" opacity=".8"/>`; }
+      } else if (eq.visage === "lunstar") {
+        s += `<path d="M${f(hx - r * .9)} ${f(ey - 3)}h${f(r * 1.8)}" stroke="${ink}" stroke-width="2.4"/>`;
+        for (const d of [-1, 1]) { let p = ""; const x = hx + d * r * .44, R = r * .4; for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, rr = i % 2 ? R * .5 : R; p += (i ? "L" : "M") + f(x + Math.cos(a) * rr) + " " + f(ey - 1 + Math.sin(a) * rr); } s += `<path d="${p}Z" fill="#ff5fa2" stroke="#ffd23f" stroke-width="3.2" stroke-linejoin="round"/><path d="${p}Z" fill="none" stroke="${ink}" stroke-width="1" stroke-linejoin="round"/><path d="M${f(x - R * .3)} ${f(ey - R * .3)}l${f(R * .2)} ${f(R * .25)}" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>`; }
       } else if (eq.visage === "coeur") {
         s += `<path d="M${f(hx - r * .9)} ${f(ey - 3)}h${f(r * 1.8)}" stroke="${ink}" stroke-width="2.4"/>`;
         for (const d of [-1, 1]) { const x = hx + d * r * .42, k = r / 22; s += `<path transform="translate(${f(x)} ${f(ey + 1)}) scale(${f(k)})" d="M0 7C-12 -1 -10 -10 -4 -10Q0 -10 0 -5Q0 -10 4 -10C10 -10 12 -1 0 7Z" fill="#ff2e63" stroke="${ink}" stroke-width="2.4"/>`; }
@@ -911,20 +1535,23 @@
       } else s += `<circle cx="${f(hx - ex)}" cy="${f(ey)}" r="${f(m < .3 ? 4.2 : 3.4)}" fill="${ink}"/><circle cx="${f(hx + ex)}" cy="${f(ey)}" r="${f(m < .3 ? 4.2 : 3.4)}" fill="${ink}"/><circle cx="${f(hx - ex + 1.2)}" cy="${f(ey - 1.3)}" r="1.2" fill="#fff"/><circle cx="${f(hx + ex + 1.2)}" cy="${f(ey - 1.3)}" r="1.2" fill="#fff"/>`;
       // sourcils : inquiets quand maigre, froncés quand énorme (ou en plein effort)
       const bt = mood === "lose" ? 5 : mood === "fight" ? -5 : mood === "win" ? 1 : pose === "most" ? -5 : m < .3 ? 4 : m > .9 ? -4 : 0;
-      const gOff = (eq.visage === "aviateur" || eq.visage === "coeur" ? 3 : 0) + (mood === "win" ? 3 : 0);
+      const gOff = (eq.visage === "aviateur" || eq.visage === "coeur" ? 3 : eq.visage === "lunstar" ? 5 : 0) + (mood === "win" ? 3 : 0);
       s += `<path d="M${f(hx - ex - 6)} ${f(ey - 9 + bt - gOff)}L${f(hx - ex + 5)} ${f(ey - 9 - bt - gOff)}M${f(hx + ex + 6)} ${f(ey - 9 + bt - gOff)}L${f(hx + ex - 5)} ${f(ey - 9 - bt - gOff)}" stroke="${ink}" stroke-width="3" stroke-linecap="round"/>`;
       if (eq.visage === "guerre") s += `<path d="M${f(hx - ex - 6)} ${f(ey + 6)}h11M${f(hx - ex - 6)} ${f(ey + 10)}h11M${f(hx + ex - 5)} ${f(ey + 6)}h11M${f(hx + ex - 5)} ${f(ey + 10)}h11" stroke="${ink}" stroke-width="2.6" stroke-linecap="round"/><path d="M${hx} ${f(ey - r * .55)}v${f(r * .35)}" stroke="#d62828" stroke-width="3.4" stroke-linecap="round"/>`;
       const my = hy + r * .45;
-      const grin = mood === "fight" || (mood !== "lose" && mood !== "win" && (pose === "most" || eq.visage === "dentor" || (m >= .9 && pose !== "kiss")));
+      const grillz = eq.visage === "grillz";
+      const grin = mood === "fight" || (mood !== "lose" && mood !== "win" && (pose === "most" || eq.visage === "dentor" || grillz || (m >= .9 && pose !== "kiss")));
       if (mood === "win") {
         // bouche grande ouverte (dents + langue)
         s += `<path d="M${f(hx - 12)} ${f(my - 4)}h24q-1 14 -12 14t-12 -14z" fill="#5a1020" stroke="${ink}" stroke-width="2.8" stroke-linejoin="round"/><path d="M${f(hx - 10.5)} ${f(my - 3)}h21v3.2h-21z" fill="#fff"/><path d="M${f(hx - 6)} ${f(my + 6.5)}q6 -5 12 0q-6 4 -12 0z" fill="#ff6b81"/>`;
         if (eq.visage === "dentor") s += `<rect x="${f(hx + 1)}" y="${f(my - 3)}" width="5" height="3.2" fill="#f5c518" stroke="${ink}" stroke-width="1"/>`;
+        if (grillz) s += `<path d="M${f(hx - 10.5)} ${f(my - 3)}h21v3.2h-21z" fill="#f5c518" stroke="${ink}" stroke-width=".8"/><path d="M${f(hx - 5)} ${f(my - 3)}v3.2M${hx} ${f(my - 3)}v3.2M${f(hx + 5)} ${f(my - 3)}v3.2" stroke="#b8860b" stroke-width="1"/>` + star(hx - 2.5, my - 1.4, 2, "#fff") + star(hx + 7.5, my - 1.4, 2, "#bfefff");
       } else if (mood === "lose") s += `<path d="M${f(hx - 8)} ${f(my + 5)}q8 -8 16 0" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
       else if (pose === "kiss") s += `<ellipse cx="${f(hx + 2)}" cy="${f(my)}" rx="4.6" ry="5.2" fill="#ff5d8a" stroke="${ink}" stroke-width="2.4"/><path d="M${f(hx + 1)} ${f(my - 2)}q3 2 0 4" stroke="${ink}" stroke-width="1.6" fill="none"/>`;
       else if (grin) {
         s += `<path d="M${f(hx - 10)} ${f(my - 3)}h20q-2 10 -10 10t-10 -10z" fill="#fff" stroke="${ink}" stroke-width="2.6" stroke-linejoin="round"/><path d="M${f(hx - 9)} ${f(my + 1)}h18" stroke="${ink}" stroke-width="1.5"/>`;
         if (eq.visage === "dentor") s += `<rect x="${f(hx + 1)}" y="${f(my - 2.2)}" width="5" height="3.6" fill="#f5c518" stroke="${ink}" stroke-width="1"/>${star(hx + 7, my - 5, 3, "#fff6a8")}`;
+        if (grillz) s += `<path d="M${f(hx - 9.4)} ${f(my - 2.4)}h18.8v3.4h-18.8z" fill="#f5c518"/><path d="M${f(hx - 9.6)} ${f(my + 1)}h19.2M${f(hx - 4.6)} ${f(my - 2.4)}v3.4M${hx} ${f(my - 2.4)}v3.4M${f(hx + 4.6)} ${f(my - 2.4)}v3.4" stroke="${ink}" stroke-width="1.1"/>` + star(hx - 2.3, my - .7, 2, "#fff") + star(hx + 7, my - .7, 2, "#bfefff") + AN.op("0;0;1;0", 2.4, star(hx + 13, my - 6, 4, "#fff"), "0;.7;.8;1");
       } else if (m < .3) s += `<path d="M${f(hx - 6)} ${f(my + 2)}q3 -4 6 0t6 0" stroke="${ink}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
       else s += `<path d="M${f(hx - 8)} ${f(my - 1)}q8 8 16 0" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
       if (look.acc === "moustache" && eq.visage !== "moust70") s += `<path d="M${f(hx - 12)} ${f(my - 2)}q6 -8 12 -3q6 -5 12 3q-6 4 -12 0q-6 4 -12 0z" fill="${hc}" stroke="${ink}" stroke-width="2.5"/>`;
@@ -945,6 +1572,12 @@
       if (look.hair === "chignon") s += `<circle cx="${hx}" cy="${f(hy - r - 8)}" r="11" fill="${hc}" stroke="${ink}" stroke-width="4"/><path d="M${f(hx - r - 1)} ${f(hy - 2)}Q${f(hx - r)} ${f(hy - r - 6)} ${hx} ${f(hy - r - 4)}Q${f(hx + r)} ${f(hy - r - 6)} ${f(hx + r + 1)} ${f(hy - 2)}Q${hx} ${f(hy - r * .5)} ${f(hx - r - 1)} ${f(hy - 2)}Z" fill="${hc}" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
       if (look.hair === "afro") s += `<path d="M${f(hx - r)} ${f(hy - 4)}Q${hx} ${f(hy - r * .55)} ${f(hx + r)} ${f(hy - 4)}" stroke="${hc}" stroke-width="6" fill="none"/>`;
       if (look.hair === "chauve") s += `<ellipse cx="${f(hx - r * .35)}" cy="${f(hy - r * .6)}" rx="${f(r * .3)}" ry="${f(r * .13)}" fill="#fff" opacity=".5" transform="rotate(-25 ${f(hx - r * .35)} ${f(hy - r * .6)})"/>`;
+      if (look.hair === "dreads" || look.hair === "manbun") {
+        s += `<path d="M${f(hx - r - 1)} ${f(hy - 1)}Q${f(hx - r)} ${f(hy - r - 7)} ${hx} ${f(hy - r - 5)}Q${f(hx + r)} ${f(hy - r - 7)} ${f(hx + r + 1)} ${f(hy - 1)}Q${f(hx + r * .55)} ${f(hy - r * .62)} ${hx} ${f(hy - r * .6)}Q${f(hx - r * .55)} ${f(hy - r * .62)} ${f(hx - r - 1)} ${f(hy - 1)}Z" fill="${hc}" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
+        if (look.hair === "manbun") s += `<path d="M${f(hx - r * .5)} ${f(hy - r * .85)}Q${f(hx - r * .1)} ${f(hy - r - 2)} ${f(hx + r * .1)} ${f(hy - r - 4)}M${f(hx + r * .45)} ${f(hy - r * .85)}Q${f(hx + r * .2)} ${f(hy - r - 1)} ${f(hx + r * .15)} ${f(hy - r - 4)}" stroke="${shade(hc, 1.8)}" stroke-width="1.8" fill="none" opacity=".7"/><path d="M${f(hx - r * .95)} ${f(hy + 1)}q2 -5 1 -9M${f(hx + r * .95)} ${f(hy + 1)}q-2 -5 -1 -9" stroke="${hc}" stroke-width="3" opacity=".4" stroke-linecap="round"/>`;
+        else for (const d of [-1, 1]) for (const j of [0, 1]) { const a = [hx + d * r * (.72 + j * .16), hy - r * (.5 - j * .2)], b = [hx + d * (r * .84 + j * 4), hy + r * .5 + j * 4]; s += `<path d="M${pt(a)}L${pt(b)}" stroke="${ink}" stroke-width="7.5" stroke-linecap="round"/><path d="M${pt(a)}L${pt(b)}" stroke="${hc}" stroke-width="4.6" stroke-linecap="round"/>`; }
+      }
+      if (look.hair === "degrade") s += hiTop();
       if (look.acc === "bandeau" && eq.tete !== "bandana" && eq.tete !== "eponge") s += `<path d="M${f(hx - r - 1)} ${f(hy - r * .42)}Q${hx} ${f(hy - r * .72)} ${f(hx + r + 1)} ${f(hy - r * .42)}" stroke="${look.topColor}" stroke-width="7" fill="none"/><path d="M${f(hx + r - 2)} ${f(hy - r * .45)}l14 -2 -4 9z" fill="${look.topColor}" stroke="${ink}" stroke-width="2"/>`;
       if (look.acc === "casquette" && !eq.tete) s += `<path d="M${f(hx - r - 1)} ${f(hy - 3)}Q${f(hx - r)} ${f(hy - r - 9)} ${hx} ${f(hy - r - 7)}Q${f(hx + r)} ${f(hy - r - 9)} ${f(hx + r + 1)} ${f(hy - 3)}Z" fill="${look.topColor}" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/><path d="M${f(hx - r - 2)} ${f(hy - 4)}q-14 -2 -18 4q12 4 20 0z" fill="${shade(look.topColor, .75)}" stroke="${ink}" stroke-width="3.5" stroke-linejoin="round"/>`;
       if (eq.tete === "bandana") s += `<path d="M${f(hx - r - 1)} ${f(hy - r * .4)}Q${hx} ${f(hy - r * .75)} ${f(hx + r + 1)} ${f(hy - r * .4)}" stroke="${ink}" stroke-width="11" fill="none"/><path d="M${f(hx - r - 1)} ${f(hy - r * .4)}Q${hx} ${f(hy - r * .75)} ${f(hx + r + 1)} ${f(hy - r * .4)}" stroke="#d62828" stroke-width="7" fill="none"/><path d="M${f(hx + r - 1)} ${f(hy - r * .42)}q14 2 22 14q-8 0 -14 -6q2 10 -4 18q-2 -12 -6 -20z" fill="#d62828" stroke="${ink}" stroke-width="2.4" stroke-linejoin="round"/>`;
@@ -982,12 +1615,74 @@
       const ay = hy - r - 14;
       s += `<ellipse cx="${hx}" cy="${f(ay)}" rx="${f(r * .95)}" ry="${f(r * .28)}" fill="none" stroke="#fff3a0" stroke-width="12" opacity=".35"/><ellipse cx="${hx}" cy="${f(ay)}" rx="${f(r * .9)}" ry="${f(r * .25)}" fill="none" stroke="${ink}" stroke-width="7"/><ellipse cx="${hx}" cy="${f(ay)}" rx="${f(r * .9)}" ry="${f(r * .25)}" fill="none" stroke="#ffd23f" stroke-width="4"/>`;
     }
+    if (eq.tete === "bob") {
+      const y0 = hy - r * .52, y1 = y0 + 8 + m;
+      s += `<path d="M${f(hx - r * .9)} ${f(y0 + 1)}Q${f(hx - r * .95)} ${f(hy - r - 10)} ${hx} ${f(hy - r - 9)}Q${f(hx + r * .95)} ${f(hy - r - 10)} ${f(hx + r * .9)} ${f(y0 + 1)}Z" fill="#d8c08a" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`
+        + `<path d="M${f(hx - r * .92)} ${f(y0 - 4)}Q${hx} ${f(y0 - 8)} ${f(hx + r * .92)} ${f(y0 - 4)}" stroke="#8a6a3a" stroke-width="4" fill="none"/>`
+        + `<path d="M${f(hx - r * .93)} ${f(y0 - 1)}Q${hx} ${f(y0 - 5)} ${f(hx + r * .93)} ${f(y0 - 1)}L${f(hx + r + 12)} ${f(y1)}Q${hx} ${f(y1 + 3)} ${f(hx - r - 12)} ${f(y1)}Z" fill="#c9ae74" stroke="${ink}" stroke-width="3.6" stroke-linejoin="round"/><path d="M${f(hx - r - 6)} ${f(y1 - 3)}Q${hx} ${f(y1)} ${f(hx + r + 6)} ${f(y1 - 3)}" stroke="#a88c52" stroke-width="1.4" fill="none" stroke-dasharray="3 2"/>`;
+    }
+    if (eq.tete === "bonnet") {
+      const y0 = hy - r * .42, dome = `M${f(hx - r - 2)} ${f(y0)}Q${f(hx - r - 2)} ${f(hy - r - 13)} ${hx} ${f(hy - r - 13)}Q${f(hx + r + 2)} ${f(hy - r - 13)} ${f(hx + r + 2)} ${f(y0)}Z`, P = polyOf(dome);
+      s += `<circle cx="${hx}" cy="${f(hy - r - 13)}" r="${f(4.6 + r * .04)}" fill="#fff" stroke="${ink}" stroke-width="3.2"/><path d="${dome}" fill="#e63946" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`
+        + `<path d="${clipLines(P, [[hx - r - 6, hy - r * .82, hx + r + 6, hy - r * .82], [hx - r - 6, hy - r * 1.12, hx + r + 6, hy - r * 1.12]], 1.6)}" stroke="#fff" stroke-width="4.4" fill="none"/>`
+        + `<rect x="${f(hx - r - 3.5)}" y="${f(y0 - 7)}" width="${f(2 * r + 7)}" height="11" rx="5" fill="#fff" stroke="${ink}" stroke-width="3.4"/><path d="${Array.from({length: 9}, (_, i) => `M${f(hx - r + i * r * .25)} ${f(y0 - 5)}v7`).join("")}" stroke="#e8c8cc" stroke-width="1.6"/>`;
+    }
+    if (eq.tete === "durag") {
+      s += `<path d="M${f(hx - r - 1.5)} ${f(hy - r * .1)}Q${f(hx - r - 1.5)} ${f(hy - r - 8)} ${hx} ${f(hy - r - 7)}Q${f(hx + r + 1.5)} ${f(hy - r - 8)} ${f(hx + r + 1.5)} ${f(hy - r * .1)}Q${hx} ${f(hy - r * .5)} ${f(hx - r - 1.5)} ${f(hy - r * .1)}Z" fill="#2c2f7a" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`
+        + `<path d="M${f(hx - r * .7)} ${f(hy - r * .55)}Q${f(hx - r * .5)} ${f(hy - r - 2)} ${f(hx + r * .1)} ${f(hy - r - 3)}" stroke="#fff" stroke-width="3" fill="none" opacity=".35" stroke-linecap="round"/><path d="M${hx} ${f(hy - r - 6)}V${f(hy - r * .45)}" stroke="#1c1e55" stroke-width="2"/>`
+        + (back ? "" : `<path d="M${f(hx - r - 1)} ${f(hy - r * .18)}Q${hx} ${f(hy - r * .58)} ${f(hx + r + 1)} ${f(hy - r * .18)}" stroke="#4a4fb0" stroke-width="2.4" fill="none"/>`);
+    }
+    if (eq.tete === "snapback") {
+      const yb = hy - r * .42;
+      s += `<path d="M${f(hx - r - 1)} ${f(yb)}Q${f(hx - r)} ${f(hy - r - 9)} ${hx} ${f(hy - r - 7)}Q${f(hx + r)} ${f(hy - r - 9)} ${f(hx + r + 1)} ${f(yb)}Z" fill="#1d1d24" stroke="${ink}" stroke-width="4" stroke-linejoin="round"/>`;
+      if (back) s += `<path d="M${f(hx - r * .45)} ${f(yb + 1)}q${f(r * .45)} -12 ${f(r * .9)} 0z" fill="${skin}" stroke="${ink}" stroke-width="2.6" stroke-linejoin="round"/><path d="M${f(hx - r * .5)} ${f(yb - 1)}h${f(r)}" stroke="#f5c518" stroke-width="2.4"/>`;
+      else s += `<text x="${hx}" y="${f(yb - r * .25)}" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="${f(r * .5)}" fill="#f5c518">GF</text>`
+        + `<path d="M${f(hx - r - 4)} ${f(yb + 1)}Q${hx} ${f(yb - 6)} ${f(hx + r + 4)} ${f(yb + 1)}Q${hx} ${f(yb + 7)} ${f(hx - r - 4)} ${f(yb + 1)}Z" fill="#26262f" stroke="${ink}" stroke-width="3.2" stroke-linejoin="round"/><circle cx="${f(hx + r * .45)}" cy="${f(yb + 1.4)}" r="3.4" fill="#f5c518" stroke="${ink}" stroke-width="1"/><circle cx="${f(hx + r * .45)}" cy="${f(yb + 1.4)}" r="1.4" fill="#fff6a8"/>`;
+    }
+    if (eq.tete === "cretefluo") {
+      const sp = `M${f(hx - 9)} ${f(hy - r + 5)}L${f(hx - 15)} ${f(hy - r - 18)}L${f(hx - 5)} ${f(hy - r - 9)}L${f(hx - 4)} ${f(hy - r - 32)}L${f(hx + 3)} ${f(hy - r - 11)}L${f(hx + 10)} ${f(hy - r - 30)}L${f(hx + 9)} ${f(hy - r - 8)}L${f(hx + 18)} ${f(hy - r - 18)}L${f(hx + 9)} ${f(hy - r + 5)}Z`;
+      const by0 = hy - r + 5;
+      s += `<g transform="translate(0 ${f(by0 * .4)}) scale(1 .6)">` + AN.op(".5;.15;.5", 1.2, `<path d="${sp}" fill="none" stroke="#39ff14" stroke-width="9" stroke-linejoin="round"/>`)
+        + `<path d="${sp}" fill="#39ff14" stroke="${ink}" stroke-width="3.4" stroke-linejoin="round"/><path d="M${f(hx - 12)} ${f(hy - r - 13)}L${f(hx - 15)} ${f(hy - r - 18)}L${f(hx - 9.4)} ${f(hy - r - 13.4)}ZM${f(hx - 4.3)} ${f(hy - r - 24)}L${f(hx - 4)} ${f(hy - r - 32)}L${f(hx - 1.6)} ${f(hy - r - 24)}ZM${f(hx + 8)} ${f(hy - r - 23)}L${f(hx + 10)} ${f(hy - r - 30)}L${f(hx + 9.6)} ${f(hy - r - 22)}Z" fill="#ff2e88"/></g>`;
+      if (back) s += `<path d="M${hx} ${f(hy - r + 2)}V${f(hy + r * .8)}" stroke="#39ff14" stroke-width="7" stroke-linecap="round"/>`;
+    }
     if (eq.peau === "doree") s += star(hx - r * .45, hy - r * .55, 4, "#fff8c2") + star(cx + SW * .3, yS + 22, 5, "#fff8c2");
     // ---- extras de pose
     if (pose === "kiss") {
       const A = arms[1], b = bulge(A);
       s += `<path transform="translate(${f(b[0] + 6)} ${f(b[1] - b[2] - 12)}) scale(1.1)" d="M0 7C-12 -1 -10 -10 -4 -10Q0 -10 0 -5Q0 -10 4 -10C10 -10 12 -1 0 7Z" fill="#ff2e63" stroke="${ink}" stroke-width="2.2"/>`;
       s += `<path transform="translate(${f(b[0] - 2)} ${f(b[1] - 2)}) rotate(-15)" d="M-5 0q2.5 -3 5 0q2.5 -3 5 0q-2.5 4 -5 1q-2.5 3 -5 -1z" fill="#ff5d8a" opacity=".85"/>`;
+    }
+    // ---- compagnon : à côté des pieds (taille presque fixe à l'écran), ou sur l'épaule (perroquet)
+    const PD = PETS[eq.animal];
+    if (PD) {
+      let px, py, k, flip = false;
+      if (PD.perch) {
+        const d = eq.dos === "roquette" ? -1 : 1, a0 = [cx + d * neckH, nkTop], c0 = [cx + d * tc0, trapTop], b0 = [cx + d * SW, yS + 4];
+        k = .72 + .2 * mc;
+        const want = Math.max(SW * .6, headR * .78 + 12 * k);
+        let q = b0;
+        for (let i = 0; i <= 40; i++) { const p2 = bz(a0, c0, b0, i / 40); if (Math.abs(p2[0] - cx) >= want) { q = p2; break; } }
+        px = q[0]; py = q[1] + 3; flip = d < 0;
+      } else if (bust) {
+        const S = hw * 2;
+        k = S * .4 / 64; px = 100 - hw + S - PD.w * k / 2 - S * .03; py = headY - headR - 18 + S + PD.h * k * .28;
+      } else {
+        k = Math.pow(size(xp) / SIZE0, -.62);
+        px = Math.min(Math.max((footX[1] || cx + 30) + 4 + PD.w * k / 2, cx + 52), 243 - PD.w * k / 2); py = 257;
+      }
+      const T = wtools(Math.max(2.4, 1.3 / k));
+      let inner = PD.draw(T, AN);
+      const mood = opts.mood;
+      if (mood === "win") inner += `<path transform="translate(${f(PD.w * .3)} ${f(-PD.h - 4)}) scale(.8)" d="M0 7C-12 -1 -10 -10 -4 -10Q0 -10 0 -5Q0 -10 4 -10C10 -10 12 -1 0 7Z" fill="#ff2e63" stroke="${INK}" stroke-width="2.4"/>`;
+      if (mood === "lose") inner += `<path d="M${f(PD.w * .32)} ${f(-PD.h + 2)}q5 8 0 11q-5 -3 0 -11z" fill="#8fd3ff" stroke="${INK}" stroke-width="1.8"/>`;
+      if (PD.leash && !bust) {
+        const H2 = arms[1].Hd, lp = [px + PD.leash[0] * k, py + PD.leash[1] * k], mid = [(lp[0] + H2[0]) / 2, Math.max(lp[1], H2[1]) + 18];
+        s += `<path d="M${pt(H2)}Q${pt(mid)} ${pt(lp)}" stroke="${ink}" stroke-width="4" fill="none"/><path d="M${pt(H2)}Q${pt(mid)} ${pt(lp)}" stroke="#e63946" stroke-width="2" fill="none"/>`;
+      }
+      if (!PD.perch && !bust) s += `<ellipse cx="${f(px)}" cy="258" rx="${f(PD.w * k * .42)}" ry="${f(2 + 3 * k)}" fill="rgba(0,0,0,.22)"/>`;
+      s += `<g transform="translate(${f(px)} ${f(py)}) scale(${f(flip ? -k : k)} ${f(k)})">${inner}</g>`;
+      if (opts.view === "pet") { const side = Math.max(PD.w, PD.h) * k * 1.5; vbOut = `${f(px - side / 2)} ${f(py - PD.h * k / 2 - side / 2)} ${f(side)} ${f(side)}`; }
     }
     // ---- effet d'arme pendant une pose (le lobby ajoute l'onomatopée et la roquette qui s'envole)
     if (opts.fx && wfx) {
@@ -998,8 +1693,7 @@
       } else s += weaponFxSvg(wfx.kind, wfx.x, wfx.y, wfx.ang, wfx.s);
     }
     if (opts.out) opts.out.fx = wfx;
-    s += `</svg>`;
-    return s;
+    return `<svg class="av" viewBox="${vbOut}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">` + s + `</svg>`;
   }
 
   // Plus il est musclé, plus le perso prend de place à l'écran. growth(xp) = la taille rapportée au départ (×1 → ×2,7),

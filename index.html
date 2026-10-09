@@ -652,6 +652,35 @@ html.imm .ov-card{max-height:calc(100dvh - 32px)}
   html.imm .d-plage .sign{display:none}
   html.imm .tile .votes{margin-top:1px;min-height:0}
 }
+/* ---------- jamais bloqués : qui a validé (✓ / ⏳), annuler, « ⋯ » en jeu (quitter, proposer d'annuler) ---------- */
+.act-who{flex:1 0 100%;display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+.act-who:empty{display:none}
+.act-who>span{display:inline-flex;align-items:center;gap:3px;padding:1px 8px 1px 1px;border-radius:999px;background:#ffffff12;font-size:.8rem;font-weight:800;white-space:nowrap;max-width:9.5em;overflow:hidden;text-overflow:ellipsis}
+.act-who>span.ok{box-shadow:inset 0 0 0 2px var(--good)}
+.act-who>span.wt{box-shadow:inset 0 0 0 2px #ffcc3366;color:var(--dim)}
+.act-who i{font-style:normal}
+.act-who .vav{width:22px;height:22px;border-radius:50%;overflow:hidden;background:var(--panel);flex:none}
+.act-who .vav .av{width:100%;height:100%;display:block}
+.actionbar [data-act="launch"]{background:var(--good)}
+.actionbar #act-btns.two{flex:1 0 100%;flex-wrap:nowrap}
+.actionbar #act-btns.two .btn{flex:1 1 auto;min-width:0}
+.actionbar #act-btns.two [data-act="cancel"]{flex:0 0 auto}
+.tile .tfav{position:absolute;left:50%;top:0;transform:translate(-50%,-55%);white-space:nowrap;background:#ffd23f;color:#1d1420;border:2px solid #1d1420;border-radius:999px;padding:0 6px;font-family:var(--f-ui);font-weight:900;font-size:clamp(.52rem,1.2vw,.72rem);line-height:1.35;letter-spacing:.02em;text-transform:uppercase;text-shadow:none;box-shadow:0 2px 0 #1d1420;z-index:1}
+.ch-acts{display:grid;justify-items:center;gap:2px;margin-top:10px}
+.ch-acts small{color:var(--dim);font-weight:700;font-size:.85rem}
+.ch-acts .btn{padding:8px 14px;font-size:.92rem}
+.gm-pop{position:absolute;z-index:40;right:max(10px,env(safe-area-inset-right,0px));top:calc(54px + env(safe-area-inset-top,0px));width:min(320px,calc(100% - 20px));display:grid;gap:6px;padding:10px;background:var(--panel);border:3px solid var(--ink);box-shadow:0 0 0 2px var(--gold),0 12px 30px #000b;border-radius:16px;animation:pop .2s cubic-bezier(.2,1.5,.4,1);text-align:left}
+.gm-pop button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:2px solid var(--line);border-radius:12px;background:#ffffff0c;color:var(--text);font:inherit;font-weight:800;font-size:1rem;padding:9px 10px;cursor:pointer}
+.gm-pop button:disabled{opacity:.5;cursor:not-allowed}
+.gm-pop button small{display:block;color:var(--dim);font-weight:600;font-size:.8rem;line-height:1.15}
+.gm-pop button .mi{font-size:1.3rem;flex:none;width:1.5em;text-align:center}
+.gm-pop button.danger{border-color:#ff5a5f;background:#ff5a5f22}
+.gm-pop p{margin:2px 2px 4px;font-weight:800}
+.gm-pop .row{display:flex;gap:6px}.gm-pop .row button{justify-content:center}
+.gm-vote{position:absolute;z-index:39;left:50%;transform:translateX(-50%);top:calc(92px + env(safe-area-inset-top,0px));width:min(440px,calc(100% - 20px));display:grid;gap:8px;padding:10px 12px;background:rgba(22,15,30,.95);border:3px solid var(--gold);border-radius:16px;box-shadow:0 12px 30px #000b;text-align:center;font-weight:800;animation:pop .25s}
+.gm-vote small{color:var(--dim);font-weight:700}
+.gm-vote .row{display:flex;gap:8px;justify-content:center}
+.gm-vote .btn{padding:8px 14px;font-size:.95rem}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 </style>
 </head>
@@ -735,7 +764,7 @@ html.imm .ov-card{max-height:calc(100dvh - 32px)}
           <div class="floor" id="floor" aria-label="Sol du lobby : touchez pour vous déplacer"></div>
         </div>
         <div class="posebar" id="posebar" role="group" aria-label="Prendre la pose"></div>
-        <div class="actionbar"><div class="msg" id="act-msg" role="status" aria-live="polite"></div><div class="tools" id="act-btns"></div></div>
+        <div class="actionbar"><div class="act-who" id="act-who" aria-label="Joueurs sur ce carré"></div><div class="msg" id="act-msg" role="status" aria-live="polite"></div><div class="tools" id="act-btns"></div></div>
       </div>
       <aside class="roster">
         <h2>Dans la salle <span id="roster-count"></span></h2>
@@ -762,7 +791,7 @@ html.imm .ov-card{max-height:calc(100dvh - 32px)}
 
 <div id="overlay"></div>
 <div id="sheet"></div>
-<div class="game-layer hidden" id="game-layer"><div class="game-top"><b id="game-title"></b><span id="game-who"></span><button class="game-fs" type="button" id="game-fs" hidden aria-label="Plein écran" title="Plein écran">⛶</button></div><div class="game-root" id="game-root"></div></div>
+<div class="game-layer hidden" id="game-layer"><div class="game-top"><b id="game-title"></b><span id="game-who"></span><button class="game-fs" type="button" id="game-fs" hidden aria-label="Plein écran" title="Plein écran">⛶</button><button class="game-fs gm-more" type="button" id="game-more" aria-haspopup="true" aria-expanded="false" aria-label="Options de la partie (quitter, annuler)" title="Options de la partie">⋯</button></div><div class="game-root" id="game-root"></div></div>
 
 <script src="vendor/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -804,6 +833,10 @@ GONFLETTE.registerGame = def => { GONFLETTE.games.push(def); };
 <script src="games/pfc.js"></script>
 <script src="games/priorities-deck.js"></script>
 <script src="games/priorities.js"></script>
+<script src="games/plusprobable-deck.js"></script>
+<script src="games/plusprobable.js"></script>
+<script src="games/loupgarou.js"></script>
+<script src="games/totem.js"></script>
 <script>
 (() => {
 "use strict";
@@ -819,9 +852,9 @@ const gameById = id => GAMES.find(g => g.id === id);
    Le Ring (Gala du Muscle) = duels et face-à-face.
    Un jeu absent de cette table (nouveau jeu) va à la plage par défaut. */
 const PLACE_OF = {
-  tiracorde: "plage", relais: "plage", pong: "plage", bataille: "plage", flip7: "plage", uno: "plage", petitbac: "plage", dessine: "plage",
-  developpe: "salle", spotteur: "salle", quiestce: "salle", motinterdit: "salle", undercover: "salle", quiadit: "salle", pictionary: "salle", priorities: "salle",
-  brasdefer: "ring", pfc: "ring", reflexes: "ring", airhockey: "ring", tron: "ring", dames: "ring", puissance4: "ring", morpion: "ring"
+  tiracorde: "plage", relais: "plage", plusprobable: "plage", pong: "plage", bataille: "plage", flip7: "plage", uno: "plage", petitbac: "plage", dessine: "plage",
+  developpe: "salle", spotteur: "salle", quiestce: "salle", motinterdit: "salle", undercover: "salle", quiadit: "salle", pictionary: "salle", priorities: "salle", loupgarou: "salle",
+  brasdefer: "ring", pfc: "ring", totem: "ring", reflexes: "ring", airhockey: "ring", tron: "ring", dames: "ring", puissance4: "ring", morpion: "ring"
 };
 // pc = code du lieu dans la présence (absent = plage : rétrocompatible avec les anciens clients)
 const PLACES = {
@@ -1007,6 +1040,9 @@ function presenceObj() {
   o.fin = myFin || null;
   if (SO) Object.assign(o, SO.presence());            // mode soirée : mj (demande de micro), sc (commande du MJ), sw (spectateur), cs (champion)
   if (G.rules) { o.rs = G.rules.mask(); o.rd = G.rules.readyMid(); } // règles déjà vues (masque) / prêt pour le match rd
+  // Jamais bloqués : gx = sortie d'une partie {m: mid, k: "c" annuler avant le début | "q" quitter}, gv = vote d'annulation
+  // {m, id, y: 1 oui / 0 non}, ln = « Lancer maintenant » (id du jeu validé, jeux de groupe). L'hôte du lobby les applique (hostTick).
+  o.gx = myGx || null; o.gv = myGv || null; o.ln = me.vote && me.ln === me.vote ? me.ln : null;
   o.hd = document.hidden ? 1 : null;                  // onglet caché (écran éteint…) : un autre téléphone devient hôte du lobby
   if (sess.tm !== o.tm || JSON.stringify(sess.tn || null) !== JSON.stringify(o.tn)) saveSess({tm: o.tm, tn: o.tn}); // équipe retrouvée après rechargement
   return o;
@@ -1049,6 +1085,10 @@ const amHost = () => myPeer && hostPeer() === myPeer;
    match = {g, mid, seed, h (téléphone qui fait tourner le jeu), pl: [clés], ro: {clé: {p, l, x}}, ph: "chosen"|"playing"|"results", at, res}
    Plusieurs parties peuvent tourner en même temps : chaque groupe de joueurs a la sienne. */
 let myFin = null;
+let myGx = null, myGv = null;                         // ma demande de sortie / mon vote d'annulation (voir presenceObj)
+const quitM = new Set();                              // parties que j'ai quittées : je redeviens libre tout de suite
+const CANCEL_VOTE_MS = 15000;                         // « Proposer d'annuler » : délai pour que les autres acceptent
+const FAV = new Set(["flip7", "reflexes", "pfc", "spotteur"]); // ⭐ coups de cœur de la bande (aussi un préréglage du mode soirée)
 function rngFrom(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function setSt(st) { st.t = Date.now(); mySt = st; pushPresence(); applySt(st); }
 const PEND_MS = 7000;
@@ -1096,6 +1136,54 @@ function lacking(mid, missing, here, ms) {
   if (!goneSince[mid]) goneSince[mid] = now;
   return now - goneSince[mid] > ms;
 }
+/* Personne ne reste bloqué par un joueur qui ne fait rien (hôte du lobby, à chaque tour de hostTick) :
+   - « Annuler la partie » (écran C'est parti, gx.k = "c") : la partie est supprimée, tout le monde revient au lobby, aucun XP ;
+   - « Quitter la partie » (gx.k = "q") : le joueur est ajouté à M.q (perd par forfait, compté sur son téléphone) ; s'il reste
+     moins de min joueurs, les autres gagnent par forfait ; si c'était le téléphone qui fait tourner le jeu, partie interrompue ;
+   - « Proposer d'annuler » (gv) : M.cv = {id, by, at} ; si tous les autres joueurs présents (onglet visible) acceptent dans
+     les CANCEL_VOTE_MS, la partie est supprimée (aucun XP, aucune défaite) ; un refus ou le délai ferme le vote (M.cvx).
+   Renvoie undefined (rien à faire), null (partie supprimée ; out.note = qui l'a annulée) ou le match modifié. */
+function exitStep(M, now, here, prOf, g, out) {
+  const mid = M.mid, P = k => prOf.get(k) || {}, nm = k => (M.ro[k] && M.ro[k].p) || "?", min = g ? g.min : 2;
+  const q = M.q || [];
+  const ex = k => { const x = P(k).gx; return x && x.m === mid ? x.k : null; };
+  if (M.ph === "chosen" || (M.ph === "playing" && now - M.at < 4000)) { // (une annulation partie juste au « GO ! » compte encore)
+    const by = M.pl.find(k => !q.includes(k) && here.has(k) && ex(k) === "c");
+    if (by) { out.note = {m: mid, b: nm(by), at: now}; return null; }
+  }
+  if (M.ph !== "playing") return undefined;
+  let C = M;
+  const nq = M.pl.filter(k => !q.includes(k) && ex(k) === "q");
+  if (nq.length) {
+    const q2 = q.concat(nq), stay = M.pl.filter(k => here.has(k) && !q2.includes(k)), who = nq.map(nm).join(", ");
+    C = Object.assign({}, M, {q: q2});
+    if (!stay.length) { out.note = {m: mid, b: who, at: now}; return null; }
+    if (q2.includes(M.h) || stay.length < min) {
+      const res = q2.includes(M.h) && stay.length >= Math.max(2, min)
+        ? {int: 1, summary: `${who} a quitté la partie : partie interrompue.`}
+        : {winners: stay, ranking: stay, summary: `Victoire par forfait : ${who} a quitté la partie.`};
+      const R = Object.assign({}, C, {ph: "results", at: now}); delete R.cv;
+      R.res = gainsFor(R, res);
+      return R;
+    }
+  }
+  // vote d'annulation : seuls les joueurs présents, onglet visible, peuvent répondre (un téléphone en veille ne bloque pas)
+  const voters = C.pl.filter(k => here.has(k) && !(C.q || []).includes(k) && !P(k).hd);
+  const gv = k => { const v = P(k).gv; return v && v.m === mid && typeof v.id === "string" ? v : null; };
+  const cv = C.cv, closed = C.cvo || [];
+  if (!cv) {
+    const by = voters.find(k => { const v = gv(k); return v && v.y && !closed.includes(v.id); });
+    if (by) C = Object.assign({}, C, {cv: {id: gv(by).id, by, at: now}});
+  } else {
+    const yes = voters.filter(k => { const v = gv(k); return v && v.id === cv.id && v.y; });
+    const no = voters.find(k => { const v = gv(k); return v && v.id === cv.id && !v.y; });
+    if (!no && yes.length && voters.every(k => yes.includes(k))) { out.note = {m: mid, b: "", v: 1, at: now}; return null; }
+    if (no || now - cv.at > CANCEL_VOTE_MS || !voters.includes(cv.by)) {
+      C = Object.assign({}, C, {cvo: closed.concat(cv.id).slice(-6), cvx: {id: cv.id, r: no ? nm(no) : null}}); delete C.cv;
+    }
+  }
+  return C === M ? undefined : C;
+}
 function hostTick() {
   if (!amHost()) { if (mySt) { mySt = null; pushPresence(); } return; }
   if (!mySt) {
@@ -1117,9 +1205,17 @@ function hostTick() {
     if (!teams[i].n) { const c = mem.find(p => p.presence.tn && p.presence.tn.t === i && p.presence.tn.n); if (c) { teams[i].n = String(c.presence.tn.n).slice(0, 18); changed = true; } }
   }
   for (const mid of Object.keys(goneSince)) if (!ms[mid]) delete goneSince[mid];
+  const prOf = new Map(peers.map(p => [p.peer, p.presence || {}]));
+  const cn = (mySt.cn || []).filter(c => now - c.at < 30000); // parties annulées récemment (qui a annulé : toast « Partie annulée par X »)
+  if (cn.length !== (mySt.cn || []).length) changed = true;
   // 1. faire avancer les parties en cours
   for (const mid of Object.keys(ms)) {
-    const M = ms[mid], g = gameById(M.g);
+    let M = ms[mid]; const g = gameById(M.g);
+    { // annuler / quitter / vote d'annulation (exitStep)
+      const out = {}, x = exitStep(M, now, here, prOf, g, out);
+      if (x === null) { delete ms[mid]; delete goneSince[mid]; if (out.note) cn.push(out.note); changed = true; continue; }
+      if (x) { ms[mid] = M = x; changed = true; if (x.ph === "results") continue; }
+    }
     // règles en 10 s : tant que M.rw existe, on attend que les nouveaux venus aient lu la carte (core/rules.js)
     if (M.ph === "chosen" && M.rw && G.rules) { const nx = G.rules.hostStep(M, now, peers); if (nx) { ms[mid] = nx; changed = true; } }
     if (M.ph === "chosen" && !M.rw && now - M.at > CHOSEN_MS) { ms[mid] = Object.assign({}, M, {ph: "playing", at: now}); changed = true; continue; }
@@ -1133,7 +1229,7 @@ function hostTick() {
         ts = ts.map((v, i) => v + add[i]);
         ms[mid] = Object.assign({}, M, {ph: "results", at: now, res}); changed = true; continue;
       }
-      const stay = M.pl.filter(k => here.has(k));
+      const stay = M.pl.filter(k => here.has(k) && !(M.q || []).includes(k)); // (M.q : ont quitté la partie)
       // Délai de grâce : en p2p, la liste des joueurs se vide un instant lors d'un changement de relais.
       if (!lacking(mid, !here.has(M.h) || stay.length < (g ? g.min : 2), here, FORFEIT_GRACE_MS)) continue;
       {
@@ -1153,7 +1249,7 @@ function hostTick() {
   if (soX && soX.changed) changed = true;
   // 2. former de nouvelles parties avec les joueurs libres qui ont validé
   const busy = new Set();
-  Object.values(ms).forEach(M => M.pl.forEach(k => busy.add(k)));
+  Object.values(ms).forEach(M => M.pl.forEach(k => { if (!(M.q && M.q.includes(k))) busy.add(k); })); // qui a quitté redevient libre
   const free = players().filter(p => !busy.has(p.peer) && !p.presence.ed && !p.presence.hd && !(soX && soX.hold.has(p.peer))); // hd : onglet caché, pas de nouvelle partie
   const voteOf = p => forceVote || p.presence.v;
   const byGame = {};
@@ -1168,13 +1264,14 @@ function hostTick() {
       continue;
     } else if (voters.length >= g.min) {
       if (!pend[gid]) { pend[gid] = now; changed = true; }
-      if (forceVote || voters.length >= g.max || now - pend[gid] > PEND_MS) {
+      // « Lancer maintenant » : un joueur qui a validé n'attend pas la fin du délai (ceux qui restent sur le carré sans valider ne comptent pas)
+      if (forceVote || voters.length >= g.max || now - pend[gid] > PEND_MS || voters.some(p => p.presence.ln === gid)) {
         const M = newMatch(gid, voters.slice(0, g.max), now); ms[M.mid] = M; delete pend[gid]; changed = true;
       }
     }
   }
   if (forceVote) forceVote = null;
-  if (changed) setSt({n: mySt.n + 1, ms, pend, teams, ts, so: soX ? soX.so : mySt.so});
+  if (changed) setSt({n: mySt.n + 1, ms, pend, teams, ts, so: soX ? soX.so : mySt.so, cn});
 }
 let midCounter = 0;
 function newMatch(gid, grp, now) {
@@ -1199,12 +1296,14 @@ function newMatch(gid, grp, now) {
 }
 function gainsFor(M, res) {
   const n = M.pl.length;
-  const winners = (res.winners || []).filter(k => M.pl.includes(k));
-  const ranking = (res.ranking || []).filter(k => M.pl.includes(k));
+  const q = M.q || []; // ont quitté la partie : défaite par forfait, 0 XP (déjà comptée sur leur téléphone)
+  let winners = (res.winners || []).filter(k => M.pl.includes(k) && !q.includes(k));
+  const ranking = (res.ranking || []).filter(k => M.pl.includes(k) && !q.includes(k));
+  if (!winners.length && q.length && (res.winners || []).length && ranking.length) winners = [ranking[0]]; // le « gagnant » avait quitté : le suivant gagne
   const gains = {};
   // Partie interrompue (res.int) : personne ne gagne ni ne perd, chacun garde la participation (+25 XP).
-  if (res.int) { M.pl.forEach(k => { gains[k] = 25; }); return {winners: [], ranking: [], summary: String(res.summary || "Partie interrompue.").slice(0, 160), gains, int: 1}; }
-  M.pl.forEach(k => { gains[k] = winners.includes(k) ? 100 : (n >= 3 && winners.length && ranking[winners.length] === k ? 40 : 25); });
+  if (res.int) { M.pl.forEach(k => { gains[k] = q.includes(k) ? 0 : 25; }); return {winners: [], ranking: [], summary: String(res.summary || "Partie interrompue.").slice(0, 160), gains, int: 1}; }
+  M.pl.forEach(k => { gains[k] = q.includes(k) ? 0 : winners.includes(k) ? 100 : (n >= 3 && winners.length && ranking[winners.length] === k ? 40 : 25); });
   return {winners, ranking, summary: String(res.summary || "").slice(0, 160), gains};
 }
 // Outils de test : l'hôte peut lancer un jeu avec tous les joueurs libres.
@@ -1232,6 +1331,7 @@ G.debug = {launch(gid) { if (!amHost()) return false; forceVote = gid; return tr
     myFin = {mid: M.mid, res: {winners: w, ranking: w.concat(M.pl.filter(k => !w.includes(k))), summary: summary || "Fin forcée (debug)."}};
     pushPresence(); return true;
   },
+  unstuck: () => ({gx: myGx, gv: myGv, quit: [...quitM], vote: me.vote, ln: me.ln || null, mid: myMid, inGame, ls: profile.ls || 0, xp: profile.xp}),
   h2h: () => profile.h2h};
 
 /* ---------- réaction à l'état ---------- */
@@ -1245,17 +1345,23 @@ function onRoom() {
   if (hp && hp.presence.st) { hostSt = hp.presence.st; if (h !== myPeer) noteHostT(hostSt.t); }
   if (h === myPeer && mySt) hostSt = mySt;
   if (hostSt) applySt(hostSt);
+  syncExit();
   if (SO) SO.update();
   renderLobby();
 }
-const matchOf = (st, k) => st && st.ms ? Object.values(st.ms).find(M => M.pl.includes(k)) : null;
+// (un joueur qui a quitté une partie, M.q, n'en fait plus partie : il est libre dans le lobby)
+const matchOf = (st, k) => st && st.ms ? Object.values(st.ms).find(M => M.pl.includes(k) && !(M.q && M.q.includes(k)) && !(k === myPeer && quitM.has(M.mid))) : null;
 function applySt(st) {
   const M = matchOf(st, myPeer);
   const key = M ? M.mid + ":" + M.ph + (M.rw ? ":r" : "") : "none";
   if (key === seenKey) return;
   seenKey = key;
   if (!M) {
-    if (myMid && resultsShown !== myMid) toast("Partie annulée : retour au lobby");
+    if (myMid && resultsShown !== myMid) {
+      const c = (st.cn || []).find(x => x.m === myMid);
+      toast(c ? (c.v ? "Partie annulée d'un commun accord : retour au lobby" : `Partie annulée par ${c.b}`) : "Partie annulée : retour au lobby");
+    }
+    closeGm(); if (G.rules) G.rules.close(); // (menu « ⋯ », carte des règles ouverte : rien ne reste par-dessus le lobby)
     const wasResults = myMid && resultsShown === myMid && $("overlay").innerHTML;
     myMid = null; myFin = null; closeOverlay(); unmountGame(); pushPresence();
     if (wasResults) afterResults();
@@ -1309,7 +1415,7 @@ function layoutTiles() {
     const el = document.createElement("div");
     el.className = "tile"; el.style.cssText = `left:${r.x * 100}%;top:${r.y * 100}%;width:${r.w * 100}%;height:${r.h * 100}%;--tc:${r.g.color}`;
     if (r.team !== undefined) el.classList.add("teampad", "team" + r.team);
-    el.innerHTML = `<div><div class="tname">${esc(r.g.name)}</div><div class="tsub">${r.team !== undefined ? "Zone d'équipe" : (r.g.min === r.g.max ? r.g.min : r.g.min + "–" + r.g.max) + " joueurs"}</div><div class="votes"></div></div>`;
+    el.innerHTML = `<div><div class="tname">${esc(r.g.name)}</div><div class="tsub">${r.team !== undefined ? "Zone d'équipe" : (r.g.min === r.g.max ? r.g.min : r.g.min + "–" + r.g.max) + " joueurs"}</div><div class="votes"></div></div>${FAV.has(r.g.id) ? `<span class="tfav" title="Coup de cœur de la bande">⭐ Coup de cœur</span>` : ""}`;
     floor.appendChild(el);
     return {el, r};
   });
@@ -1356,7 +1462,7 @@ function weaponFxHtml(wf, facing) {
   }
   return h;
 }
-function tileData() { return tileEls.map(t => ({id: t.r.g.id, name: t.r.g.name, sub: t.r.team !== undefined ? "Zone d'équipe" : (t.r.g.min === t.r.g.max ? t.r.g.min : t.r.g.min + "–" + t.r.g.max) + " joueurs", color: t.r.g.color, x: t.r.x, y: t.r.y, w: t.r.w, h: t.r.h})); }
+function tileData() { return tileEls.map(t => ({id: t.r.g.id, name: t.r.g.name, sub: t.r.team !== undefined ? "Zone d'équipe" : (FAV.has(t.r.g.id) ? "⭐ Coup de cœur · " : "") + (t.r.g.min === t.r.g.max ? t.r.g.min : t.r.g.min + "–" + t.r.g.max) + " joueurs", color: t.r.g.color, x: t.r.x, y: t.r.y, w: t.r.w, h: t.r.h})); }
 function init3D() {
   if (s3d || !want3D || !G.scene3d || !G.scene3d.supported) { syncBtn3D(); return; }
   try { s3d = G.scene3d.create(scene, {theme, tiles: tileData(), onFloorClick: floorTap, insets: hudIns}); window.__s3d = s3d; scene.classList.add("three"); }
@@ -1491,8 +1597,9 @@ function renderTiles() {
 const pendLeft = at => Math.max(1, Math.ceil((at + PEND_MS - hostNow()) / 1000));
 setInterval(() => { if (inLobby && !inGame && hostSt && hostSt.pend && Object.keys(hostSt.pend).length) { renderTiles(); renderAction(); } }, 500);
 function renderAction() {
-  renderAction0();
+  whoG = null; renderAction0(); renderWho();
   const btns = $("act-btns");
+  if (!btns.querySelector('[data-act="cancel"]')) btns.classList.remove("two");
   $("act-msg").parentNode.classList.toggle("go", !!btns.querySelector('[data-act="vote"]'));
 }
 function renderAction0() {
@@ -1516,17 +1623,48 @@ function renderAction0() {
   }
   if (SO && SO.action(msg, btns)) return; // soirée en cours : c'est le maître du jeu qui choisit les jeux
   const g = here && here.r.g;
-  const mates = g ? ps.filter(p => p.presence.v === g.id && !matchOf(hostSt, p.peer)).length : 0;
+  whoG = g || null;
+  const free = p => !matchOf(hostSt, p.peer);
+  const mates = g ? ps.filter(p => (p.peer === myPeer ? me.vote === g.id : p.presence.v === g.id) && free(p)).length : 0;
+  // sur le carré sans valider : ils ne comptent pas, la partie part sans eux (on le dit clairement)
+  const idle = g ? ps.filter(p => p.peer !== myPeer && p.presence.t === g.id && p.presence.v !== g.id && !p.presence.ed && free(p)).length : 0;
+  const canGo = !!(g && me.vote === g.id && g.min < g.max && mates >= g.min); // jeux de groupe : « Lancer maintenant »
   const pend = g && hostSt && hostSt.pend && hostSt.pend[g.id];
   if (ps.length < 2) msg.innerHTML = `Vous êtes seul pour l'instant. <b>Envoyez le lien</b> à vos amis : il faut au moins 2 joueurs.`;
-  else if (here && me.vote) msg.innerHTML = pend ? `<b>${esc(g.name)}</b> démarre dans <b class="pendn">${pendLeft(pend)} s</b> avec ${mates} joueurs (jusqu'à ${g.max}). D'autres peuvent encore vous rejoindre !` : `Vous attendez sur <b>${esc(g.name)}</b> : ${mates}/${g.min} joueurs prêts. La partie se lance dès qu'il y a assez de monde.`;
+  else if (here && me.vote) msg.innerHTML = (pend ? `<b>${esc(g.name)}</b> démarre dans <b class="pendn">${pendLeft(pend)} s</b> avec ${mates} joueurs${mates < g.max ? ` (jusqu'à ${g.max})` : ""}.` : `Vous attendez sur <b>${esc(g.name)}</b> : ${mates}/${g.min} joueurs prêts.`)
+    + (idle ? ` ⏳ ${idle} sur le carré n'${idle > 1 ? "ont" : "a"} pas validé : la partie partira sans ${idle > 1 ? "eux" : "lui"}.` : pend ? ` D'autres peuvent encore vous rejoindre !` : ` La partie se lance dès qu'il y a assez de monde.`);
   else if (here) msg.innerHTML = `Vous êtes sur <b>${esc(g.name)}</b> (${g.min === g.max ? g.min : g.min + " à " + g.max} joueurs). Validez pour jouer${mates ? ` : ${mates} joueur${mates > 1 ? "s" : ""} attend${mates > 1 ? "ent" : ""} déjà` : ""}.`;
   else msg.innerHTML = `Marchez jusqu'au carré d'un jeu et validez. Plusieurs parties peuvent tourner en même temps.`;
-  const want = here ? (me.vote ? "cancel" : "vote:" + here.r.g.id) : "";
+  const lnOn = me.vote && me.ln === me.vote;
+  const want = here ? (me.vote ? "cancel:" + (canGo ? 1 : 0) + (lnOn ? "l" : "") : "vote:" + here.r.g.id) : "";
   if (btns.dataset.state !== want) {
     btns.dataset.state = want;
-    btns.innerHTML = here ? (me.vote ? `<button class="btn alt" type="button" data-act="cancel">Annuler mon choix</button>` : `<button class="btn" type="button" data-act="vote">Valider ${esc(here.r.g.name)}</button>`) : "";
+    btns.classList.toggle("two", !!(me.vote && canGo));
+    btns.innerHTML = here ? (me.vote ? (canGo ? (lnOn ? `<button class="btn" type="button" disabled>Lancement…</button>` : `<button class="btn" type="button" data-act="launch">Lancer maintenant ▶</button>`) : "")
+      + `<button class="btn alt" type="button" data-act="cancel" aria-label="Annuler mon choix" title="Annuler mon choix">Annuler ✕</button>` : `<button class="btn" type="button" data-act="vote">Valider ${esc(here.r.g.name)}</button>`) : "";
   }
+}
+/* Qui est sur mon carré : ✓ a validé, ⏳ n'a pas (encore) validé. Rendu seulement quand la liste change (avatars SVG). */
+let whoG = null;
+const bustCache = new Map();
+function bustSvg(look, xp) {
+  const k = JSON.stringify([look, xp]); let v = bustCache.get(k);
+  if (!v) { v = A.svg(look, xp, {view: "bust"}); bustCache.set(k, v); if (bustCache.size > 60) bustCache.delete(bustCache.keys().next().value); }
+  return v;
+}
+function renderWho() {
+  const box = $("act-who"), g = whoG;
+  let list = [];
+  if (g && !(g.team !== undefined)) {
+    list = players().filter(p => p.peer === myPeer || (p.presence.t === g.id && !p.presence.ed && !matchOf(hostSt, p.peer)))
+      .map(p => { const isMe = p.peer === myPeer, ok = isMe ? me.vote === g.id : p.presence.v === g.id; return {k: p.peer, n: isMe ? "Vous" : p.presence.ps, ok, lk: isMe ? myLook() : p.presence.lk, xp: isMe ? profile.xp : p.presence.xp || 0}; })
+      .sort((a, b) => (b.ok - a.ok) || (a.k === myPeer ? -1 : b.k === myPeer ? 1 : 0));
+    if (list.length < 2 && !list.some(x => x.ok)) list = []; // seul sur le carré, pas encore validé : rien à montrer
+  }
+  const key = JSON.stringify(list.map(x => [x.k, x.n, x.ok, x.xp, x.lk]));
+  if (box.dataset.k === key) return;
+  box.dataset.k = key;
+  box.innerHTML = list.map(x => `<span class="${x.ok ? "ok" : "wt"}" title="${esc(x.n)} : ${x.ok ? "a validé" : "n'a pas validé"}"><span class="vav">${bustSvg(x.lk, x.xp)}</span>${esc(x.n)} <i>${x.ok ? "✓" : "⏳"}</i></span>`).join("");
 }
 $("act-btns").addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if (!b) return;
@@ -1542,7 +1680,8 @@ $("act-btns").addEventListener("click", e => {
     }
     me.team = i; me.vote = null;
   } else if (act === "leave-team") { me.team = null; me.teamName = null; }
-  else me.vote = act === "vote" && here && here.r.team === undefined ? here.r.g.id : null;
+  else if (act === "launch") { if (!me.vote) return; me.ln = me.vote; toast("C'est parti : on lance avec ceux qui ont validé !"); }
+  else { me.vote = act === "vote" && here && here.r.team === undefined ? here.r.g.id : null; me.ln = null; }
   pushPresence(); renderAll();
 });
 function renderRoster() {
@@ -1768,7 +1907,15 @@ function showChosen(M) {
   }
   $("overlay").innerHTML = `<div class="ov"><div class="ov-card"><p>${SO ? SO.chosenTag(M) : ""}C'est parti pour</p><h2>${esc(g ? g.name : M.g)}</h2>
     <div class="versus">${M.pl.map((k, i) => `${i && M.pl.length === 2 ? `<div class="vs">VS</div>` : ""}<figure style="width:min(${Math.round(70 * A.size(M.ro[k].x))}px,${M.pl.length === 2 ? 42 : 30}vw)">${badge[k] || ""}${rosterAv(M, k, "flex", undefined, "fight")}<figcaption>${esc(M.ro[k].p)}</figcaption></figure>`).join("")}</div>
-    ${g && placeOfGame(g) === "ring" ? announceHtml(M) : ""}${h2h}<div class="cd" id="countdown" aria-live="assertive"><small>Préparez-vous…</small><b></b></div></div></div>`;
+    ${g && placeOfGame(g) === "ring" ? announceHtml(M) : ""}${h2h}<div class="cd" id="countdown" aria-live="assertive"><small>Préparez-vous…</small><b></b></div>
+    ${M.pl.includes(myPeer) ? `<div class="ch-acts"><button class="btn alt" type="button" id="ch-cancel">✕ Annuler la partie</button><small>Retour au lobby pour tout le monde, sans gain ni perte</small></div>` : ""}</div></div>`;
+  // Quelqu'un ne confirme pas, on s'est trompé de jeu… : n'importe quel joueur du match peut tout annuler avant le début.
+  const cb = $("ch-cancel");
+  if (cb) {
+    const busy = () => { cb.disabled = true; cb.textContent = "Annulation…"; };
+    if (myGx && myGx.m === M.mid) busy();
+    cb.onclick = () => { myGx = {m: M.mid, k: "c"}; pushPresence(); busy(); };
+  }
   // Compte à rebours synchronisé sur l'heure de l'hôte (M.at), borné : au pire, il part de la réception.
   emit("chosen", {M, game: g ? G.lobby.game(g.id) : null, place: g ? placeOfGame(g) : place, first: chosenSeen !== M.mid}); chosenSeen = M.mid;
   if (G.rules && G.rules.wait(M, $("countdown"))) return; // règles en 10 s : la carte remplace le compte à rebours
@@ -2016,7 +2163,7 @@ function drawShop() {
     : profile.sh >= sel.price ? `<button class="btn red" type="button" data-buy="${sel.id}">Acheter · 🥤 ${sel.price}</button>` : `<button class="btn" type="button" disabled>Il manque 🥤 ${sel.price - profile.sh}</button>`;
   const card = it => {
     const R2 = RAR(it.r), own = profile.own.includes(it.id), eq = profile.eq[it.s] === it.id, bust = it.s === "tete" || it.s === "visage" || it.s === "cou";
-    return `<button type="button" class="item ${it.r}" style="--rc:${R2.color}" data-item="${it.id}" aria-pressed="${shopSel === it.id}">${A.svg(withItem(base, it.id), profile.xp, {view: bust ? "bust" : undefined, pose: itemPose(it)})}<b>${esc(it.n)}</b><span class="rar">${R2.name}</span>${own ? "" : `<span class="price">🥤 ${it.price}</span>`}${own ? `<span class="tagown${eq ? " eq" : ""}">${eq ? "Équipé" : "À vous"}</span>` : ""}</button>`;
+    return `<button type="button" class="item ${it.r}" style="--rc:${R2.color}" data-item="${it.id}" aria-pressed="${shopSel === it.id}">${A.svg(withItem(base, it.id), profile.xp, {view: it.s === "animal" ? "pet" : bust ? "bust" : undefined, pose: itemPose(it)})}<b>${esc(it.n)}</b><span class="rar">${R2.name}</span>${own ? "" : `<span class="price">🥤 ${it.price}</span>`}${own ? `<span class="tagown${eq ? " eq" : ""}">${eq ? "Équipé" : "À vous"}</span>` : ""}</button>`;
   };
   body.innerHTML = `<h2>Boutique Protéines</h2><p class="sub">Vous avez <b style="color:var(--gold)">🥤 ${profile.sh} shakers</b> · seuls les gagnants sont payés : <b>victoire = +${WIN_SHAKERS} 🥤 et un shaker mystère 🎁</b>.</p>
     <div class="shop"><div class="shop-prev">${A.svg(sel ? withItem(base, sel.id) : base, profile.xp, {pose: sel ? itemPose(sel) : "flex"})}<div><div class="nm">${sel ? esc(sel.n) : "Cabine d'essayage"}</div>${sel ? `<span class="rar" style="--rc:${R.color}">${R.name}</span>` : ""}<p class="ds">${sel ? esc(sel.d) : "Touchez un objet pour l'essayer sur votre perso."}</p><div class="acts">${acts}</div></div></div>
@@ -2165,6 +2312,7 @@ async function mountGame(M) {
     return;
   }
   // Présence dans la partie : un joueur absent depuis moins de DISC_GRACE_MS compte encore comme connecté pour le jeu.
+  const quitters = () => { const C = hostSt && hostSt.ms && hostSt.ms[M.mid]; return (C && C.q) || []; }; // « Quitter la partie » (M.q)
   const lastSeen = {}, inpJ = {}, base = saved ? Object.assign({}, saved.inp || {}) : null;
   const seqOff = again && sess.sq && sess.sq.mid === M.mid ? +sess.sq.n || 0 : 0;
   M.pl.forEach(k => { lastSeen[k] = Date.now(); });
@@ -2181,7 +2329,7 @@ async function mountGame(M) {
     let txt = "";
     if (lobby && lobby.connected && !lobby.connected()) txt = "📡 Connexion perdue… reconnexion en cours";
     else {
-      const gone = M.pl.filter(k => k !== myPeer && !set.has(k) && now - lastSeen[k] > 1500);
+      const q = quitters(), gone = M.pl.filter(k => k !== myPeer && !q.includes(k) && !set.has(k) && now - lastSeen[k] > 1500);
       if (gone.length) {
         const left = Math.max(0, Math.ceil((DISC_GRACE_MS - (now - lastSeen[gone[0]])) / 1000));
         txt = `⏳ ${M.ro[gone[0]] ? M.ro[gone[0]].p : "?"}${gone.length > 1 ? ` (+${gone.length - 1})` : ""} s'est déconnecté… ${left ? `on l'attend (${left} s)` : "il ne revient pas"}`;
@@ -2228,7 +2376,7 @@ async function mountGame(M) {
       const run = list => { const h = list.find(p => p.peer === M.h); const s = h && h.presence ? h.presence.s : undefined; if (s === undefined) return; const j = JSON.stringify(s); if (j !== last) { last = j; fn(s); } };
       const off = room.onPeers(ch => run(ch.peers)); offs.push(off); setTimeout(() => run(room.peers()), 0); return off;
     },
-    connected() { const set = hereNow(), now = Date.now(); return M.pl.filter(k => set.has(k) || k === myPeer || now - lastSeen[k] < DISC_GRACE_MS); },
+    connected() { const set = hereNow(), now = Date.now(), q = quitters(); return M.pl.filter(k => !q.includes(k) && (set.has(k) || k === myPeer || now - lastSeen[k] < DISC_GRACE_MS)); }, // (qui a quitté : absent tout de suite)
     // Jeux d'équipe : [{name, color, keys}] ×2 ; null pour les autres jeux.
     teams: M.tm ? M.tm.map((keys, i) => ({index: i, name: (M.tn && M.tn[i]) || (i ? "Équipe bleue" : "Équipe rouge"), color: TEAM_COLORS[i], keys: keys.slice()})) : null,
     teamOf(k) { return M.tm ? (M.tm[0].includes(k) ? 0 : M.tm[1].includes(k) ? 1 : null) : null; },
@@ -2256,12 +2404,109 @@ $("game-fs").addEventListener("click", () => {
 });
 document.addEventListener("fullscreenchange", syncFs); document.addEventListener("webkitfullscreenchange", syncFs);
 function unmountGame() {
+  closeGm(); const gv = $("gm-vote"); if (gv) gv.remove();
   if (instance) { try { instance.destroy && instance.destroy(); } catch (e) { console.error(e); } (instance._offs || []).forEach(f => f()); instance = null; emit("game:end"); }
   if (matchName) { net.leave(matchName); matchName = null; matchRoom = null; }
   mounted = null;
   $("game-layer").classList.add("hidden");
   $("game-root").innerHTML = "";
   if (inGame) { inGame = false; if (inLobby) { $("scr-lobby").classList.remove("hidden"); layoutTiles(); init3D(); renderAll(); } }
+}
+
+/* ---------- en jeu : « ⋯ » (quitter la partie, proposer d'annuler) ----------
+   Un joueur qui ne joue plus (téléphone dans la poche, distrait…) ne doit bloquer personne. Tout passe par la présence du
+   lobby (gx / gv), appliquée par l'hôte du lobby dans exitStep : robuste aux déconnexions et aux changements d'hôte. */
+let gmConfirm = false;
+const liveMatch = () => { const M = matchOf(hostSt, myPeer); return M && M.ph === "playing" && mounted === M.mid ? M : null; };
+function closeGm() { gmConfirm = false; const p = $("gm-pop"); if (p) p.remove(); const b = $("game-more"); if (b) b.setAttribute("aria-expanded", "false"); }
+function openGm() {
+  const M = liveMatch(); if (!M) { closeGm(); return; }
+  let p = $("gm-pop");
+  if (!p) { p = document.createElement("div"); p.id = "gm-pop"; p.className = "gm-pop"; p.setAttribute("role", "menu"); $("game-layer").appendChild(p); p.addEventListener("click", onGm); }
+  $("game-more").setAttribute("aria-expanded", "true");
+  const g = gameById(M.g), rest = M.pl.filter(k => k !== myPeer && !(M.q || []).includes(k)).length, min = g ? g.min : 2;
+  const mi = (k, i, t, sub, cls, dis) => `<button type="button" role="menuitem" data-gm="${k}"${cls ? ` class="${cls}"` : ""}${dis ? " disabled" : ""}><span class="mi">${i}</span><span>${t}${sub ? `<small>${sub}</small>` : ""}</span></button>`;
+  p.innerHTML = gmConfirm
+    ? `<p>Quitter ${esc(g ? g.name : "la partie")} ?</p><small style="color:var(--dim);font-weight:700">Vous perdez par forfait${rest < min ? " et les autres gagnent" : " ; les autres continuent sans vous"}. Vous revenez au lobby.</small><div class="row">${mi("quit-yes", "🏳️", "Oui, quitter", "", "danger")}${mi("close", "↩", "Non")}</div>`
+    : mi("quit", "🏳️", "Quitter la partie", `Défaite par forfait${rest < min ? " : les autres gagnent" : ""}`, "danger")
+      + mi("cancel", "🤝", "Proposer d'annuler", M.cv ? "Vote en cours…" : "Si tous les autres acceptent (15 s) : retour au lobby, sans gain ni perte", "", !!M.cv)
+      + (G.rules && G.rules.has(M.g) ? mi("rules", "📖", "Règles du jeu") : "")
+      + mi("close", "✕", "Fermer");
+}
+function onGm(e) {
+  const b = e.target.closest("[data-gm]"); if (!b || b.disabled) return;
+  const k = b.dataset.gm, M = liveMatch();
+  if (k === "quit") { gmConfirm = true; openGm(); }
+  else if (k === "quit-yes") quitMatch();
+  else if (k === "cancel") {
+    closeGm();
+    if (!M || M.cv) return;
+    myGv = {m: M.mid, id: rid(), y: 1}; pushPresence();
+    toast("Proposition envoyée : les autres ont 15 s pour accepter");
+  } else if (k === "rules") { closeGm(); if (M && G.rules) G.rules.open(M.g); }
+  else closeGm();
+}
+$("game-more").addEventListener("click", () => { if ($("gm-pop")) closeGm(); else openGm(); });
+document.addEventListener("pointerdown", e => { if ($("gm-pop") && !e.target.closest("#gm-pop,#game-more")) closeGm(); }, true);
+// Quitter : défaite par forfait comptée ici (le joueur ne verra pas l'écran des résultats), puis retour immédiat au lobby.
+function quitMatch() {
+  const M = liveMatch(); closeGm();
+  if (!M) return;
+  myGx = {m: M.mid, k: "q"}; myGv = null; quitM.add(M.mid);
+  let txt = "Vous avez quitté la partie : défaite par forfait.";
+  if (profile.lastMid !== M.mid) {
+    profile.lastMid = M.mid;
+    profile.ls = (profile.ls || 0) + 1; // 2 défaites d'affilée = −5 % (même règle que l'écran des résultats)
+    if (profile.ls >= 2) { profile.ls = 0; profile.xp = Math.max(0, profile.xp - 100); txt += " 2 défaites d'affilée : ça dégonfle 💀"; }
+    saveProfile();
+  }
+  myMid = null; // (pas de « Partie annulée »)
+  applySt(hostSt); pushPresence(); renderAll(); toast(txt);
+}
+// Vote d'annulation en cours (M.cv) : bandeau pour accepter / refuser, ou suivre qui doit encore répondre.
+let gvSeen = null;
+function renderGameVote() {
+  const M = inGame ? liveMatch() : null;
+  let box = $("gm-vote");
+  if (M && M.cvx && M.cvx.id !== gvSeen) { // vote fermé sans annulation : on prévient ceux qui y ont pris part
+    gvSeen = M.cvx.id;
+    if (myGv && myGv.id === M.cvx.id && myGv.y) toast(M.cvx.r ? `${M.cvx.r} refuse d'annuler : la partie continue` : "Tout le monde n'a pas accepté à temps : la partie continue (⋯ pour quitter)");
+  }
+  const cv = M && M.cv;
+  if (!cv) { if (box) box.remove(); return; }
+  // deux propositions en même temps : la mienne rejoint celle retenue par l'hôte
+  if (myGv && myGv.m === M.mid && myGv.y && myGv.id !== cv.id && !(M.cvo || []).includes(myGv.id)) { myGv = {m: M.mid, id: cv.id, y: 1}; pushPresence(); }
+  const byK = new Map(peers.map(p => [p.peer, p.presence || {}]));
+  const said = k => { const v = k === myPeer ? myGv : (byK.get(k) || {}).gv; return v && v.m === M.mid && v.id === cv.id ? v.y : null; };
+  const voters = M.pl.filter(k => byK.has(k) && !(M.q || []).includes(k) && !byK.get(k).hd), waitK = voters.filter(k => said(k) !== 1);
+  const left = Math.max(0, Math.ceil((cv.at + CANCEL_VOTE_MS - hostNow()) / 1000)), nm = k => esc(M.ro[k] ? M.ro[k].p : "?");
+  const html = said(myPeer) === 1
+    ? `<div>🤝 ${cv.by === myPeer ? "Vous proposez" : nm(cv.by) + " propose"} d'annuler la partie</div><small>${waitK.length ? `En attente de ${waitK.map(nm).join(", ")} · ${left} s` : "Tout le monde est d'accord…"}</small>`
+    : `<div>🤝 ${nm(cv.by)} propose d'annuler la partie</div><small>Retour au lobby sans gain ni perte · ${left} s</small><div class="row"><button class="btn" type="button" data-gv="1">Accepter ✓</button><button class="btn alt" type="button" data-gv="0">Refuser ✕</button></div>`;
+  if (!box) {
+    box = document.createElement("div"); box.id = "gm-vote"; box.className = "gm-vote"; box.setAttribute("role", "alertdialog");
+    box.addEventListener("click", e => {
+      const b = e.target.closest("[data-gv]"), C = liveMatch(); if (!b || !C || !C.cv) return;
+      myGv = {m: C.mid, id: C.cv.id, y: +b.dataset.gv}; pushPresence(); renderGameVote();
+    });
+    $("game-layer").appendChild(box);
+  }
+  if (box.dataset.h !== html) { box.dataset.h = html; box.innerHTML = html; }
+}
+setInterval(() => { if (inGame) renderGameVote(); }, 500);
+// Nettoyage : demandes traitées ou périmées retirées de la présence, parties quittées oubliées une fois terminées.
+function syncExit() {
+  const ms = hostSt && hostSt.ms; if (!ms) return;
+  let ch = false;
+  if (myGx) {
+    const M = ms[myGx.m];
+    const stale = myGx.k === "c" && M && M.ph !== "chosen" && hostNow() - M.at > 6000; // trop tard : la partie avait déjà commencé
+    if (!M || (myGx.k === "q" && M.q && M.q.includes(myPeer)) || stale) { if (stale && M.ph === "playing") toast("Trop tard pour annuler : la partie a commencé (⋯ pour quitter)"); myGx = null; ch = true; }
+  }
+  if (myGv && !(ms[myGv.m] && ms[myGv.m].ph === "playing")) { myGv = null; ch = true; }
+  for (const mid of quitM) if (!ms[mid]) quitM.delete(mid);
+  if (ch) pushPresence();
+  if (inGame) renderGameVote();
 }
 
 // Mode soirée (core/soiree.js) : playlist de jeux menée par un maître du jeu 🎤, classement, cérémonie, photo souvenir.

@@ -19,7 +19,7 @@
 
   // Durée approximative d'une partie (minutes), pour estimer la soirée.
   const MINUTES = {airhockey: 3, bataille: 7, brasdefer: 2, dames: 10, dessine: 8, developpe: 3, flip7: 6, morpion: 4, motinterdit: 8, petitbac: 6, pfc: 2,
-    pictionary: 10, pong: 3, priorities: 10, puissance4: 5, quiadit: 7, quiestce: 5, reflexes: 2, relais: 3, spotteur: 3, tiracorde: 2, tron: 3, undercover: 8, uno: 8};
+    pictionary: 10, pong: 3, plusprobable: 7, loupgarou: 12, totem: 6, priorities: 10, puissance4: 5, quiadit: 7, quiestce: 5, reflexes: 2, relais: 3, spotteur: 3, tiracorde: 2, tron: 3, undercover: 8, uno: 8};
   const minutesOf = id => MINUTES[id] || 5;
   const STEP_OVERHEAD = .6; // compte à rebours + résultats + entracte
   const INTER_MS = 15000, FIRST_MS = 12000, SKIP_LEFT_MS = 6000, MJ_GONE_MS = 15000, CLAIM_MS = 12000;
@@ -30,7 +30,8 @@
   const PRESETS = {
     express: ["reflexes", "pfc", "brasdefer", "tiracorde", "developpe", "airhockey", "pong", "spotteur", "relais", "morpion", "tron"],
     duels: ["brasdefer", "pong", "puissance4", "airhockey", "morpion", "quiestce", "dames", "bataille"],
-    team: ["tiracorde", "relais", "pictionary", "dessine", "motinterdit", "petitbac", "developpe"]
+    team: ["tiracorde", "relais", "pictionary", "dessine", "motinterdit", "petitbac", "developpe"],
+    fav: ["flip7", "reflexes", "pfc", "spotteur"] // ⭐ les préférés de la bande (aussi marqués « Coup de cœur » dans le lobby)
   };
 
   let C = null, A = null;
@@ -140,7 +141,7 @@
   let mjGone = null, claimSeen = new Map();
   function participants(ps, ms) {
     const busy = new Set();
-    Object.values(ms).forEach(M => { if (!M.so) M.pl.forEach(k => busy.add(k)); });
+    Object.values(ms).forEach(M => { if (!M.so) M.pl.forEach(k => { if (!(M.q && M.q.includes(k))) busy.add(k); }); }); // M.q : a quitté sa partie
     return ps.filter(p => p.presence.ps && !p.presence.sw && !p.presence.ed && !busy.has(p.peer));
   }
   function toFinal(so, now) { so.ph = "f"; so.at = now; delete so.sp; delete so.m; delete so.pz; }
@@ -456,7 +457,7 @@
     }).join("");
     return `<div class="so-kicker">🎤 Vous êtes le maître du jeu</div><h2>Votre soirée</h2>
       <p class="so-sub">${n} joueur${n > 1 ? "s" : ""} dans la salle${n < 2 ? " : il en faut au moins 2" : ""}. Touchez les jeux pour les ajouter dans l'ordre.</p>
-      <div class="so-presets"><button class="chip" type="button" data-so="preset" data-a="express">⚡ Express (5 jeux)</button><button class="chip" type="button" data-so="preset" data-a="duels">🥊 Spécial duels</button><button class="chip" type="button" data-so="preset" data-a="team">🤝 Team building</button><button class="chip" type="button" data-so="preset" data-a="surprise">🎲 Surprise</button></div>
+      <div class="so-presets"><button class="chip" type="button" data-so="preset" data-a="fav">⭐ Les préférés</button><button class="chip" type="button" data-so="preset" data-a="express">⚡ Express (5 jeux)</button><button class="chip" type="button" data-so="preset" data-a="duels">🥊 Spécial duels</button><button class="chip" type="button" data-so="preset" data-a="team">🤝 Team building</button><button class="chip" type="button" data-so="preset" data-a="surprise">🎲 Surprise</button></div>
       <div class="so-plbox"><div class="so-plhead"><b>Playlist</b><span>${draft.length ? `${draft.length} jeu${draft.length > 1 ? "x" : ""} · ≈ ${estMin(draft)} min` : "vide"}</span>${draft.length ? `<button type="button" class="so-link" data-so="clear">Vider</button>` : ""}</div>
       ${draft.length ? `<ol class="so-pl">${list}</ol>` : `<p class="so-empty">Ajoutez des jeux ci-dessous ou choisissez un préréglage.</p>`}</div>
       ${cat}
