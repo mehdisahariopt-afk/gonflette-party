@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><radialGradient id="g" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#4a2a5e"/><stop offset=".6" stop-color="#2b1d3a"/><stop offset="1" stop-color="#17121c"/></radialGradient></defs><rect x="8" y="8" width="496" height="496" rx="112" fill="url(#g)" stroke="#1d1420" stroke-width="16"/><g transform="translate(23.799999999999983 31.900000000000006) scale(0.9)">
+  <g stroke="#1d1420" stroke-width="16" stroke-linejoin="round" stroke-linecap="round">
+    <path fill="#ffcc33" d="M70 424 C66 360 70 318 92 286 C120 244 164 206 216 188 C268 172 310 192 330 236 C336 250 340 262 344 274 L344 222
+      C330 210 300 186 300 140 C300 96 334 60 376 60 C420 60 448 94 446 136 C444 162 432 182 420 196 C432 246 438 292 432 336
+      C426 382 398 416 352 428 C296 442 230 438 170 434 C130 432 96 430 70 424 Z"/>
+    <path fill="none" stroke-width="11" d="M248 330 C282 336 316 318 340 290"/>
+    <path fill="none" stroke-width="10" d="M328 126 C346 136 370 138 394 130 M326 154 C344 164 368 166 392 158"/>
+  </g>
+  <path fill="#fff3b0" opacity=".85" d="M120 300 C146 258 186 230 226 220 C250 214 270 220 284 232 C250 230 214 246 186 268 C160 288 140 304 120 300 Z"/>
+  <g stroke="#1d1420" stroke-width="12" stroke-linejoin="round">
+    <path fill="#e63946" d="M340 198 L426 196 L434 240 L346 244 Z"/>
+    <path fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" d="M358 221 L420 219"/>
+  </g>
+  <g stroke="#ffcc33" stroke-width="14" stroke-linecap="round">
+    <path d="M150 150 L128 118 M206 128 L202 88 M96 196 L60 180"/>
+  </g></g></svg>

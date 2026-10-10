@@ -4,6 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Gonflette Party</title>
+<!-- appli installable (écran d'accueil) : manifeste + icônes, chemins relatifs (site servi sous /gonflette-party/) -->
+<meta name="theme-color" content="#17121c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gonflette">
+<meta name="application-name" content="Gonflette Party">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700;800&family=Pacifico&display=swap">
@@ -704,6 +715,54 @@ html.imm .ov-card{max-height:calc(100dvh - 32px)}
 .rb-list{margin:8px 0;padding-left:0;list-style:none;display:grid;gap:4px;font-weight:600}
 .rb-list .lg-b{width:1.2em;height:1.2em}
 .rb-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+/* ---------- appli installée (plein écran sous l'encoche) : marges de sécurité hors lobby immersif ---------- */
+.entry{padding-top:max(20px,env(safe-area-inset-top,0px));padding-bottom:max(20px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+html:not(.imm) .wrap{padding-top:max(14px,env(safe-area-inset-top,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ov{padding-top:max(16px,env(safe-area-inset-top,0px));padding-bottom:max(16px,env(safe-area-inset-bottom,0px))}
+.sheet{padding-top:max(12px,env(safe-area-inset-top,0px));padding-bottom:max(12px,env(safe-area-inset-bottom,0px))}
+html.imm .ov-card{max-height:calc(100dvh - 2 * max(16px,env(safe-area-inset-top,0px)))}
+/* ---------- 💾 code de sauvegarde du perso + 📲 installer l'appli ---------- */
+.sv{display:grid;gap:10px;text-align:left}
+.sheet .sv h2,.sheet .ins h2{margin:0 44px 0 0}
+.sv h3{margin:4px 0 0;font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.85rem;color:var(--dim)}
+.sv .sub{margin:0}
+.sv-top{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:center}
+.sv-qr{flex:none;width:min(260px,68vw);aspect-ratio:1;background:#fff;border:3px solid var(--ink);border-radius:14px;padding:6px;display:grid;place-items:center;color:#1d1420;font-weight:700;font-size:.85rem;text-align:center}
+.sv-qr svg{width:100%;height:100%;display:block}
+.sv-side{flex:1 1 200px;display:grid;gap:6px;min-width:0}
+.sv-side small{color:var(--dim);font-weight:600;line-height:1.25}
+.sv textarea{width:100%;min-width:0;font:600 .82rem/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink);background:#fff;border:3px solid var(--ink);border-radius:12px;padding:8px 10px;resize:vertical;word-break:break-all}
+.sv textarea[readonly]{background:#f3eee6;height:5.6em}
+.sv-acts{display:flex;gap:8px;flex-wrap:wrap}
+.sv-acts .btn{flex:1 1 auto}
+.sv-ios{margin:0;background:#ffffff10;border-left:4px solid var(--gold);padding:8px 10px;border-radius:8px;color:var(--dim);font-weight:600;font-size:.95rem}
+.sv-ios b{color:var(--text)}
+.sv-err{margin:0;color:#ff8a8a;font-weight:800;min-height:1.2em}
+.sv-err:empty{display:none}
+.sv-box{background:#ffffff0c;border:2px solid var(--line);border-radius:14px;padding:10px 12px;display:grid;gap:8px}
+.rs-duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:10px;align-items:stretch}
+.rs-fig{min-width:0;overflow:hidden;margin:0;background:#ffffff0c;border:2px solid var(--line);border-radius:14px;padding:8px;text-align:center;display:grid;gap:4px;align-content:start}
+.rs-fig.new{border-color:var(--gold);background:radial-gradient(circle at 50% 40%,#ffcc3322,transparent 70%),#ffffff0c}
+.rs-fig.old{opacity:.8}
+.rs-fig .av{width:100%;height:auto;max-height:30vh}
+.rs-fig .k{font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:.75rem;color:var(--dim)}
+.rs-fig b.nm{font-family:var(--f-display);font-weight:400;font-size:1.3rem;text-transform:uppercase;line-height:1.05}
+.rs-fig ul{list-style:none;margin:0;padding:0;font-weight:700;font-size:.92rem;display:grid;gap:1px}
+.rs-fig .lg-rank{font-size:.82rem;white-space:normal}
+.rs-fig .k,.rs-fig b.nm{overflow-wrap:anywhere}
+.rs-warn{margin:0;background:#ff5a5f26;border:2px solid #ff5a5f;border-radius:12px;padding:8px 10px;font-weight:800}
+.name-alt{justify-self:start;background:none;border:0;padding:4px 0;color:var(--gold);font:inherit;font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ins{display:grid;gap:10px;text-align:left}
+.ins-os{background:#ffffff0c;border:2px solid var(--line);border-radius:14px;padding:10px 12px}
+.ins-os.first{border-color:var(--gold)}
+.ins-os h3{margin:0 0 6px;font-weight:800;font-size:1.05rem}
+.ins-os ol{margin:0;padding:0;list-style:none;display:grid;gap:8px;counter-reset:st}
+.ins-os li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;align-items:center;font-weight:600;counter-increment:st}
+.ins-os li::before{content:counter(st);width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--ink);font-weight:900;display:grid;place-items:center}
+.ins-ic{width:38px;height:38px;border-radius:10px;background:#fff;color:#0a84ff;display:grid;place-items:center;border:2px solid var(--ink)}
+.ins-ic svg{width:24px;height:24px}
+.ins-ic.and{color:#1d1420}
+.ins-chip{display:inline-block;background:#fff;color:#1d1420;border-radius:8px;padding:0 6px;font-weight:800;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -721,6 +780,7 @@ html.imm .ov-card{max-height:calc(100dvh - 32px)}
         <small>Tout le monde tape le même code (ou ouvre le même lien) pour se retrouver. Pas besoin de compte.</small>
       </div>
       <button class="btn" type="submit" id="name-go">Créer mon perso</button>
+      <button class="name-alt" type="button" id="name-restore">💾 J'ai déjà un perso : restaurer</button>
     </form>
   </div>
 </section>
@@ -735,7 +795,7 @@ html.imm .ov-card{max-height:calc(100dvh - 32px)}
     </div>
     <div class="ed-extra" id="ed-extra"></div>
     <p class="muscle-note">Les muscles ne se choisissent pas, ils se gagnent : <b>+100 XP par victoire</b>, +40 pour la 2e place, +25 pour chaque partie jouée. <b>Chaque victoire vous fait gonfler d’environ 5 %</b> (chaque partie jouée, un peu aussi) : à 1 500 XP vous êtes une montagne, à 2 000 XP un titan démesuré. Seuls les gagnants remportent des shakers 🥤 et un shaker mystère.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="ed-go">Entrer dans le lobby</button><button class="btn alt" type="button" id="ed-rename">Changer de pseudo</button></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="ed-go">Entrer dans le lobby</button><button class="btn alt" type="button" id="ed-rename">Changer de pseudo</button><button class="btn alt" type="button" id="ed-save">💾 Sauvegarder mon perso</button></div>
   </div>
 </section>
 
@@ -929,14 +989,15 @@ function migrateProfile() {
 }
 migrateProfile();
 // Le look diffusé : apparence + objets équipés (compacts, tout passe par presence.lk)
-function myLook() {
-  const l = Object.assign({}, profile.look);
+function lookOf(p) {
+  const l = Object.assign({}, p.look);
   delete l.mg;
-  const it = Object.values(profile.eq).filter(id => A.ITEM[id] && profile.own.includes(id));
+  const own = p.own || [], it = Object.values(p.eq || {}).filter(id => A.ITEM[id] && own.includes(id));
   if (it.length) l.it = it;
-  if (profile.pr > 0) l.pr = profile.pr; else delete l.pr; // forme légendaire (voyage avec le look ; ignoré des anciens clients)
+  if (p.pr > 0) l.pr = p.pr; else delete l.pr; // forme légendaire (voyage avec le look ; ignoré des anciens clients)
   return l;
 }
+function myLook() { return lookOf(profile); }
 // Le lieu où je suis (= le décor affiché). Tout le monde arrive à la plage.
 let theme = "plage";
 function setTheme(t) { theme = t; if (window.__s3d) window.__s3d.setTheme(t); document.body.dataset.theme = t; emit("place", t); document.querySelectorAll("[data-theme-btn]").forEach(b => b.setAttribute("aria-pressed", b.dataset.themeBtn === t)); }
@@ -1027,7 +1088,7 @@ const MODE = G.net.mode();
 let roomCode = "", booted = false;
 if (MODE === "p2p") {
   $("room-box").hidden = false;
-  const h = (location.hash || "").replace("#", "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const h = roomHash();
   if (h) $("room-code").value = h;
 }
 const newCode = () => { const A = "ABCDEFGHJKLMNPQRSTUVWXYZ"; let c = ""; for (let i = 0; i < 4; i++) c += A[Math.floor(Math.random() * A.length)]; return c + Math.floor(10 + Math.random() * 90); };
@@ -1889,12 +1950,14 @@ function openDrawer(kind) {
     openSheet("menu", `<div class="dr"><h2>Menu</h2><div class="net-box"><span class="${esc(nb.className)}">${esc(nb.textContent)}</span>${MODE === "p2p" && roomCode ? `<div>Salle <span class="room">${esc(roomCode)}</span></div>` : ""}${!help.hidden && help.textContent ? `<p>${esc(help.textContent)}</p>` : ""}</div>
       <ul class="menu-list">${MODE === "p2p" && roomCode ? li("share", "🔗", "Copier le lien d'invitation", "Envoyez-le à vos amis") : ""}
       ${li("edit", "✏️", "Mon perso", esc(titleOf(myLook(), profile.xp)) + " · " + profile.xp + " XP")}
+      ${li("save", "💾", "Sauvegarder mon perso", "Code ou QR : retrouvez-le sur un autre téléphone")}
       ${li("shop", "🛒", "Boutique", "🥤 " + profile.sh + " shakers")}
       ${profile.loot > 0 ? li("loot", "🎁", "Shakers mystère à ouvrir", "", profile.loot) : ""}
       ${li("rivals", "⚔️", "Mes rivaux", "Vos face-à-face en duel")}
       ${li("roster", "👥", "Dans la salle", "", n)}
       ${li("soiree", "🎉", "Mode soirée", "Playlist, classement, photo de groupe")}
       ${s3ok ? li("3d", "🧊", s3d ? "Passer en décor 2D" : "Passer en décor 3D", s3d ? "Plus léger pour la batterie" : "") : ""}
+      ${canInstall() ? li("install", "📲", "Installer l'appli", "Une icône sur l'écran d'accueil, en plein écran") : ""}
       ${li("help", "ℹ️", "Comment jouer")}</ul></div>`);
   }
 }
@@ -1907,6 +1970,8 @@ $("sheet").addEventListener("click", e => {
     else if (k === "loot") openLoot();
     else if (k === "rivals") openRivals();
     else if (k === "share") $("btn-share").click();
+    else if (k === "save") openSave();
+    else if (k === "install") doInstall();
     else if (k === "3d") { closeSheet(); $("btn-3d").click(); }
     else if (DRAWERS.includes(k)) openDrawer(k);
     return;
@@ -1921,7 +1986,7 @@ document.addEventListener("click", e => { const b = imm && e.target.closest("#sc
 (() => {
   let card = null, y0 = 0, dy = 0, t0 = 0;
   $("sheet").addEventListener("touchstart", e => {
-    const c = imm && e.target.closest(".sheet-card"); if (!c || e.touches.length !== 1 || e.target.closest("button,input,.shaker")) { card = null; return; }
+    const c = imm && e.target.closest(".sheet-card"); if (!c || e.touches.length !== 1 || e.target.closest("button,input,textarea,.shaker")) { card = null; return; }
     const r = c.getBoundingClientRect(); y0 = e.touches[0].clientY;
     if (y0 - r.top > 64 && c.scrollTop > 0) { card = null; return; }
     if (y0 - r.top > 64) { card = null; return; }
@@ -2225,6 +2290,290 @@ function drawEdExtra() {
       <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" type="button" data-shop>🛒 Boutique · 🥤 ${profile.sh}</button>${profile.loot ? `<button class="btn loot" type="button" data-openloot>🎁 Shakers à ouvrir : ${profile.loot}</button>` : ""}</div></div>
     <div class="ed-box"><h3>⚔️ Mes rivaux</h3>${rivalsList()}</div>`;
 }
+/* ---------- 💾 code de sauvegarde du perso (transfert vers un autre téléphone / l'appli installée) ----------
+   Format : "GF1." + f + corps + "." + somme
+     f = z (deflate-raw) | d (deflate) | j (JSON brut, navigateur sans CompressionStream) ;
+     corps = base64url des octets ; somme = 6 caractères (FNV-1a de tout ce qui précède) : repère une faute de frappe
+     ou une retouche à la main (jeu entre amis : ce n'est pas une sécurité).
+   Le JSON est compact (packProfile) et TOUT est revérifié à l'import (unpackProfile) : types, bornes, objets connus.
+   Versions : un nouveau champ = même étiquette GF1 (les anciens jeux l'ignorent, les nouveaux complètent ce qui manque) ;
+   GF2… seulement si le format change vraiment (un jeu plus ancien demande alors de recharger la page). */
+const SAVE_TAG = "GF1.", SAVE_V = 1, SAVE_MAX = 24000, JSON_MAX = 64000;
+const SITE_URL = "https://mehdisahariopt-afk.github.io/gonflette-party/";
+const QR_MAX = 1200; // au-delà, le QR devient trop dense pour un appareil photo : on allège la version du QR
+const LOOK_OK = {skin: A.SKINS, hair: A.HAIR_STYLES.map(h => h[0]), hairColor: A.HAIR_COLORS, top: A.TOPS.map(t => t[0]), topColor: A.CLOTH, shorts: A.CLOTH, acc: A.ACCS.map(a => a[0])};
+const ID_RE = /^[a-z0-9]{6,16}$/;
+const b64uEnc = bytes => { let s = ""; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
+const b64uDec = str => { const s = atob(str.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((str.length + 3) % 4)); const b = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; };
+function saveSum(str) { let h = 0x811c9dc5; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); } return ((h >>> 0) % 2176782336).toString(36).padStart(6, "0"); }
+const saveErr = code => Object.assign(new Error(code), {code});
+const SAVE_MSG = {
+  empty: "Collez d'abord le code de sauvegarde (il commence par GF1.).",
+  format: "Ce n'est pas un code Gonflette valide : il commence par « GF1. ». Vérifiez qu'il est complet.",
+  sum: "Code abîmé : un caractère a changé en route. Recopiez-le en entier (le bouton « Copier le code » évite les fautes).",
+  data: "Code illisible : impossible d'y retrouver un perso.",
+  big: "Code beaucoup trop long : ce n'est pas un code Gonflette.",
+  newer: "Ce code vient d'une version plus récente du jeu : rechargez la page, puis réessayez.",
+  old: "Ce navigateur est trop ancien pour lire ce code : mettez-le à jour (ou essayez avec Chrome ou Safari récent)."
+};
+async function streamBytes(bytes, ts, max) {
+  const rd = new Blob([bytes]).stream().pipeThrough(ts).getReader(), parts = [];
+  let n = 0;
+  for (;;) {
+    const {done, value} = await rd.read(); if (done) break;
+    n += value.length; if (max && n > max) { rd.cancel().catch(() => {}); throw saveErr("big"); }
+    parts.push(value);
+  }
+  const out = new Uint8Array(n); let o = 0; for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
+// Profil → objet compact (sans les champs volatils : lastMid, lastSo… restent propres à chaque appareil)
+function packProfile(p, hMax, noRules) {
+  const h = Object.entries(p.h2h || {}).filter(([id, r]) => ID_RE.test(id) && r && typeof r === "object").sort((a, b) => (b[1].t || 0) - (a[1].t || 0)).slice(0, hMax)
+    .map(([id, r]) => [id, String(r.n || "").slice(0, 14), r.w | 0, r.l | 0, r.last === "w" ? 1 : r.last === "l" ? 2 : 0, r.gw | 0, r.gl | 0, Math.round((r.t || 0) / 1000)]);
+  const l = {}; for (const k in LOOK_OK) if (p.look && p.look[k] != null) l[k] = p.look[k];
+  const o = {v: SAVE_V, p: p.pseudo, i: p.id, x: p.xp | 0, s: p.sh | 0, b: p.loot | 0, r: p.pr | 0, ls: p.ls | 0, l, o: (p.own || []).slice(), e: Object.values(p.eq || {})};
+  if (h.length) o.h = h;
+  if (!noRules && Array.isArray(p.rulesSeen) && p.rulesSeen.length) o.rs = p.rulesSeen.slice(0, 100);
+  return o;
+}
+// Objet importé → profil propre (rien d'inattendu ne passe : un mauvais code ne peut pas casser l'appli)
+function unpackProfile(o) {
+  if (!o || typeof o !== "object" || Array.isArray(o)) throw saveErr("data");
+  const int = (x, lo, hi) => { x = Math.floor(+x); return isFinite(x) ? Math.min(hi, Math.max(lo, x)) : lo; };
+  const str = (x, n) => typeof x === "string" ? x.replace(/[\u0000-\u001f\u007f-\u009f\u200b\u200c\u200e\u200f\u2028-\u202e\u2066-\u2069\ufeff]/g, "").replace(/\s+/g, " ").trim().slice(0, n) : "";
+  const pseudo = str(o.p, 14);
+  if (!pseudo) throw saveErr("data");
+  const look = Object.assign({}, A.DEFAULT_LOOK);
+  if (o.l && typeof o.l === "object") for (const k in LOOK_OK) if (LOOK_OK[k].includes(o.l[k])) look[k] = o.l[k];
+  const own = (Array.isArray(o.o) ? o.o : []).filter((id, i, a) => typeof id === "string" && Object.prototype.hasOwnProperty.call(A.ITEM, id) && a.indexOf(id) === i);
+  const eq = {};
+  for (const id of Array.isArray(o.e) ? o.e.slice(0, 40) : []) { const it = typeof id === "string" && own.includes(id) && A.ITEM[id]; if (it) eq[it.s] = id; }
+  const h2h = {};
+  for (const r of Array.isArray(o.h) ? o.h.slice(0, 80) : []) {
+    if (!Array.isArray(r) || typeof r[0] !== "string" || !ID_RE.test(r[0]) || h2h[r[0]]) continue;
+    h2h[r[0]] = {n: str(r[1], 14) || "?", w: int(r[2], 0, 1e5), l: int(r[3], 0, 1e5), last: r[4] === 1 ? "w" : r[4] === 2 ? "l" : null, gw: int(r[5], 0, 1e5), gl: int(r[6], 0, 1e5), t: int(r[7], 0, 1e10) * 1000};
+  }
+  const rulesSeen = (Array.isArray(o.rs) ? o.rs.slice(0, 200) : []).filter((id, i, a) => typeof id === "string" && gameById(id) && a.indexOf(id) === i);
+  return {pseudo, look, xp: int(o.x, 0, 1e7), sh: int(o.s, 0, 1e7), loot: int(o.b, 0, 999), pr: int(o.r, 0, 999), ls: int(o.ls, 0, 1),
+    own, eq, h2h, rulesSeen, id: typeof o.i === "string" && ID_RE.test(o.i) ? o.i : rid()};
+}
+async function makeSaveCode(p, hMax = 80, noRules = false) {
+  const raw = new TextEncoder().encode(JSON.stringify(packProfile(p, hMax, noRules)));
+  let f = "j", bytes = raw;
+  for (const [fl, fmt] of [["z", "deflate-raw"], ["d", "deflate"]]) {
+    let cs; try { cs = new CompressionStream(fmt); } catch (e) { continue; } // absent ou format inconnu : on essaie le suivant
+    try { const c = await streamBytes(raw, cs); if (c.length < raw.length) { f = fl; bytes = c; } } catch (e) {}
+    break;
+  }
+  const head = SAVE_TAG + f + b64uEnc(bytes);
+  return head + "." + saveSum(head);
+}
+async function readSaveCode(txt) {
+  let s = String(txt == null ? "" : txt);
+  if (s.length > SAVE_MAX * 3) throw saveErr("big");
+  const m = /restore=([^&\s]+)/.exec(s); // lien complet collé (…#restore=GF1.…)
+  if (m) { try { s = decodeURIComponent(m[1]); } catch (e) { s = m[1]; } }
+  s = s.replace(/\s+/g, "").replace(/^["'«»“”]+|["'«»“”]+$/g, "");
+  if (!s) throw saveErr("empty");
+  if (s.length > SAVE_MAX) throw saveErr("big");
+  const t = /^GF(\d{1,3})\.([zdj])([A-Za-z0-9_-]+)\.([0-9a-z]{6})$/.exec(s);
+  if (!t) throw saveErr(/^GF(\d{1,3})\./.test(s) && +RegExp.$1 > 1 ? "newer" : "format");
+  if (t[1] !== "1") throw saveErr(+t[1] > 1 ? "newer" : "format");
+  if (saveSum(s.slice(0, s.lastIndexOf("."))) !== t[4]) throw saveErr("sum");
+  let bytes;
+  try { bytes = b64uDec(t[3]); } catch (e) { throw saveErr("format"); }
+  if (t[2] !== "j") {
+    let ds; try { ds = new DecompressionStream(t[2] === "z" ? "deflate-raw" : "deflate"); } catch (e) { throw saveErr("old"); }
+    try { bytes = await streamBytes(bytes, ds, JSON_MAX); } catch (e) { throw e.code ? e : saveErr("data"); }
+  } else if (bytes.length > JSON_MAX) throw saveErr("big");
+  let o;
+  try { o = JSON.parse(new TextDecoder("utf-8", {fatal: true}).decode(bytes)); } catch (e) { throw saveErr("data"); }
+  return unpackProfile(o);
+}
+// Adresse du site pour le lien de restauration (dans claude.ai ou en fichier local : le site public)
+function siteUrl() {
+  const web = /^https?:$/.test(location.protocol) && MODE !== "claude" && !inFrame && !/(^|\.)claude(usercontent)?\.(ai|com)$/.test(location.hostname);
+  return web ? location.origin + location.pathname.replace(/index\.html$/, "") : SITE_URL;
+}
+const restoreLink = code => siteUrl() + "#restore=" + code;
+function restoreFromHash() { const m = /[#&]restore=([^&]+)/.exec(location.hash || ""); return m ? m[1] : null; }
+function roomHash() { const h = location.hash || ""; return /restore=/i.test(h) ? "" : h.replace("#", "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+function cleanRestoreHash() {
+  if (!/restore=/i.test(location.hash || "")) return;
+  try { history.replaceState(null, "", location.pathname + location.search + (MODE === "p2p" && roomCode ? "#" + roomCode : "")); } catch (e) {}
+}
+const hasProgress = p => !!p && (p.xp > 0 || p.pr > 0 || (p.own || []).length > 0 || p.loot > 0 || p.sh > 100 || Object.keys(p.h2h || {}).length > 0);
+// QR code : bibliothèque chargée seulement à l'ouverture de la fenêtre (copie locale, sinon cdnjs)
+let qrLoad = null;
+function loadQr() {
+  if (typeof window.qrcode === "function") return Promise.resolve(window.qrcode);
+  if (qrLoad) return qrLoad;
+  const one = src => new Promise((ok, ko) => { const s = document.createElement("script"); s.src = src; s.async = true; s.onload = () => typeof window.qrcode === "function" ? ok(window.qrcode) : ko(new Error("qr")); s.onerror = () => { s.remove(); ko(new Error("qr")); }; document.head.appendChild(s); });
+  qrLoad = one("vendor/qrcode.min.js").catch(() => one("https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js")).catch(e => { qrLoad = null; throw e; });
+  return qrLoad;
+}
+function qrSvg(qr, text) {
+  const q = qr(0, "L"); q.addData(text, "Byte"); q.make();
+  const n = q.getModuleCount(), M = 4; let d = "";
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    if (!q.isDark(y, x)) continue;
+    let w = 1; while (x + w < n && q.isDark(y, x + w)) w++;
+    d += `M${x + M} ${y + M}h${w}v1h-${w}z`; x += w - 1;
+  }
+  return {n, svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n + 2 * M} ${n + 2 * M}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path fill="#1d1420" d="${d}"/></svg>`};
+}
+// Le QR porte un lien : s'il est trop long, on allège (rivalités anciennes, puis cartes de règles vues)
+async function qrCodeFor(p, full) {
+  if (restoreLink(full).length <= QR_MAX) return {code: full, lite: false};
+  for (const [h, nr] of [[12, false], [0, false], [0, true]]) {
+    const c = await makeSaveCode(p, h, nr);
+    if (restoreLink(c).length <= QR_MAX || nr) return {code: c, lite: true};
+  }
+}
+const SAVE_IOS = `<p class="sv-ios">📱 Sur iPhone, l'appli installée sur l'écran d'accueil a sa propre mémoire : utilisez ce code pour y transférer votre perso.</p>`;
+let saveCode = "", restoreData = null;
+function openSave(restoreOnly) {
+  const has = !!profile.pseudo && !restoreOnly;
+  saveCode = "";
+  openSheet("save", `<div class="sv"><h2>💾 ${has ? "Sauvegarder mon perso" : "Restaurer mon perso"}</h2>
+    ${has ? `<p class="sub">Votre perso vit dans ce navigateur. Ce code le transporte ailleurs : XP, prestige, shakers, objets, compagnons, rivaux.</p>
+    <div class="sv-top"><div class="sv-qr" id="sv-qr" role="img" aria-label="QR code : lien de restauration du perso">Préparation du QR…</div>
+      <div class="sv-side"><small>📷 Sur l'autre téléphone, scannez ce QR avec l'appareil photo : Gonflette Party s'ouvre et propose de restaurer ce perso.</small><small id="sv-lite"></small></div></div>
+    <textarea readonly id="sv-code" rows="3" aria-label="Code de sauvegarde">Préparation…</textarea>
+    <div class="sv-acts"><button class="btn" type="button" data-sv="copy">📋 Copier le code</button>${navigator.share ? `<button class="btn alt" type="button" data-sv="share">📤 Partager</button>` : ""}</div>
+    ${SAVE_IOS}` : `<p class="sub">Collez le code de sauvegarde de votre perso (il commence par GF1.) ou le lien de restauration. Avec un QR code : scannez-le simplement avec l'appareil photo.</p>`}
+    <div class="sv-box"><h3>${has ? "Restaurer un code" : "Votre code"}</h3><textarea id="sv-in" rows="3" placeholder="GF1.…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Code à restaurer"></textarea>
+      <p class="sv-err" id="sv-err" role="alert"></p><div class="sv-acts"><button class="btn" type="button" data-sv="check">Restaurer ce code</button></div></div>
+    ${has ? "" : SAVE_IOS}</div>`, true);
+  if (!has) { setTimeout(() => { const i = $("sv-in"); if (i) i.focus(); }, 50); return; }
+  (async () => {
+    const code = await makeSaveCode(profile);
+    if (sheetKind !== "save" || !$("sv-code")) return;
+    saveCode = code; $("sv-code").value = code;
+    const box = $("sv-qr");
+    try {
+      const [qr, q] = await Promise.all([loadQr(), qrCodeFor(profile, code)]);
+      if (sheetKind !== "save" || !$("sv-qr")) return;
+      const r = qrSvg(qr, restoreLink(q.code));
+      box.innerHTML = r.svg; box.dataset.link = restoreLink(q.code);
+      if (r.n > 77) box.style.width = "min(320px,80vw)"; // QR dense : on l'affiche plus grand
+      if (q.lite) $("sv-lite").textContent = "Le QR emporte l'essentiel (sans les plus vieux rivaux) ; le code texte contient tout.";
+    } catch (e) { if (box) box.textContent = "QR indisponible (hors ligne, ou perso trop chargé) : utilisez « Copier le code » ou « Partager »."; }
+  })();
+}
+async function copyText(txt, okMsg) {
+  try { await navigator.clipboard.writeText(txt); toast(okMsg); return; } catch (e) {}
+  const ta = $("sv-code") || document.createElement("textarea");
+  try { if (!ta.parentNode) { ta.value = txt; document.body.appendChild(ta); } ta.focus(); ta.select(); if (document.execCommand("copy")) { toast(okMsg); return; } } catch (e) {} finally { if (ta.id !== "sv-code") ta.remove(); }
+  toast("Sélectionnez le code et copiez-le à la main");
+}
+function figOf(p, label, cls) {
+  const n = (p.own || []).length, pets = (p.own || []).filter(id => A.ITEM[id] && A.ITEM[id].s === "animal").length, t = A.tier(p.xp);
+  return `<figure class="rs-fig ${cls}"><span class="k">${esc(label)}</span>${A.svg(lookOf(p), p.xp, {pose: "flex", lg: "full"})}
+    <b class="nm">${LG ? LG.nameHtml(esc(p.pseudo), p.pr) : esc(p.pseudo)}</b>${p.pr > 0 && LG ? `<span class="lg-rank" style="--lgc:${LG.color(p.pr)}">Prestige ${p.pr} · ${esc(LG.rankLabel(p.pr))}</span>` : ""}
+    <ul><li>${esc(t.name)} · Niv. ${A.level(p.xp)}</li><li>⭐ ${p.xp} XP</li><li>🥤 ${p.sh} shaker${p.sh > 1 ? "s" : ""}${p.loot ? ` · 🎁 ${p.loot}` : ""}</li><li>🎽 ${n} objet${n > 1 ? "s" : ""}${pets ? ` · 🐾 ${pets}` : ""}</li></ul></figure>`;
+}
+async function openRestore(txt, from) {
+  let data;
+  try { data = await readSaveCode(txt); }
+  catch (e) {
+    const msg = SAVE_MSG[e && e.code] || SAVE_MSG.data;
+    if (from === "paste" && sheetKind === "save" && $("sv-err")) { $("sv-err").textContent = msg; return; }
+    cleanRestoreHash();
+    openSheet("restore", `<div class="sv"><h2>Code illisible</h2><p class="rs-warn">${esc(msg)}</p><div class="sv-acts"><button class="btn" type="button" data-sv="paste">Coller un code</button><button class="btn alt" type="button" data-sv="cancel">Fermer</button></div></div>`, true);
+    return;
+  }
+  restoreData = data;
+  const cur = profile.pseudo ? profile : null, prog = hasProgress(cur);
+  openSheet("restore", `<div class="sv"><h2>Restaurer ce perso ?</h2>
+    ${cur ? `<p class="rs-warn">⚠️ ${prog ? `Ce téléphone a déjà un perso avec de la progression : <b>${esc(cur.pseudo)}</b> sera <u>remplacé</u> (XP, shakers, objets, rivaux).` : `Le perso <b>${esc(cur.pseudo)}</b> de ce téléphone sera remplacé.`}${prog ? " Sauvegardez-le d'abord si vous voulez le garder." : ""}</p>` : ""}
+    <div class="rs-duo">${cur ? figOf(cur, "Sur ce téléphone", "old") : ""}${figOf(data, cur ? "Restauré" : "Le perso du code", "new")}</div>
+    <div class="sv-acts"><button class="btn" type="button" data-sv="apply">✅ Restaurer</button>${cur && prog ? `<button class="btn alt" type="button" data-sv="backup">💾 Sauvegarder l'actuel</button>` : ""}<button class="btn alt" type="button" data-sv="cancel">Annuler</button></div></div>`, true);
+}
+function applyRestore() {
+  const d = restoreData; if (!d) return;
+  restoreData = null;
+  const keep = {lastMid: profile.lastMid || null}; // champs volatils : ceux de CET appareil (pas de gains comptés deux fois)
+  if (profile.lastSo !== undefined) keep.lastSo = profile.lastSo;
+  for (const k of Object.keys(profile)) delete profile[k];
+  Object.assign(profile, {pseudo: "", look: Object.assign({}, A.DEFAULT_LOOK), xp: 0}, d, keep);
+  migrateProfile(); saveProfile();
+  cleanRestoreHash(); closeSheet();
+  $("pseudo").value = profile.pseudo;
+  if (editing) drawEditor();
+  renderAll(); pushPresence();
+  emit("profile", profile);
+  toast("Perso restauré ! 💪");
+}
+$("sheet").addEventListener("click", e => {
+  const b = e.target.closest("[data-sv]"); if (!b) return;
+  const k = b.dataset.sv;
+  if (k === "copy") { if (saveCode) copyText(saveCode, "Code copié : gardez-le précieusement ! 💾"); }
+  else if (k === "share") {
+    if (!saveCode) return;
+    const link = ($("sv-qr") && $("sv-qr").dataset.link) || restoreLink(saveCode);
+    navigator.share({title: "Mon perso Gonflette Party", text: `Mon perso Gonflette Party « ${profile.pseudo} » : ouvrez ce lien sur l'autre téléphone pour le restaurer.\n${link}`})
+      .catch(err => { if (!err || err.name !== "AbortError") copyText(saveCode, "Partage impossible : code copié à la place 💾"); });
+  }
+  else if (k === "check") { const i = $("sv-in"); if ($("sv-err")) $("sv-err").textContent = ""; openRestore(i ? i.value : "", "paste"); }
+  else if (k === "apply") applyRestore();
+  else if (k === "backup") { restoreData = null; openSave(); }
+  else if (k === "paste") openSave(true);
+  else if (k === "cancel") { restoreData = null; cleanRestoreHash(); closeSheet(); renderAll(); if (editing) drawEditor(); }
+});
+$("name-restore").addEventListener("click", () => openSave(true));
+$("ed-save").addEventListener("click", () => openSave());
+
+/* ---------- 📲 appli installable (PWA) ---------- */
+let inFrame = false;
+try { inFrame = window.top !== window.self; } catch (e) { inFrame = true; }
+let installEvt = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; }); // Android / Chrome : gardé pour le menu ⋯
+addEventListener("appinstalled", () => { installEvt = null; toast("Appli installée : Gonflette est sur l'écran d'accueil ! 📲"); });
+const isStandalone = () => { try { return matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone === true; } catch (e) { return false; } };
+const canInstall = () => !isStandalone() && MODE !== "claude" && !inFrame;
+async function doInstall() {
+  const ev = installEvt;
+  if (ev) {
+    installEvt = null; closeSheet();
+    try { await ev.prompt(); const c = await ev.userChoice; if (c && c.outcome === "accepted") toast("C'est parti : l'icône arrive sur l'écran d'accueil 📲"); return; } catch (e) {}
+  }
+  openInstallGuide();
+}
+function openInstallGuide() {
+  const ua = navigator.userAgent || "", ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1), android = /Android/.test(ua);
+  const ic = (p, cls) => `<span class="ins-ic${cls ? " " + cls : ""}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${p}</svg></span>`;
+  const SHARE = ic(`<path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M8.5 10H6.5a1.5 1.5 0 0 0-1.5 1.5v8A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-8a1.5 1.5 0 0 0-1.5-1.5h-2"/>`);
+  const ADD = ic(`<rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 8.5v7M8.5 12h7"/>`);
+  const OK = ic(`<path d="M5 12.5l4.5 4.5L19 7.5"/>`);
+  const DOTS = ic(`<circle cx="12" cy="5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/>`, "and");
+  const INST = ic(`<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3"/>`, "and");
+  const iosB = `<section class="ins-os${ios ? " first" : ""}"><h3>🍎 iPhone / iPad · Safari</h3><ol>
+    <li><span>Touchez le bouton <b>Partager</b> ⬆️ (en bas de Safari ; dans Chrome : en haut, dans la barre d'adresse)</span>${SHARE}</li>
+    <li><span>Faites défiler et choisissez <span class="ins-chip">Sur l'écran d'accueil</span></span>${ADD}</li>
+    <li><span>Touchez <b>Ajouter</b> en haut à droite : l'icône 💪 apparaît.</span>${OK}</li></ol></section>`;
+  const andB = `<section class="ins-os${android ? " first" : ""}"><h3>🤖 Android · Chrome</h3><ol>
+    <li><span>Touchez le menu <b>⋮</b> en haut à droite</span>${DOTS}</li>
+    <li><span>Choisissez <span class="ins-chip">Installer l'application</span> ou <span class="ins-chip">Ajouter à l'écran d'accueil</span></span>${INST}</li>
+    <li><span>Confirmez <b>Installer</b> : l'icône 💪 apparaît.</span>${OK}</li></ol></section>`;
+  openSheet("install", `<div class="ins"><h2>📲 Installer l'appli</h2><p class="sub">Gonflette Party sur l'écran d'accueil : elle s'ouvre en plein écran, comme une vraie appli, sans passer par un store.</p>
+    ${android && !ios ? andB + iosB : iosB + andB}${!ios && !android ? `<p class="sub">Sur ordinateur (Chrome, Edge) : bouton « Installer » à droite de la barre d'adresse.</p>` : ""}
+    <p class="sv-ios">📱 Sur iPhone, l'appli installée a sa propre mémoire : ensuite, transférez-y votre perso avec <b>💾 Sauvegarder mon perso</b>.</p>
+    ${profile.pseudo ? `<div class="sv-acts"><button class="btn alt" type="button" data-menu="save">💾 Sauvegarder mon perso</button></div>` : ""}</div>`, true);
+}
+// Service worker : seulement sur le vrai site (https, ou localhost pour les tests) et jamais dans claude.ai
+// (artefact en iframe), en mode ?mock ou en fichier local. Sans lui, tout marche pareil (sauf hors ligne).
+(function registerSW() {
+  if (!("serviceWorker" in navigator)) return;
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  if (!(location.protocol === "https:" || (location.protocol === "http:" && local))) return;
+  if (MODE !== "p2p" || inFrame || window.claude) return;
+  if (/[?&]nosw\b/.test(location.search)) { navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(() => {}); return; }
+  const go = () => navigator.serviceWorker.register("sw.js", {scope: "./"}).catch(e => console.warn("service worker", e));
+  if (document.readyState === "complete") go(); else addEventListener("load", go, {once: true});
+})();
+
 function buyItem(id) {
   const it = A.ITEM[id]; if (!it || profile.own.includes(id)) return;
   if (profile.sh < it.price) { toast(`Pas assez de shakers : il en manque ${it.price - profile.sh} 🥤`); return; }
@@ -2665,9 +3014,12 @@ addEventListener("pointerdown", () => keepAwake(), {passive: true}); // certains
 // avec la même clé (core/net.js), donc dans sa partie si elle continue.
 if (sess.lob && profile.pseudo) {
   if (sess.tm === 0 || sess.tm === 1) { me.team = sess.tm; me.teamName = sess.tn || null; }
-  const code = MODE === "p2p" ? ((location.hash || "").replace("#", "").toUpperCase().replace(/[^A-Z0-9]/g, "") || sess.r || "") : "";
+  const code = MODE === "p2p" ? (roomHash() || sess.r || "") : "";
   if (MODE !== "p2p" || code.length >= 3) { if (MODE === "p2p") { roomCode = code; if (!booted) boot(); } enterLobby(); }
 }
+// Lien de restauration (QR code scanné : …/#restore=GF1.…) : fenêtre de confirmation avec l'aperçu du perso
+{ const rc = restoreFromHash(); if (rc) openRestore(rc, "link"); }
+addEventListener("hashchange", () => { const rc = restoreFromHash(); if (rc) openRestore(rc, "link"); });
 })();
 </script>
 </body>
