@@ -1871,13 +1871,13 @@
       s += `<path transform="translate(${f(b[0] + 6)} ${f(b[1] - b[2] - 12)}) scale(1.1)" d="M0 7C-12 -1 -10 -10 -4 -10Q0 -10 0 -5Q0 -10 4 -10C10 -10 12 -1 0 7Z" fill="#ff2e63" stroke="${ink}" stroke-width="2.2"/>`;
       s += `<path transform="translate(${f(b[0] - 2)} ${f(b[1] - 2)}) rotate(-15)" d="M-5 0q2.5 -3 5 0q2.5 -3 5 0q-2.5 4 -5 1q-2.5 3 -5 -1z" fill="#ff5d8a" opacity=".85"/>`;
     }
-    // ---- compagnon : à côté des pieds (taille presque fixe à l'écran), ou sur l'épaule (perroquet)
+    // ---- compagnon : à côté des pieds (grandit avec le perso), ou sur l'épaule (perroquet)
     const PD = PETS[eq.animal];
     if (PD) {
       let px, py, k, flip = false;
       if (PD.perch) {
         const d = eq.dos === "roquette" ? -1 : 1, a0 = [cx + d * neckH, nkTop], c0 = [cx + d * tc0, trapTop], b0 = [cx + d * SW, yS + 4];
-        k = .72 + .2 * mc;
+        k = .8 + .3 * mc;
         const want = Math.max(SW * .6, headR * .78 + 12 * k);
         let q = b0;
         for (let i = 0; i <= 40; i++) { const p2 = bz(a0, c0, b0, i / 40); if (Math.abs(p2[0] - cx) >= want) { q = p2; break; } }
@@ -1886,7 +1886,7 @@
         const S = hw * 2;
         k = S * .4 / 64; px = 100 - hw + S - PD.w * k / 2 - S * .03; py = headY - headR - 18 + S + PD.h * k * .28;
       } else {
-        k = Math.pow(size(xp) / SIZE0, -.62);
+        k = 1.15 * Math.pow(size(xp) / SIZE0, -.12); // le compagnon grandit avec son maître (≈ ×2,4 à l'écran du départ au Titan)
         px = Math.min(Math.max((footX[1] || cx + 30) + 4 + PD.w * k / 2, cx + 52), 243 - PD.w * k / 2); py = 257;
       }
       const T = wtools(Math.max(2.4, 1.3 / k));
