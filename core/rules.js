@@ -52,10 +52,10 @@ const R = {
     "Au signal <b>« FORCE ! »</b>, martelez votre gros bouton.",
     "Plus vous tapez vite, <b>plus le bras penche</b> de votre côté.",
     "Plaquez le bras adverse : <b>2 manches gagnantes</b>."]},
-  morpion: {s: "Votre case envoie l'adversaire dans la grille voisine.", k: "pick", o: {sym: "✕", bg: "ttt"}, l: [
-    "<b>Touchez une case</b> : l'adversaire doit jouer dans la petite grille au même endroit.",
-    "<b>3 alignés</b> dans une petite grille = vous la gagnez.",
-    "<b>Alignez 3 petites grilles</b> pour remporter la partie."]},
+  morpion: {s: "Alignez 3 symboles, au meilleur des 3 manches.", k: "pick", o: {sym: "✕", bg: "ttt"}, l: [
+    "<b>Touchez une case</b> pour y tracer votre symbole, chacun son tour.",
+    "<b>3 alignés</b> (ligne, colonne ou diagonale) = la manche est à vous.",
+    "<b>2 manches gagnées</b> = victoire. Manche nulle : on rejoue."]},
   reflexes: {s: "Attendez « TIREZ ! » puis touchez le plus vite.", k: "quick", l: [
     "<b>Attendez le signal</b>… puis touchez l'écran <b>le plus vite</b> possible !",
     "Trop tôt = <b>faux départ</b>. Méfiez-vous du faux signal orange.",
@@ -72,10 +72,10 @@ const R = {
     "<b>Lisez votre mot secret</b> sans le montrer. L'Undercover a un mot proche !",
     "Chacun <b>tape un indice</b>, puis tout le monde <b>vote</b> pour éliminer un suspect.",
     "Civils : <b>démasquez l'intrus</b>. Undercover : <b>survivez</b> jusqu'au bout."]},
-  petitbac: {s: "Une lettre, 6 cases à remplir, STOP !", k: "type", o: {letter: "B", txt: "Banane"}, l: [
-    "Une lettre, 6 catégories : <b>tapez un mot pour chaque case</b>.",
+  petitbac: {s: "Une lettre, 6 cases, STOP ! Puis le juge note.", k: "type", o: {letter: "B", txt: "Banane"}, l: [
+    "Une lettre, 6 catégories : <b>tapez un mot pour chaque case</b> (2 min).",
     "Tout rempli ? <b>Criez « STOP ! »</b> (5 s pour les autres).",
-    "Mot unique = <b>2 pts</b>, partagé = 1 pt. 3 manches."]},
+    "<b>Le juge (l'hôte) donne les points</b> : unique 10, doublon 5, refusé 0. 3 manches."]},
   tiracorde: {s: "Tapez pile sur le « HISSE ! », ensemble.", k: "beat", l: [
     "<b>Tapez pile sur le « HISSE ! »</b>, en rythme avec le tempo.",
     "Tapez <b>en même temps que votre équipe</b> : la synchro compte plus que la vitesse.",

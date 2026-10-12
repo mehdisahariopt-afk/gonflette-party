@@ -1,11 +1,17 @@
 /* Gonflette Party : Petit Bac (2 à 8 joueurs, chacun sur son téléphone).
    Style cahier d'écolier : papier Seyès, marge rouge, post-it, tampon, corrections au stylo rouge.
-   3 manches. L'hôte tire une lettre (sans K Q W X Y Z) et 6 catégories. 90 s pour remplir ;
+   3 manches. L'hôte tire une lettre (sans K Q W X Y Z) et 6 catégories. 2 min pour remplir ;
    le premier qui a tout rempli peut crier « STOP ! » (fin pour tous 5 s plus tard).
-   Correction : réponses vides ou ne commençant pas par la lettre refusées d'office ; les autres joueurs
-   peuvent contester (👎), majorité des autres votants = refusée. Réponse valide unique 2 pts, partagée 1 pt.
-   Entrée joueur (absolue, renvoyée régulièrement) : {r, a:[6 réponses], st:0|1 (STOP), v:[ids contestés], ok:0|1}.
-   Tests : window.__pbSpeed = 10 accélère les durées (lu par l'hôte et pour les animations). */
+   Correction sans chrono serré : un JUGE (le joueur qui fait tourner la partie, sinon le premier joueur ; s'il
+   part, le suivant) attribue les points de chaque réponse : 10 (unique), 5 (doublon), 0 (refusée). C'est pré-rempli
+   (vide ou mauvaise lettre = 0, doublon = 5, sinon 10), le juge corrige d'une touche (10 → 5 → 0) et tout le monde
+   voit ses choix en direct ; les autres peuvent contester (👎, indicatif). Le juge touche « Terminé ✓ » (confirmé)
+   pour valider ; filet de sécurité : validation automatique au bout de 5 min.
+   État de correction : {ph:"val", A, p (un code par réponse : "0"=0, "1"=5, "2"=10, "-"=pas de copie), j (siège du juge),
+   jv (n° de juge, change à chaque relève), V (nombre de 👎 par réponse), tl}.
+   Entrée joueur (absolue, renvoyée régulièrement) : {r, a:[6 réponses], st:0|1 (STOP), v:[ids contestés],
+   jv, p (points du juge), dn:0|1 (juge : terminé)}.
+   Tests : window.__pbSpeed = 10 accélère les durées ; window.__pbJudge = siège force le juge préféré (lus par l'hôte). */
 (function () {
 "use strict";
 
@@ -19,7 +25,9 @@ const CATS = [
 ];
 const LETTERS = "ABCDEFGHIJLMNOPRSTUV";             // sans K Q W X Y Z
 const ROUNDS = 3, NC = 6, MAXLEN = 24;
-const T = {draw: 5, play: 90, stop: 5, lock: 1, val: 15, cor: 7, lb: 6, end: 3};
+const T = {draw: 5, play: 120, stop: 5, lock: 1, val: 300, cor: 8, lb: 6, end: 3};
+const PTS = {"0": 0, "1": 5, "2": 10};          // code de points -> points
+const fmt = t => t >= 60 ? `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}` : String(t);
 const NOTE_COLORS = 4;
 
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
@@ -131,15 +139,38 @@ const CSS = `
 .pb-mark.pb-big{font-size:21px}
 .pb-mark small{font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;margin-left:3px}
 .pb-me{flex:none;font-size:13px;font-weight:700;color:#8a879a;text-transform:uppercase;letter-spacing:.06em}
-.pb-vote{flex:none;min-width:58px;height:36px;border:2px solid #c6cbe0;border-radius:18px;background:#fff;font:700 16px "Barlow Condensed",sans-serif;color:var(--txt);cursor:pointer}
+.pb-vote{flex:none;min-width:48px;height:44px;padding:0 8px;border:2px solid #c6cbe0;border-radius:22px;background:#fff;font:700 17px "Barlow Condensed",sans-serif;color:var(--txt);cursor:pointer;touch-action:manipulation}
 .pb-vote.pb-on{border-color:var(--red);background:#ffe3e3;color:var(--red)}
 .pb-vote:disabled{opacity:.6}
 .pb-cnt{flex:none;font-weight:700;color:var(--red);font-size:15px}
-.pb-okbar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:10px;margin:10px -12px 0 -40px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px)) 40px;
-  background:rgba(253,252,244,.96);border-top:2px solid var(--line2)}
-.pb-okbtn{flex:1;height:48px;border:3px solid var(--txt);border-radius:10px;background:#bdf0ae;font:800 19px "Barlow Condensed",sans-serif;color:var(--txt);cursor:pointer;box-shadow:0 3px 0 var(--txt)}
-.pb-okbtn.pb-on{background:#fff;box-shadow:none;transform:translateY(3px)}
-.pb-okn{flex:none;font-weight:700;color:#5d5a6a}
+.pb-okbar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;gap:8px;min-height:68px;margin:10px -12px 0 -40px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px)) 16px;
+  background:rgba(253,252,244,.97);border-top:2px solid var(--line2);box-shadow:0 -4px 10px -6px rgba(0,0,0,.2)}
+.pb-okbar .gk-btn{flex:none;min-height:48px;padding:8px 14px;font-size:1.05rem}
+.pb-okbar .gk-btn:not(.good){background:#fff}
+.pb-okbar .pb-done{flex:1 1 auto;max-width:220px;font-size:1.2rem}
+.pb-bmsg{flex:1;min-width:0;font-weight:600;font-size:15px;line-height:1.2;color:#5d5a6a}
+.pb-bmsg b{color:var(--txt)}
+.pb-mytot{flex:none;display:grid;justify-items:center;line-height:1;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#5d5a6a}
+.pb-mytot b{font-family:"Pacifico",cursive;font-weight:400;font-size:24px;line-height:1.3;color:var(--red);text-transform:none;letter-spacing:0}
+.pb-instr b{color:var(--txt)}
+.pb-aw{flex:1;min-width:0;display:flex;flex-direction:column;padding:3px 0}
+.pb-aw .pb-who{width:auto;font-size:13px;line-height:1.1}
+.pb-aw .pb-txt{margin:0;align-self:flex-start;font-size:21px}
+.pb-why{font-family:"Pacifico",cursive;font-style:normal;font-size:12px;color:var(--red);line-height:1.2}
+.pb-ans.pb-mine .pb-aw .pb-who{color:var(--ink)}
+.pb-pt{flex:none;display:grid;place-items:center;width:56px;height:44px;padding:0;border:3px solid var(--txt);border-radius:12px;background:#fff;color:var(--txt);
+  font:400 22px "Anton",Impact,sans-serif;letter-spacing:.02em;font-variant-numeric:tabular-nums;transition:background-color .15s,transform .1s}
+button.pb-pt{cursor:pointer;box-shadow:0 3px 0 var(--txt);touch-action:manipulation}
+button.pb-pt:active{transform:translateY(2px);box-shadow:0 1px 0 var(--txt)}
+button.pb-pt:disabled{cursor:default;opacity:.5;box-shadow:none}
+span.pb-pt{border-width:2px;height:38px;width:48px;font-size:19px;transform:rotate(-3deg)}
+.pb-pt.pb-v2{background:#bdf0ae;border-color:#2e7d32;color:#1b5e20}
+.pb-pt.pb-v1{background:#fff27a;border-color:#a68a00;color:#6b5900}
+.pb-pt.pb-v0{background:#f1eef2;border-color:#9a93a6;color:#9a93a6}
+button.pb-pt.pb-v2{box-shadow:0 3px 0 #2e7d32}button.pb-pt.pb-v1{box-shadow:0 3px 0 #a68a00}button.pb-pt.pb-v0{box-shadow:0 3px 0 #9a93a6}
+.pb-pt.pb-flash{animation:pb-flash .7s}
+.pb-ans.pb-x .pb-aw .pb-txt{color:#8d8aa0}
+@keyframes pb-flash{0%{transform:scale(1.35) rotate(-3deg);box-shadow:0 0 0 6px rgba(29,63,166,.25)}100%{transform:scale(1) rotate(-3deg)}}
 .pb-score{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
 .pb-circle{display:inline-grid;place-items:center;min-width:76px;height:58px;padding:0 10px 6px;border:3px solid var(--red);border-radius:50%;color:var(--red);
   font-family:"Pacifico",cursive;font-size:26px;transform:rotate(-6deg);animation:pb-ink .4s backwards}
@@ -229,52 +260,69 @@ GONFLETTE.registerGame({
       ans = {};
       H = {ph: "draw", r, L, c, tl: T.draw, S: H ? H.S : P.map(() => 0)};
     }
+    /* Points par défaut : vide ou mauvaise lettre = 0, même réponse qu'un autre = 5 (doublon), sinon 10. */
+    function defaults(A, L) {
+      const out = new Array(NP * NC).fill("-");
+      for (let ci = 0; ci < NC; ci++) {
+        const n = {};
+        P.forEach((p, s) => { const a = A[s]; if (a && !autoBad(a[ci], L)) { const k = dupKey(a[ci]); n[k] = (n[k] || 0) + 1; } });
+        P.forEach((p, s) => { const a = A[s]; if (a) out[s * NC + ci] = autoBad(a[ci], L) ? "0" : n[dupKey(a[ci])] > 1 ? "1" : "2"; });
+      }
+      return out.join("");
+    }
     function startVal() {
       const alive = aliveSet();
       const A = P.map(p => alive.has(p.key) ? clean(ans[p.key]) : null);
-      H = {ph: "val", r: H.r, L: H.L, c: H.c, tl: T.val, A, V: "0".repeat(NP * NC), k: "0".repeat(NP), S: H.S};
-      hostVotes();
+      H = {ph: "val", r: H.r, L: H.L, c: H.c, tl: T.val, A, p: defaults(A, H.L), j: -1, jv: 0, V: "0".repeat(NP * NC), S: H.S};
+      hostVal();
     }
-    /* Votes de contestation (absolus, dans les entrées) -> H.V (un chiffre par réponse) et H.k (prêts). */
-    function voteCounts() {
+    /* Juge : le joueur qui fait tourner la partie (sinon le premier joueur). S'il n'est plus là, le suivant prend
+       la relève (jv change : le nouveau juge repart des points publiés). */
+    function pickJudge() {
+      const alive = aliveSet();
+      if (H.j >= 0 && alive.has(P[H.j].key)) return;
+      const f = window.__pbJudge, pref = f != null && P[+f] ? +f : (mySeat >= 0 ? mySeat : 0);
+      for (let d = 0; d < NP; d++) {
+        const s = (pref + d) % NP;
+        if (alive.has(P[s].key)) { if (H.j !== s) { H.j = s; H.jv++; } return; }
+      }
+    }
+    /* Contestations (👎, indicatives) -> H.V ; points et « Terminé » du juge -> H.p / fin de la correction. */
+    function hostVal() {
+      pickJudge();
       const alive = aliveSet(), cnt = new Array(NP * NC).fill(0);
       for (const p of P) {
         const inp = inputs[p.key];
         if (!alive.has(p.key) || !inp || inp.r !== H.r || !Array.isArray(inp.v)) continue;
         const seen = new Set();
         for (const raw of inp.v.slice(0, NP * NC)) {
-          const id = raw | 0, s = (id / NC) | 0, ci = id % NC;
-          if (id < 0 || id >= NP * NC || seen.has(id) || s === seatOf[p.key] || !H.A[s] || autoBad(H.A[s][ci], H.L)) continue;
+          const id = raw | 0, s = (id / NC) | 0;
+          if (id < 0 || id >= NP * NC || seen.has(id) || s === seatOf[p.key] || !H.A[s] || !norm(H.A[s][id % NC])) continue;
           seen.add(id); cnt[id]++;
         }
       }
-      return cnt;
-    }
-    function hostVotes() {
-      const alive = aliveSet();
-      H.V = voteCounts().map(n => Math.min(9, n)).join("");
-      H.k = P.map(p => { const inp = inputs[p.key]; return alive.has(p.key) && inp && inp.r === H.r && inp.ok ? "1" : "0"; }).join("");
-      const voters = P.filter(p => alive.has(p.key) && H.A[seatOf[p.key]]);
-      if (voters.length && voters.every(p => H.k[seatOf[p.key]] === "1")) endVal();
+      H.V = cnt.map(n => Math.min(9, n)).join("");
+      const jp = H.j >= 0 ? inputs[P[H.j].key] : null;
+      if (jp && jp.r === H.r && jp.jv === H.jv) {
+        if (typeof jp.p === "string" && jp.p.length === NP * NC) {
+          H.p = H.p.split("").map((c, i) => {
+            const v = jp.p[i], a = H.A[(i / NC) | 0];
+            return c === "-" || !/^[012]$/.test(v) || (v !== "0" && !norm(a[i % NC])) ? c : v;   // réponse vide : 0 d'office
+          }).join("");
+        }
+        if (jp.dn) endVal();
+      }
     }
     function endVal() {
-      const alive = aliveSet(), cnt = voteCounts();
-      const nVoters = P.filter(p => alive.has(p.key)).length;
-      const R = new Array(NP * NC).fill("-"), G = P.map(() => 0);
-      for (let ci = 0; ci < NC; ci++) {
-        const valid = [];
-        P.forEach((p, s) => {
-          const a = H.A[s];
-          if (!a || !alive.has(p.key)) return;                      // parti : réponses ignorées
+      const alive = aliveSet(), G = P.map(() => 0), R = H.p.split("");
+      P.forEach((p, s) => {
+        for (let ci = 0; ci < NC; ci++) {
           const id = s * NC + ci;
-          if (autoBad(a[ci], H.L)) R[id] = "0";
-          else if (cnt[id] * 2 > nVoters - 1) R[id] = "1";
-          else valid.push([s, dupKey(a[ci])]);
-        });
-        const n = {}; valid.forEach(([, k]) => { n[k] = (n[k] || 0) + 1; });
-        valid.forEach(([s, k]) => { const uniq = n[k] === 1; R[s * NC + ci] = uniq ? "3" : "2"; G[s] += uniq ? 2 : 1; });
-      }
-      H = {ph: "cor", r: H.r, L: H.L, c: H.c, tl: T.cor, A: H.A, R: R.join(""), G, S: H.S.map((v, i) => v + G[i])};
+          if (!H.A[s] || !alive.has(p.key)) R[id] = "-";             // parti : réponses ignorées
+          else G[s] += PTS[R[id]] || 0;
+        }
+      });
+      H = {ph: "cor", r: H.r, L: H.L, c: H.c, tl: T.cor, A: H.A, R: R.join(""), G, S: H.S.map((v, i) => v + G[i]), j: H.j};
     }
     function rankSeats(S) {
       const alive = aliveSet();
@@ -301,7 +349,7 @@ GONFLETTE.registerGame({
           if (H.tl <= 0 || H.sx === 0) { H.ph = "lock"; H.tl = T.lock; }
           break;
         case "lock": if (--H.tl <= 0) startVal(); break;
-        case "val": if (--H.tl <= 0) endVal(); break;
+        case "val": hostVal(); if (H.ph === "val" && --H.tl <= 0) endVal(); break;
         case "cor": if (--H.tl <= 0) H = {ph: "lb", r: H.r, tl: T.lb, G: H.G, S: H.S}; break;
         case "lb":
           if (--H.tl <= 0) {
@@ -335,7 +383,7 @@ GONFLETTE.registerGame({
           if (Array.isArray(inp.a)) ans[p.key] = clean(inp.a);
           if (H.ph === "play" && H.sx == null && inp.st && ans[p.key].every(x => norm(x))) { H.sx = T.stop; H.sb = seatOf[p.key]; }
         }
-      } else if (H.ph === "val") hostVotes();
+      } else if (H.ph === "val") hostVal();
       pub();
     }
     if (api.isHost) {
@@ -346,20 +394,25 @@ GONFLETTE.registerGame({
     }
 
     /* =================== AFFICHAGE (tout le monde) =================== */
-    let S = null, view = "", myRound = 0, myAns = [], myStop = 0, myVotes = new Set(), myOk = 0, allInputs = {};
+    let S = null, view = "", myRound = 0, myAns = [], myStop = 0, myVotes = new Set(), allInputs = {};
+    let myPts = "", myJv = 0, myDone = 0, confirming = false, confirmT = null, prevP = "";
     let sendT = null, lastStopBeep = -1;
     const blank = () => new Array(NC).fill("");
-    function myInput() { return {r: S.r, a: myAns.map(x => x.slice(0, MAXLEN)), st: myStop, v: [...myVotes], ok: myOk}; }
+    const amJudge = () => !!S && S.ph === "val" && mySeat >= 0 && S.j === mySeat;
+    function myInput() {
+      const o = {r: S.r, a: myAns.map(x => x.slice(0, MAXLEN)), st: myStop, v: [...myVotes]};
+      if (myJv) { o.jv = myJv; o.p = myPts; o.dn = myDone; }
+      return o;
+    }
     function push() { cancel(sendT); sendT = null; if (S && mySeat >= 0) api.setInput(myInput()); }
     function sendSoon() { if (!sendT) sendT = later(push, 250); }
     const beat = setInterval(() => { if (!dead && S && /play|lock|val/.test(S.ph)) push(); }, 1200);
 
     function top(s, title, sub, right) {
       return `<div class="pb-top"><div class="pb-badge" aria-label="Lettre ${s.L}">${s.L}</div>
-        <div class="pb-mid"><b>${title}</b><small>${sub}</small></div>${right || ""}<div class="pb-clock" id="pb-clock" aria-label="Temps restant">${s.tl}</div></div>`;
+        <div class="pb-mid"><b>${title}</b><small>${sub}</small></div>${right || ""}<div class="pb-clock" id="pb-clock" aria-label="Temps restant">${fmt(s.tl)}</div></div>`;
     }
     const nameHTML = s => esc(P[s].pseudo);
-    const voterCount = () => P.filter(p => aliveSet().has(p.key)).length - 1;
 
     /* ---- tirage ---- */
     function buildDraw(s) {
@@ -368,7 +421,7 @@ GONFLETTE.registerGame({
         <div class="pb-wbox"><div class="pb-ptr"></div><div class="pb-wheel" id="pb-wheel">${LETTERS.split("").map((l, i) => `<span style="transform:rotate(${i * step}deg)">${l}</span>`).join("")}</div><div class="pb-hub"></div>
           <div class="pb-stamp" id="pb-stamp" role="status"><b>${s.L}</b><small>LETTRE TIRÉE</small></div></div>
         <div class="pb-wcats" id="pb-wcats">${s.c.map((ci, i) => `<span class="pb-note pb-n${i % NOTE_COLORS}" style="--i:${i};--rot:${(i % 2 ? 2 : -2) + (i % 3) - 1}deg">${esc(CATS[ci])}</span>`).join("")}</div>
-        <p class="pb-next">${mySeat >= 0 ? "À vos stylos !" : "Les joueurs prennent leurs stylos…"} 90 s, 6 catégories.</p></div>`;
+        <p class="pb-next">${mySeat >= 0 ? "À vos stylos !" : "Les joueurs prennent leurs stylos…"} ${T.play >= 60 && T.play % 60 === 0 ? T.play / 60 + " min" : T.play + " s"}, 6 catégories.</p></div>`;
       const wheel = $("pb-wheel"), stamp = $("pb-stamp"), cats = $("pb-wcats");
       const final = -(idx * step) - 360 * 5;
       const late = s.tl < T.draw - 1;
@@ -433,7 +486,7 @@ GONFLETTE.registerGame({
     }
     function updPlay(s) {
       const clock = $("pb-clock");
-      if (clock) { clock.textContent = s.ph === "lock" ? "0" : s.tl; clock.classList.toggle("pb-hot", s.ph === "play" && s.tl <= 10); }
+      if (clock) { clock.textContent = s.ph === "lock" ? "0" : fmt(s.tl); clock.classList.toggle("pb-hot", s.ph === "play" && s.tl <= 10); }
       const ban = $("pb-ban");
       const setBan = (mode, html) => { if (ban.dataset.m !== mode) { ban.dataset.m = mode; ban.innerHTML = html; } };
       if (s.ph === "lock") {
@@ -451,66 +504,120 @@ GONFLETTE.registerGame({
       checkRows(); renderProg();
     }
 
-    /* ---- correction (votes) ---- */
+    /* ---- correction : le juge attribue les points ---- */
     function ansList(s, ci, rowFn) {
       return P.map((p, si) => s.A[si] ? rowFn(si, s.A[si][ci] || "", si * NC + ci) : "").join("");
     }
+    const ptsOf = id => (amJudge() && myPts ? myPts : S.p)[id];
+    const ptLabel = c => c === "-" ? "–" : String(PTS[c]);
+    function myTotal(codes) { let t = 0; if (mySeat >= 0) for (let ci = 0; ci < NC; ci++) t += PTS[codes[mySeat * NC + ci]] || 0; return t; }
     function buildVal(s) {
-      const me = mySeat >= 0;
-      page.innerHTML = top(s, "Correction", me ? "Contestez les réponses douteuses" : "Les joueurs corrigent") +
-        `<p class="pb-instr">Touchez 👎 sur une réponse qui ne tient pas la route. Majorité des autres joueurs = réponse refusée.</p>` +
+      const me = mySeat >= 0, judge = amJudge(), jn = nameHTML(s.j);
+      clearConfirm();
+      page.innerHTML = top(s, "Correction", judge ? "⚖️ Tu es le juge" : `⚖️ Juge : ${jn}`) +
+        `<p class="pb-instr">${judge
+          ? `<b>Tu donnes les points.</b> Touche un score pour le changer : <b>10 → 5 → 0</b>. Pré-rempli : unique 10, doublon 5, vide ou mauvaise lettre 0.`
+          : `<b>${jn}</b> est le juge : il donne les points, tu les vois en direct.${me ? " Pas d'accord ? Touche 👎." : ""}`}</p>` +
         s.c.map((ci, k) => `<section class="pb-cat"><span class="pb-note pb-n${k % NOTE_COLORS}" style="--rot:${k % 2 ? 1.2 : -1.6}deg">${esc(CATS[ci])}</span><ul>` +
           ansList(s, k, (si, a, id) => {
-            const bad = autoBad(a, s.L);
-            const right = bad ? `<em class="pb-mark">${bad}</em>`
-              : si === mySeat ? `<span class="pb-me">toi</span><span class="pb-cnt" data-c="${id}"></span>`
-              : me ? `<button class="pb-vote" type="button" data-id="${id}" aria-label="Contester ${esc(a)}">👎 <b>0</b></button>`
+            const mine = si === mySeat, empty = !norm(a), bad = autoBad(a, s.L);
+            const vote = !judge && me && !mine && !empty
+              ? `<button class="pb-vote" type="button" data-id="${id}" aria-label="Contester ${esc(a)}">👎<b></b></button>`
               : `<span class="pb-cnt" data-c="${id}"></span>`;
-            return `<li class="pb-ans${bad ? " pb-x" : ""}" data-li="${id}"><span class="pb-who">${nameHTML(si)}</span><span class="pb-txt${a ? "" : " pb-empty"}">${a ? esc(a) : "—"}</span>${right}</li>`;
+            const pt = judge
+              ? `<button class="pb-pt" type="button" data-id="${id}"${empty ? " disabled" : ""} aria-label="Points pour ${esc(a || "réponse vide")}"></button>`
+              : `<span class="pb-pt" data-id="${id}"></span>`;
+            return `<li class="pb-ans${mine ? " pb-mine" : ""}" data-li="${id}"><span class="pb-aw"><span class="pb-who">${nameHTML(si)}${mine ? " (toi)" : ""}</span>` +
+              `<span class="pb-txt${a ? "" : " pb-empty"}">${a ? esc(a) : "—"}</span>${bad && bad !== "vide" ? `<em class="pb-why">${bad}</em>` : ""}</span>${vote}${pt}</li>`;
           }) + `</ul></section>`).join("") +
-        (me ? `<div class="pb-okbar"><button class="pb-okbtn" id="pb-ok" type="button">J'ai fini de corriger ✔</button><span class="pb-okn" id="pb-okn"></span></div>` : `<p class="pb-hint" id="pb-okn"></p>`);
+        `<div class="pb-okbar" id="pb-bar"></div>`;
       el.querySelectorAll(".pb-vote").forEach(b => b.addEventListener("click", () => {
         const id = +b.dataset.id;
         if (myVotes.has(id)) myVotes.delete(id); else { myVotes.add(id); tone(300, .08, "triangle", .08); }
         b.classList.toggle("pb-on", myVotes.has(id)); push();
       }));
-      const ok = $("pb-ok");
-      if (ok) ok.addEventListener("click", () => { myOk = myOk ? 0 : 1; push(); updVal(S); });
+      el.querySelectorAll("button.pb-pt").forEach(b => b.addEventListener("click", () => {
+        if (!amJudge() || myDone) return;
+        const id = +b.dataset.id, c = ptsOf(id), nx = c === "2" ? "1" : c === "1" ? "0" : "2";
+        myPts = myPts.slice(0, id) + nx + myPts.slice(id + 1);
+        push(); updVal(S);
+        tone(nx === "2" ? 880 : nx === "1" ? 660 : 220, .07, "triangle", .08);
+        if (api.haptic) api.haptic("light");
+      }));
+      prevP = s.p;
+      drawBar(s);
+    }
+    function clearConfirm() { confirming = false; cancel(confirmT); confirmT = null; }
+    /* Barre du bas : « Terminé ✓ » (avec confirmation) pour le juge, rappel du juge et total de ma copie pour les autres. */
+    function drawBar(s) {
+      const bar = $("pb-bar"); if (!bar) return;
+      const late = s.tl <= 30 ? ` · validation auto dans ${s.tl} s` : "";
+      let mode, html;
+      if (amJudge()) {
+        const nCt = (s.V.match(/[1-9]/g) || []).length;
+        if (myDone) { mode = "sent"; html = `<span class="pb-bmsg">Points validés, on corrige au stylo rouge…</span>`; }
+        else if (confirming) {
+          mode = "ask";
+          html = `<span class="pb-bmsg"><b>Valider ces points ?</b></span><button class="gk-btn" id="pb-no" type="button">Retour</button><button class="gk-btn good" id="pb-yes" type="button">Oui ✓</button>`;
+        } else {
+          mode = "j:" + nCt + late;
+          html = `<button class="gk-btn good pb-done" id="pb-done" type="button">Terminé ✓</button><span class="pb-bmsg">${nCt ? `👎 sur ${nCt} réponse${nCt > 1 ? "s" : ""}` : "Prends ton temps."}${late}</span>`;
+        }
+      } else {
+        const t = myTotal(s.p);
+        mode = "o:" + t + late;
+        html = `<span class="pb-bmsg">⚖️ <b>${nameHTML(s.j)}</b> corrige…${late}</span>${mySeat >= 0 ? `<span class="pb-mytot">Ta copie<b>${t}</b></span>` : ""}`;
+      }
+      if (bar.dataset.m === mode) return;
+      bar.dataset.m = mode; bar.innerHTML = html;
+      const on = (id, fn) => { const b = $(id); if (b) b.addEventListener("click", fn); };
+      on("pb-done", () => { confirming = true; drawBar(S); confirmT = later(() => { confirmT = null; confirming = false; drawBar(S); }, 8000); });
+      on("pb-no", () => { clearConfirm(); drawBar(S); });
+      on("pb-yes", () => { clearConfirm(); myDone = 1; push(); drawBar(S); tone(523, .1, "triangle", .1); later(() => tone(784, .2, "triangle", .1), 110); if (api.haptic) api.haptic("success"); });
     }
     function updVal(s) {
       const clock = $("pb-clock");
-      if (clock) { clock.textContent = s.tl; clock.classList.toggle("pb-hot", s.tl <= 5); }
-      const need = Math.floor(voterCount() / 2) + 1;
+      if (clock) { clock.textContent = fmt(s.tl); clock.classList.toggle("pb-hot", s.tl <= 30); }
+      const judge = amJudge(), codes = judge && myPts ? myPts : s.p, alive = aliveSet();
       for (let id = 0; id < NP * NC; id++) {
-        const n = +(s.V[id] || 0), li = el.querySelector(`[data-li="${id}"]`);
+        const li = el.querySelector(`[data-li="${id}"]`);
         if (!li) continue;
-        if (!li.classList.contains("pb-x")) li.classList.toggle("pb-ct", n >= need);
+        li.classList.toggle("pb-gone", !alive.has(P[(id / NC) | 0].key));
+        const c = codes[id], pt = li.querySelector(".pb-pt");
+        li.classList.toggle("pb-x", c === "0");
+        if (pt) {
+          const cls = "pb-pt pb-v" + c;
+          if (pt.className.replace(" pb-flash", "") !== cls) {
+            pt.className = cls;
+            if (!judge && prevP && prevP[id] !== c && !RM) { void pt.offsetWidth; pt.classList.add("pb-flash"); }
+          }
+          pt.textContent = ptLabel(c);
+        }
+        const n = +(s.V[id] || 0);
         const b = li.querySelector(".pb-vote");
-        if (b) { b.querySelector("b").textContent = n; b.classList.toggle("pb-on", myVotes.has(id)); }
-        const c = li.querySelector(".pb-cnt"); if (c) c.textContent = n ? `👎 ${n}/${need}` : "";
+        if (b) { b.querySelector("b").textContent = n ? " " + n : ""; b.classList.toggle("pb-on", myVotes.has(id)); }
+        const cn = li.querySelector(".pb-cnt"); if (cn) cn.textContent = n ? `👎 ${n}` : "";
       }
-      const alive = aliveSet(), tot = P.filter(p => alive.has(p.key) && s.A[seatOf[p.key]]).length, rd = (s.k.match(/1/g) || []).length;
-      const okn = $("pb-okn"); if (okn) okn.textContent = `${rd}/${tot} prêts`;
-      const ok = $("pb-ok"); if (ok) { ok.classList.toggle("pb-on", !!myOk); ok.textContent = myOk ? "Prêt ! (toucher pour annuler)" : "J'ai fini de corriger ✔"; }
+      prevP = s.p;
+      drawBar(s);
     }
 
     /* ---- corrections au stylo rouge ---- */
     function buildCor(s) {
       const me = mySeat >= 0, g = me ? s.G[mySeat] : 0;
       page.innerHTML = top(s, "Corrigé", `Manche ${s.r}/${ROUNDS} · lettre ${s.L}`) +
-        (me ? `<div class="pb-score"><span class="pb-circle">+${g}</span><p>${g >= 10 ? "Excellent travail !" : g >= 6 ? "Bien, continue !" : g >= 3 ? "Peut mieux faire." : "Il faut réviser !"}<br><small>Unique : +2 · en double : +1</small></p></div>` : "") +
+        (me ? `<div class="pb-score"><span class="pb-circle">+${g}</span><p>${g >= 50 ? "Excellent travail !" : g >= 30 ? "Bien, continue !" : g >= 15 ? "Peut mieux faire." : "Il faut réviser !"}<br><small>Unique 10 · doublon 5${s.j != null && P[s.j] ? ` · juge : ${nameHTML(s.j)}` : ""}</small></p></div>` : "") +
         s.c.map((ci, k) => `<section class="pb-cat pb-cor"><span class="pb-note pb-n${k % NOTE_COLORS}" style="--rot:${k % 2 ? 1.2 : -1.6}deg">${esc(CATS[ci])}</span><ul>` +
           ansList(s, k, (si, a, id) => {
             const r = s.R[id], dl = `style="--dl:${((k * 0.25 + 0.2) / spd()).toFixed(2)}s"`;
             if (r === "-") return `<li class="pb-ans pb-gone"><span class="pb-who">${nameHTML(si)}</span><span class="pb-txt pb-empty">parti</span></li>`;
-            const cls = r === "0" ? " pb-x" : r === "1" ? " pb-ct" : "";
-            const mark = r === "3" ? `<em class="pb-mark pb-big" ${dl}>+2</em>` : r === "2" ? `<em class="pb-mark pb-big" ${dl}>+1<small>doublon</small></em>`
-              : r === "1" ? `<em class="pb-mark" ${dl}>contesté</em>` : `<em class="pb-mark" ${dl}>${autoBad(a, s.L)}</em>`;
-            return `<li class="pb-ans${cls}${si === mySeat ? " pb-mine" : ""}" ${dl}><span class="pb-who">${nameHTML(si)}${si === mySeat ? " ★" : ""}</span><span class="pb-txt${a ? "" : " pb-empty"}" ${dl}>${a ? esc(a) : "—"}</span>${mark}</li>`;
+            const mark = r === "2" ? `<em class="pb-mark pb-big" ${dl}>+10</em>` : r === "1" ? `<em class="pb-mark pb-big" ${dl}>+5<small>doublon</small></em>`
+              : `<em class="pb-mark" ${dl}>${autoBad(a, s.L) || "refusé"}</em>`;
+            return `<li class="pb-ans${r === "0" ? " pb-x" : ""}${si === mySeat ? " pb-mine" : ""}" ${dl}><span class="pb-who">${nameHTML(si)}${si === mySeat ? " ★" : ""}</span><span class="pb-txt${a ? "" : " pb-empty"}" ${dl}>${a ? esc(a) : "—"}</span>${mark}</li>`;
           }) + `</ul></section>`).join("");
       later(() => tone(1400, .05, "sawtooth", .02), 300);
     }
-    function updClock(s) { const c = $("pb-clock"); if (c) { c.textContent = s.tl; c.classList.remove("pb-hot"); } }
+    function updClock(s) { const c = $("pb-clock"); if (c) { c.textContent = fmt(s.tl); c.classList.remove("pb-hot"); } }
 
     /* ---- classement ---- */
     function rankList(s, order) {
@@ -541,13 +648,19 @@ GONFLETTE.registerGame({
     function render(s) {
       if (dead || !s) return;
       const prev = S; S = s;
-      if (s.r !== myRound) { myRound = s.r; myAns = blank(); myStop = 0; myVotes = new Set(); myOk = 0; lastStopBeep = -1; }
-      const ph = s.ph === "lock" ? "play" : s.ph, vk = ph + ":" + s.r;
+      if (s.r !== myRound) { myRound = s.r; myAns = blank(); myStop = 0; myVotes = new Set(); myPts = ""; myJv = 0; myDone = 0; clearConfirm(); lastStopBeep = -1; }
+      // je deviens juge (début de correction ou relève) : je repars des points publiés
+      if (s.ph === "val" && mySeat >= 0 && s.j === mySeat && myJv !== s.jv) { myJv = s.jv; myPts = s.p; myDone = 0; push(); }
+      const ph = s.ph === "lock" ? "play" : s.ph, vk = ph + ":" + s.r + (ph === "val" ? ":" + s.j : "");
       if (vk !== view) {
         if (prev && (prev.ph === "play" || prev.ph === "lock")) push();     // dernières réponses
+        const relay = ph === "val" && view.startsWith("val:" + s.r + ":");    // relève du juge : on garde le défilement
         view = vk;
-        page.scrollTop = 0; el.scrollTop = 0;
-        ({draw: buildDraw, play: buildPlay, val: buildVal, cor: buildCor, lb: buildLb, end: buildEnd})[ph](s);
+        if (relay) { const y = el.scrollTop; buildVal(s); el.scrollTop = y; api.toast(s.j === mySeat ? "⚖️ Le juge est parti : c'est toi le juge !" : `⚖️ ${P[s.j].pseudo} devient juge.`); }
+        else {
+          page.scrollTop = 0; el.scrollTop = 0;
+          ({draw: buildDraw, play: buildPlay, val: buildVal, cor: buildCor, lb: buildLb, end: buildEnd})[ph](s);
+        }
       }
       if (ph === "play") updPlay(s);
       else if (ph === "val") updVal(s);
