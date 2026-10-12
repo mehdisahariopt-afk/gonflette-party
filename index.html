@@ -338,6 +338,12 @@ body .tile.teampad .tname,body .tile.teampad .tsub{background:none!important;col
 .ent .posefx{position:absolute;left:50%;top:18%;transform:translate(-50%,-50%);font-size:clamp(1.4rem,4vw,2.6rem);pointer-events:none;animation:posefx 1.4s ease-out forwards;filter:drop-shadow(0 2px 0 #0008);z-index:3}
 .ent .poseflash{position:absolute;left:50%;top:55%;width:150%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#fff8 0,#ffcc3355 35%,transparent 70%);animation:poseflash .7s ease-out forwards;pointer-events:none}
 .ent.posing .body{animation:posepop .45s cubic-bezier(.2,1.6,.4,1)}
+.qc-say{position:absolute;left:50%;transform:translateX(-50%);z-index:7;white-space:nowrap;max-width:60vw;overflow:hidden;text-overflow:ellipsis;background:#fff;color:#1d1420;font-weight:800;font-size:.82rem;line-height:1.15;padding:3px 9px;border-radius:12px;border:2px solid #1d1420;box-shadow:0 3px 0 #0006;pointer-events:none;animation:qcsay 2.6s ease-out both}
+@keyframes qcsay{0%{opacity:0;scale:.6}8%{opacity:1;scale:1.08}14%{scale:1}85%{opacity:1}100%{opacity:0}}
+.ent .posefx.p67{display:grid;justify-items:center;line-height:1;white-space:nowrap;animation-duration:2.5s}
+.ent .posefx.p67 i{display:inline-block;font-style:normal;animation:b67 .56s steps(1) infinite}.ent .posefx.p67 i+i{animation-delay:-.28s}
+.ent .posefx.p67 b{font-family:var(--f-display);font-weight:400;font-size:.62em;letter-spacing:.03em;color:var(--gold);-webkit-text-stroke:1.5px var(--ink);paint-order:stroke fill;text-shadow:0 3px 0 var(--ink)}
+@keyframes b67{0%{transform:translateY(-22%)}50%{transform:translateY(18%)}}
 .ent .wfx{position:absolute;z-index:4;transform:translate(-50%,-50%);font-family:var(--f-display);font-size:clamp(.95rem,2.8vw,1.7rem);line-height:1;color:var(--c,#ffd23f);-webkit-text-stroke:2px #1d1420;paint-order:stroke fill;text-shadow:3px 3px 0 #1d1420;white-space:nowrap;pointer-events:none;letter-spacing:.02em;animation:wfxpop 1.7s cubic-bezier(.2,1.6,.4,1) forwards}
 .ent .wcf{position:absolute;z-index:3;width:clamp(4px,1vw,7px);height:clamp(3px,.6vw,4px);border-radius:1px;background:var(--c);pointer-events:none;transform:translate(-50%,-50%);animation:wcf 1.1s cubic-bezier(.15,.7,.4,1) forwards}
 .ent .wrk{position:absolute;z-index:4;width:62%;transform:translate(-50%,-50%) rotate(var(--a));pointer-events:none;animation:wrk 1.5s cubic-bezier(.5,0,.9,.4) forwards}
@@ -584,13 +590,13 @@ html.imm .actionbar.go [data-act="vote"]{animation:glowbeat .8s ease-in-out infi
 @keyframes glowbeat{from{box-shadow:0 4px 0 var(--ink),0 0 0 0 #ffcc3300}to{box-shadow:0 4px 0 var(--ink),0 0 0 6px #ffcc3366}}
 html.imm .actionbar .pendn{color:var(--gold);font-family:var(--f-display);font-weight:400;font-size:1.15em}
 /* poses : le bouton 💪 déplie une rangée de boutons ronds à la place du dock */
-html.imm .posebar{display:none;position:fixed;z-index:33;right:calc(var(--hx) + var(--sar) + 64px);bottom:calc(8px + var(--sab) + 2px);margin:0;gap:7px;flex-direction:row-reverse}
+html.imm .posebar{display:none;position:fixed;z-index:33;right:calc(var(--hx) + var(--sar) + 64px);bottom:calc(8px + var(--sab) + 2px);margin:0;gap:6px;flex-direction:row-reverse;--pb:min(48px,calc((100vw - var(--sal) - var(--sar) - 2 * var(--hx) - 64px - 30px) / 6))}
 html.imm.poses-open .posebar{display:flex}
 html.imm.poses-open .hud-dock>.hud-b:not(.big){visibility:hidden}
 html.imm.poses-open #hb-pose{background:var(--panel);color:var(--text);border-color:var(--gold)}
-html.imm .pose-btn{flex:none;width:48px;height:48px;padding:0;gap:0;border-radius:50%;align-content:center;font-size:.5rem;letter-spacing:0;background:rgba(22,15,30,.86);border:2px solid var(--gold);box-shadow:0 3px 0 #0009;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:fanin .22s cubic-bezier(.2,1.5,.4,1) backwards}
+html.imm .pose-btn{flex:none;width:var(--pb,48px);height:var(--pb,48px);padding:0;gap:0;border-radius:50%;align-content:center;font-size:.5rem;letter-spacing:0;background:rgba(22,15,30,.86);border:2px solid var(--gold);box-shadow:0 3px 0 #0009;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:fanin .22s cubic-bezier(.2,1.5,.4,1) backwards}
 html.imm .pose-btn .e{font-size:1.3rem}
-html.imm .pose-btn:nth-child(2){animation-delay:.03s}html.imm .pose-btn:nth-child(3){animation-delay:.06s}html.imm .pose-btn:nth-child(4){animation-delay:.09s}html.imm .pose-btn:nth-child(5){animation-delay:.12s}
+html.imm .pose-btn:nth-child(2){animation-delay:.03s}html.imm .pose-btn:nth-child(3){animation-delay:.06s}html.imm .pose-btn:nth-child(4){animation-delay:.09s}html.imm .pose-btn:nth-child(5){animation-delay:.12s}html.imm .pose-btn:nth-child(6){animation-delay:.15s}
 @keyframes fanin{from{opacity:0;transform:translateX(30px) scale(.4)}}
 /* zone du sol 2D sous le HUD ; le décor remplit tout l'écran */
 html.imm .floor{top:var(--ft);bottom:var(--fb);height:auto}
@@ -655,7 +661,7 @@ html.imm .ov-card{max-height:calc(100dvh - 32px)}
   html.imm .actionbar{left:calc(var(--hx) + var(--sal) + 4 * 52px + 6px);right:calc(var(--hx) + var(--sar) + 62px);bottom:calc(6px + var(--sab));min-height:48px;padding:4px 4px 4px 12px}
   html.imm .actionbar .msg{-webkit-line-clamp:2;font-size:.86rem}
   html.imm .hud-dock{bottom:calc(6px + var(--sab))}
-  html.imm .posebar{flex-direction:column-reverse;right:calc(var(--hx) + var(--sar) + 3px);bottom:calc(6px + var(--sab) + 58px);gap:5px}
+  html.imm .posebar{flex-direction:column-reverse;flex-wrap:wrap-reverse;max-height:calc(100dvh - var(--sab) - 64px - var(--top3));right:calc(var(--hx) + var(--sar) + 3px);bottom:calc(6px + var(--sab) + 58px);gap:5px}
   html.imm.poses-open .hud-dock>.hud-b:not(.big){visibility:visible}
   html.imm .pose-btn{width:44px;height:44px}
   @keyframes fanin{from{opacity:0;transform:translateY(30px) scale(.4)}}
@@ -876,12 +882,14 @@ html.imm .ov-card{max-height:calc(100dvh - 2 * max(16px,env(safe-area-inset-top,
 <div class="game-layer hidden" id="game-layer"><div class="game-top"><b id="game-title"></b><span id="game-who"></span><button class="game-fs" type="button" id="game-fs" hidden aria-label="Plein écran" title="Plein écran">⛶</button><button class="game-fs gm-more" type="button" id="game-more" aria-haspopup="true" aria-expanded="false" aria-label="Options de la partie (quitter, annuler)" title="Options de la partie">⋯</button></div><div class="game-root" id="game-root"></div></div>
 
 <script src="vendor/peerjs.min.js"></script>
+<script src="vendor/nostr-sign.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="core/avatar.js"></script>
 <script src="core/legend.js"></script>
 <script src="core/scene3d.js"></script>
 <script src="core/net.js"></script>
 <script src="core/kit.js"></script>
+<script src="core/chat.js"></script>
 <script src="core/rules.js"></script>
 <script src="core/ambiance.js"></script>
 <script src="core/announcer.js"></script>
@@ -959,6 +967,7 @@ const pcOf = pl => (PLACES[pl] && PLACES[pl].pc) || null;
 /* Pont vers les modules core/kit.js, rules.js, ambiance.js, announcer.js (événements + lecture de l'état du lobby). */
 const emit = (ev, d) => { if (G.kit) G.kit.emit(ev, d); };
 G.lobby = {profile: () => profile, saveProfile: () => saveProfile(), pushPresence: () => pushPresence(), hostNow: () => hostNow(), myPeer: () => myPeer, peers: () => peers, place: () => place,
+  myLook: () => myLook(), chatCtx: () => mounted ? "m:" + mounted : inLobby && !inGame ? "l:" + place : null, // chat rapide (core/chat.js) : partie en cours, sinon lieu du lobby
   game: id => { const g = gameById(id); return g ? {id: g.id, name: g.name, min: g.min, max: g.max, teams: !!g.teams, place: placeOfGame(g), emoji: PLACES[placeOfGame(g)].emoji} : null; }};
 
 /* ---------- profil (sur cet appareil) ---------- */
@@ -1068,7 +1077,8 @@ let hostSt = null;        // dernier état publié par l'hôte
 let mySt = null;          // état que je publie si je suis l'hôte
 let lastPresenceSent = 0, presenceTimer = null;
 
-let netState = "connecting", lastNetError = "";
+let netState = "connecting", lastNetError = "", netStatus = null, everLive = false;
+const isRelay = () => !!(net && net.transport === "relay");
 function renderNet() {
   const n = peers.length, named = players().length;
   const b = $("netbadge");
@@ -1077,10 +1087,13 @@ function renderNet() {
     : netState === "connecting" ? "● Connexion à la salle…"
     : netState === "local" ? "● Mode local (onglets de ce navigateur)"
     : netState === "reconnecting" ? "● Connexion perdue, reconnexion…"
-    : "● Hors ligne";
-  const help = $("net-help");
-  const msg = netState === "offline" ? (MODE === "p2p" ? `Impossible de rejoindre la salle (${lastNetError}). Vérifiez votre connexion internet puis rechargez la page.` : `Impossible de rejoindre la salle partagée (${lastNetError}). Pour se voir, chaque joueur doit ouvrir ce lien en étant connecté à claude.ai, et l'artefact doit être partagé avec son compte (menu Partager). Un lien public ne suffit pas.`)
-    : netState === "live" && named < 2 && inLobby ? (MODE === "p2p" ? `Vous êtes seul dans la salle ${roomCode}. Envoyez le lien (bouton « Copier le lien ») ou dites à vos amis de taper le code ${roomCode}.` : "Vous êtes seul dans la salle. Si un ami a ouvert le lien mais n'apparaît pas, vérifiez qu'il est connecté à claude.ai et que l'artefact est partagé avec son compte.") : "";
+    : isRelay() ? "● Aucun serveur joignable" : "● Hors ligne";
+  const help = $("net-help"), ns = netStatus;
+  // salle à code (relais) : jamais « hors ligne » pour de bon, nouvel essai automatique (délai croissant)
+  const msg = netState === "offline" ? (MODE === "p2p" ? (isRelay() ? `Aucun serveur de connexion joignable : vérifiez internet (wifi ou données mobiles). Nouvel essai automatique… Si ça dure : ⋯ › 🔌 Connexion › Réparer la connexion.` : `Impossible de rejoindre la salle (${lastNetError}). Vérifiez votre connexion internet puis rechargez la page.`) : `Impossible de rejoindre la salle partagée (${lastNetError}). Pour se voir, chaque joueur doit ouvrir ce lien en étant connecté à claude.ai, et l'artefact doit être partagé avec son compte (menu Partager). Un lien public ne suffit pas.`)
+    : ns && ns.newer ? "Une version plus récente de Gonflette Party est utilisée dans la salle : rechargez la page pour jouer avec les autres."
+    : ns && ns.legacy && inLobby ? `Un téléphone de la salle ${roomCode} a encore l'ancienne version : il ne vous voit pas. Rechargez la page sur TOUS les téléphones (tout le monde doit avoir la dernière version).`
+    : netState === "live" && named < 2 && inLobby ? (MODE === "p2p" ? `Vous êtes seul dans la salle ${roomCode}. Envoyez le lien (bouton « Copier le lien ») ou dites à vos amis de taper le code ${roomCode}.${isRelay() ? " Un ami ne vous voit pas ? Tout le monde doit avoir la dernière version (rechargez)." : ""}` : "Vous êtes seul dans la salle. Si un ami a ouvert le lien mais n'apparaît pas, vérifiez qu'il est connecté à claude.ai et que l'artefact est partagé avec son compte.") : "";
   help.hidden = !msg; help.textContent = msg;
   renderNetHud(msg);
 }
@@ -1105,12 +1118,15 @@ async function boot() {
     $("roomtag").hidden = false; $("roomtag").textContent = "Salle " + roomCode; $("btn-share").hidden = false;
     net = await G.net.connectP2P(roomCode);
   } else net = await G.net.connect();
-  if (net.offline) { netState = "offline"; lastNetError = {timeout: "pas de réponse après 20 s", error: "erreur", unavailable: "accès refusé ou non disponible", p2p: "serveur de mise en relation injoignable"}[net.reason] || net.reason; renderNet(); return; }
-  netState = net.mock ? "local" : "live";
+  if (net.offline) { netState = "offline"; lastNetError = {timeout: "pas de réponse après 20 s", error: "erreur", unavailable: "accès refusé ou non disponible", p2p: "connexion directe au téléphone relais impossible", "relay-unsupported": "navigateur trop ancien"}[net.reason] || net.reason; renderNet(); return; }
+  netState = net.mock ? "local" : isRelay() && !net.lobby.connected() ? "offline" : "live";
+  everLive = netState === "live";
   lobby = net.lobby;
   bootAt = Date.now();
   lobby.onPeers(ch => { peers = ch.peers; myPeer = net.myPeer() || myPeer; onRoom(); renderNet(); }, e => { netState = "offline"; lastNetError = e.code; renderNet(); });
-  if (lobby.onConnection && !net.mock) lobby.onConnection(c => { if (netState !== "offline") { netState = c ? "live" : "reconnecting"; renderNet(); } }, e => { netState = "offline"; lastNetError = e.code; renderNet(); });
+  // relais : la connexion se refait toute seule (et l'état suit), même après « aucun serveur joignable »
+  if (lobby.onConnection && !net.mock) lobby.onConnection(c => { if (netState !== "offline" || isRelay()) { netState = c ? "live" : isRelay() && !everLive ? "offline" : "reconnecting"; if (c) everLive = true; renderNet(); } }, e => { netState = "offline"; lastNetError = e.code; renderNet(); });
+  if (net.onStatus) net.onStatus(st => { const was = netStatus; netStatus = st; if (st.lastErr) lastNetError = st.lastErr; if (sheetKind === "netdiag") drawNetDiag(); if (!was || was.newer !== st.newer || was.legacy !== st.legacy || was.up !== st.up) renderNet(); });
   setInterval(hostTick, 400);
   renderNet();
   pushPresence();
@@ -1119,6 +1135,7 @@ function presenceObj() {
   const o = {ps: profile.pseudo || null, lk: myLook(), xp: profile.xp, x: +me.x.toFixed(3), y: +me.y.toFixed(3), v: me.vote, ja: me.ja, ed: editing || !inLobby ? 1 : 0, f: me.facing, w: me.walking ? 1 : 0};
   o.id = profile.id;                                   // identifiant persistant (rivalités)
   o.po = myPose ? [myPose.p, myPose.seq] : null;       // dernière pose [id, numéro] : les autres l'affichent ~2,5 s
+  o.qc = G.chat ? G.chat.presence() : null;            // chat rapide : dernier message [phrase, numéro, contexte, heure] (core/chat.js)
   // La disposition des carrés dépend de l'écran (2 ou 3 colonnes) : sur un carré, on envoie la position
   // RELATIVE à ce carré (t = id du jeu, u/q = position dans le carré) pour que tout le monde nous voie au bon endroit.
   const tl = inLobby && tileEls.length ? tileAt(me.x, me.y) : null;
@@ -1434,6 +1451,7 @@ G.debug = {launch(gid) { if (!amHost()) return false; forceVote = gid; return tr
 let seenKey = null, mounted = null, resultsShown = null, myMid = null;
 function onRoom() {
   checkPoses();
+  if (G.chat) G.chat.update();
   // mode ?mock sans ?prof : les onglets partagent le profil, donc le même id. On en régénère un pour rester distincts.
   if (myPeer && peers.some(p => p.peer !== myPeer && p.peer < myPeer && p.presence && p.presence.id === profile.id)) { profile.id = rid(); pushPresence(); }
   const h = hostPeer();
@@ -1637,8 +1655,8 @@ function renderEntities() {
       if (typeof x !== "number" || typeof y !== "number") continue;
       const xp = isMe ? profile.xp : pr.xp || 0, BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
       const look = isMe ? myLook() : pr.lk, pz = BM ? null : poseOf(p.peer), pd = pz && POSE[pz];
-      const sf = cachedSvgFx(look, xp, pz, "sprite");
-      list.push({key: p.peer, pr: prOf(look), x, y, svg: sf.svg, fx: pz ? sf.fx : null, poseKey: pz ? pz + ":" + (isMe ? myPose.seq : (seenPoses.get(p.peer) || {}).k) : null, name: pr.ps + (SO ? SO.badge(p, true) : ""), sub:(pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " : "") + (BM ? "🎮 " + (bg ? bg.name : "en partie") : pd ? pd[2] + " " + pd[1] + " !" : titleOf(look, xp)),
+      const p67 = pz === "67", sf = cachedSvgFx(look, xp, p67 ? "67a" : pz, "sprite"); // 67 : deux images fixes, alternées par scene3d (svg2)
+      list.push({key: p.peer, pr: prOf(look), x, y, svg: sf.svg, svg2: p67 ? cachedSvgFx(look, xp, "67b", "sprite").svg : null, fx: p67 ? {kind: "word", x: 100, y: 30, ang: -90, word: "SIX… SEVEN !", color: "#ffd23f"} : pz ? sf.fx : null, poseKey: pz ? pz + ":" + (isMe ? myPose.seq : (seenPoses.get(p.peer) || {}).k) : null, name: pr.ps + (SO ? SO.badge(p, true) : ""), sub:(pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " : "") + (BM ? "🎮 " + (bg ? bg.name : "en partie") : pd ? pd[2] + " " + pd[1] + " !" : titleOf(look, xp)),
         me: isMe, scale: A.size(xp) * .55 * (1 + .4 * (1 - A.level(xp) / A.MAX_LEVEL)), pose: pz, /* 3D : petits gabarits encore un peu agrandis (la caméra est loin), taille max inchangée */ walking: !!(isMe ? me.walking : pr.w), facing: (isMe ? me.facing : pr.f) === -1 ? -1 : 1, busy: !!BM && !isMe, crown: host === p.peer, voted: !!pr.v && !BM});
     }
     s3d.setEntities(list);
@@ -1665,7 +1683,7 @@ function renderEntities() {
     if (key !== e.key) {
       e.key = key;
       const look = isMe ? myLook() : pr.lk, xp = isMe ? profile.xp : pr.xp || 0, sf = cachedSvgFx(look, xp, pz, "full"), P = prOf(look);
-      e.el.innerHTML = `<div class="body">${sf.svg}${pd ? weaponFxHtml(sf.fx, fc) : ""}${pr.v && !BM ? `<span class="voted" title="A validé">✔</span>` : ""}${host === p.peer ? `<span class="crown" title="Hôte">👑</span>` : ""}${pd ? `<span class="poseflash"></span><span class="posefx">${pd[2]}</span>` : ""}</div><div class="tag${P ? " lgp" : ""}"${P ? ` style="--lgc:${LG.color(P)}"` : ""}>${nmH(pr.ps, look, {plain: isMe})}${esc(sob)}${BM ?`<small>🎮 ${esc(bg ? bg.name : "en partie")}</small>` : pd ? `<small class="pz">${pd[2]} ${esc(pd[1])} !</small>` : `<small>${esc(titleOf(look, xp))}</small>`}</div>`;
+      e.el.innerHTML = `<div class="body">${sf.svg}${pd ? weaponFxHtml(sf.fx, fc) : ""}${pr.v && !BM ? `<span class="voted" title="A validé">✔</span>` : ""}${host === p.peer ? `<span class="crown" title="Hôte">👑</span>` : ""}${pd ? `<span class="poseflash"></span><span class="posefx${pz === "67" ? " p67" : ""}">${pz === "67" ? P67_FX : pd[2]}</span>` : ""}</div><div class="tag${P ? " lgp" : ""}"${P ? ` style="--lgc:${LG.color(P)}"` : ""}>${nmH(pr.ps, look, {plain: isMe})}${esc(sob)}${BM ?`<small>🎮 ${esc(bg ? bg.name : "en partie")}</small>` : pd ? `<small class="pz">${pd[2]} ${esc(pd[1])} !</small>` : `<small>${esc(titleOf(look, xp))}</small>`}</div>`;
       e.el.classList.toggle("posing", !!pd);
       const tg = e.el.querySelector(".tag"); e.tw = tg ? tg.offsetWidth : 0; e.th = tg ? tg.offsetHeight : 0; e.tdy = 0;
     }
@@ -1916,15 +1934,43 @@ function renderNetHud(msg) {
   const dot = $("hb-net-dot");
   if (dot) dot.className = "hud-dot" + (netState === "live" ? "" : netState === "local" ? " local" : netState === "offline" ? " bad" : " wait");
   const pill = $("hud-net"); if (!pill) return;
-  const kind = netState === "offline" ? "off" : netState === "reconnecting" ? "re" : msg ? "alone" : "";
-  const html = kind === "off" ? `⚠️ Hors ligne · <b>Détails</b>` : kind === "re" ? `📶 Connexion perdue, reconnexion…`
+  const ver = !!(netStatus && (netStatus.newer || netStatus.legacy));
+  const kind = netState === "offline" ? "off" : netState === "reconnecting" ? "re" : msg && ver ? "ver" : msg ? "alone" : "";
+  const html = kind === "off" ? (isRelay() ? `⚠️ Aucun serveur joignable · <b>🔌 Détails</b>` : `⚠️ Hors ligne · <b>Détails</b>`) : kind === "re" ? `📶 Connexion perdue, reconnexion…${net && net.status ? " · <b>🔌</b>" : ""}`
+    : kind === "ver" ? (netStatus.newer ? `⚠️ Nouvelle version : rechargez · <b>🔌</b>` : `⚠️ Un téléphone a l'ancienne version · <b>🔌</b>`)
     : kind === "alone" ? (MODE === "p2p" ? `Seul dans la salle ${esc(roomCode)} · <b>🔗 Inviter</b>` : `Seul dans la salle · <b>Aide</b>`) : "";
   pill.hidden = !kind || !inLobby || pillGone === kind + roomCode;
   pill.classList.toggle("bad", kind === "off" || kind === "re");
   pill.dataset.kind = kind;
   if ($("hud-net-go").innerHTML !== html) $("hud-net-go").innerHTML = html;
 }
-$("hud-net-go").addEventListener("click", () => { if ($("hud-net").dataset.kind === "alone" && MODE === "p2p") $("btn-share").click(); else openDrawer("menu"); });
+$("hud-net-go").addEventListener("click", () => { const k = $("hud-net").dataset.kind; if (k === "alone" && MODE === "p2p") $("btn-share").click(); else if (k !== "alone" && net && net.status) openNetDiag(); else openDrawer("menu"); });
+/* 🔌 Connexion : diagnostic (transport, état de chaque relais, salle, joueurs vus, dernière erreur, version) + « Réparer » */
+function netShort() {
+  const s = netStatus || (net && net.status ? net.status() : null);
+  if (!s) return MODE === "mock" ? "mode local" : "salle partagée claude.ai";
+  if (s.transport === "relay") return `relais (${s.up}/${s.total} serveur${s.total > 1 ? "s" : ""} OK)`;
+  return s.link ? "directe (PeerJS)" : "directe (PeerJS), en attente";
+}
+function netDiagHtml() {
+  const s = netStatus || (net && net.status ? net.status() : null);
+  if (!s) return `<div class="dr"><h2>🔌 Connexion</h2><p class="sub">${esc(netShort())}</p></div>`;
+  const ic = {up: "🟢", sub: "🟡", connecting: "🟡", off: "🔴"}, lb = {up: "OK", sub: "abonnement…", connecting: "connexion…", off: "hors service"};
+  const rows = (s.relays || []).map(r => `<li style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><span>${r.limited || r.refusing ? "🟠" : ic[r.st] || "⚪"}</span><b style="word-break:break-all">${esc(r.host)}</b><small style="color:var(--dim)">${esc(r.refusing ? "refuse nos messages" : r.limited ? "ralenti (limite de débit)" : lb[r.st] || r.st)}${r.rtt != null && r.st === "up" ? ` · ${r.rtt} ms` : ""}${r.st === "off" && r.retryIn != null ? ` · nouvel essai dans ${r.retryIn} s` : ""}${r.err && r.st !== "up" ? ` · ${esc(r.err)}` : ""}</small></li>`).join("");
+  const warn = s.newer ? "⚠️ Une version plus récente est utilisée dans la salle : rechargez la page." : s.legacy ? "⚠️ Un téléphone de cette salle a encore l'ancienne version (il ne vous voit pas) : rechargez la page sur tous les téléphones." : "";
+  return `<div class="dr"><h2>🔌 Connexion</h2>
+    <div class="net-box"><span class="netbadge ${s.link ? "ok" : "bad"}">● ${esc(netShort())}</span>${MODE === "p2p" && roomCode ? `<div>Salle <span class="room">${esc(roomCode)}</span></div>` : ""}
+      <p>${s.transport === "relay" ? "Chaque téléphone se connecte à des serveurs relais publics (comme une page web, port 443) : pas de connexion directe entre téléphones." : "Connexion directe entre téléphones (WebRTC), un téléphone sert de relais."}</p>
+      ${warn ? `<p style="color:#ffcc33;font-weight:800">${esc(warn)}</p>` : ""}
+      <p style="font-weight:800">Tout le monde doit avoir la dernière version (rechargez).</p></div>
+    <ul style="list-style:none;margin:8px 0;padding:0;display:grid;gap:6px">${rows}</ul>
+    <p class="sub" style="margin:4px 0">Autres téléphones vus : <b>${s.peers != null ? s.peers : "?"}</b>${s.role ? ` · rôle : ${esc(s.role)}` : ""}${s.lastErr ? `<br>Dernière erreur : ${esc(s.lastErr)}` : ""}${s.clockOff ? `<br>Heure du téléphone décalée de ${s.clockOff} s (corrigée)` : ""}<br>Version ${esc(s.app || "?")} · protocole ${s.proto} · ${s.transport === "relay" ? "relais Nostr" : "PeerJS"}${s.key ? ` · clé ${esc(String(s.key).slice(0, 7))}` : ""}</p>
+    <div class="dr-acts" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" type="button" data-menu="netfix">🔧 Réparer la connexion</button><button class="btn alt" type="button" data-menu="netreload">🔄 Recharger la page</button></div></div>`;
+}
+G.debug.netStats = () => (net && net.stats ? net.stats() : null);
+let netDiagLast = "";
+function drawNetDiag() { const b = sheetBody(); if (b && sheetKind === "netdiag") { const h = netDiagHtml(); if (netDiagLast !== h) { netDiagLast = h; b.innerHTML = h; } } }
+function openNetDiag() { closePoses(); openSheet("netdiag", netDiagLast = netDiagHtml()); if (net && net.probeLegacy && !(netStatus && netStatus.legacy)) net.probeLegacy(); }
 $("hud-net-x").addEventListener("click", () => { pillGone = $("hud-net").dataset.kind + roomCode; renderNet(); });
 /* Tiroirs (bottom sheets) du téléphone : on y déplace les vrais éléments (liste des joueurs, barre de soirée, aide),
    remis à leur place à la fermeture (sheetCleanup). */
@@ -1955,6 +2001,7 @@ function openDrawer(kind) {
       ${profile.loot > 0 ? li("loot", "🎁", "Shakers mystère à ouvrir", "", profile.loot) : ""}
       ${li("rivals", "⚔️", "Mes rivaux", "Vos face-à-face en duel")}
       ${li("roster", "👥", "Dans la salle", "", n)}
+      ${MODE === "p2p" ? li("netdiag", "🔌", "Connexion : " + esc(netShort()), "État des serveurs, réparer la connexion") : ""}
       ${li("soiree", "🎉", "Mode soirée", "Playlist, classement, photo de groupe")}
       ${s3ok ? li("3d", "🧊", s3d ? "Passer en décor 2D" : "Passer en décor 3D", s3d ? "Plus léger pour la batterie" : "") : ""}
       ${canInstall() ? li("install", "📲", "Installer l'appli", "Une icône sur l'écran d'accueil, en plein écran") : ""}
@@ -1972,6 +2019,9 @@ $("sheet").addEventListener("click", e => {
     else if (k === "share") $("btn-share").click();
     else if (k === "save") openSave();
     else if (k === "install") doInstall();
+    else if (k === "netdiag") openNetDiag();
+    else if (k === "netfix") { if (net && net.repair) { net.repair(); toast("Reconnexion aux serveurs…"); setTimeout(drawNetDiag, 300); } }
+    else if (k === "netreload") location.reload();
     else if (k === "3d") { closeSheet(); $("btn-3d").click(); }
     else if (DRAWERS.includes(k)) openDrawer(k);
     return;
@@ -2134,7 +2184,8 @@ function showResults(M) {
 
 /* ---------- poses dans le lobby ---------- */
 const POSE = {}; A.POSES.forEach(p => { POSE[p[0]] = p; });
-const POSE_SHORT = {flex: "Biceps", most: "Most musc.", kiss: "Bisou", back: "Dos", leg: "Jambe"};
+const POSE_SHORT = {flex: "Biceps", most: "Most musc.", kiss: "Bisou", back: "Dos", leg: "Jambe", 67: "6-7"};
+const P67_FX = `<span><i>6️⃣</i><i>7️⃣</i></span><b>SIX… SEVEN !</b>`; // « six seven » : les deux chiffres sautent en alternance
 const POSE_MS = 2600;
 let myPose = null, poseSeq = Math.floor(Math.random() * 1e5), poseHist = [], poseCdUntil = 0;
 const seenPoses = new Map(); // pose des autres : affichée ~2,5 s à partir du moment où CE téléphone la reçoit (horloges différentes)
@@ -2178,6 +2229,16 @@ function renderPoseBar() {
   if (bar.dataset.h !== html) { bar.innerHTML = html; bar.dataset.h = html; }
 }
 $("posebar").addEventListener("click", e => { const b = e.target.closest("[data-pose]"); if (b && !b.disabled) strikePose(b.dataset.pose); });
+// chat rapide (core/chat.js) : dans le lobby, la phrase apparaît aussi un instant au-dessus du perso qui l'a envoyée
+if (G.kit) G.kit.on("qc", d => {
+  if (!d || !inLobby || inGame) return;
+  const b = document.createElement("span"); b.className = "qc-say"; b.textContent = d.i === 5 ? "6️⃣7️⃣ SIX… SEVEN !" : d.text;
+  if (s3d) {
+    const o = s3d.screenOf && s3d.screenOf(d.peer); if (!o) return;
+    b.style.cssText = `left:${Math.round(o.x)}px;top:${Math.round(o.y - o.h / .62 - 34)}px;bottom:auto;transform:translate(-50%,-100%)`; scene.appendChild(b);
+  } else { const e = entEls.get(d.peer); if (!e) return; b.style.bottom = `calc(100% + ${(e.th || 20) + 8}px)`; e.el.appendChild(b); }
+  setTimeout(() => b.remove(), 2600);
+});
 
 /* ---------- shakers, objets, rivaux ---------- */
 // Shakers 🥤 : uniquement pour les gagnants (+ un shaker mystère). Les autres ne gagnent que de l'XP.
@@ -2905,6 +2966,7 @@ function openGm() {
     : mi("quit", "🏳️", "Quitter la partie", `Défaite par forfait${rest < min ? " : les autres gagnent" : ""}`, "danger")
       + mi("cancel", "🤝", "Proposer d'annuler", M.cv ? "Vote en cours…" : "Si tous les autres acceptent (15 s) : retour au lobby, sans gain ni perte", "", !!M.cv)
       + (G.rules && G.rules.has(M.g) ? mi("rules", "📖", "Règles du jeu") : "")
+      + (G.chat ? (G.chat.muted() ? mi("chat", "🔔", "Remettre le chat", "Revoir les messages des autres") : mi("chat", "🔕", "Couper le chat", "Plus de bulles 💬 des autres sur cet appareil")) : "")
       + mi("close", "✕", "Fermer");
 }
 function onGm(e) {
@@ -2918,6 +2980,7 @@ function onGm(e) {
     myGv = {m: M.mid, id: rid(), y: 1}; pushPresence();
     toast("Proposition envoyée : les autres ont 15 s pour accepter");
   } else if (k === "rules") { closeGm(); if (M && G.rules) G.rules.open(M.g); }
+  else if (k === "chat") { closeGm(); if (G.chat) { G.chat.setMuted(!G.chat.muted()); toast(G.chat.muted() ? "🔕 Chat coupé sur cet appareil" : "🔔 Chat réactivé"); } }
   else closeGm();
 }
 $("game-more").addEventListener("click", () => { if ($("gm-pop")) closeGm(); else openGm(); });

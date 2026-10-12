@@ -3,9 +3,10 @@
    - nos fichiers (HTML, JS, CSS, manifeste, icônes) : RÉSEAU D'ABORD (revalidé, jamais une vieille version
      tant qu'il y a du réseau), copie en cache, et cache seulement si le réseau ne répond pas (hors ligne) ;
    - bibliothèques des CDN (three.js…) et polices Google : CACHE D'ABORD (URL versionnées, ne changent pas) ;
-   - tout le reste (PeerJS : serveur de mise en relation, WebSocket, requêtes d'autres sites) : jamais touché.
+   - tout le reste (relais wss:// des salles, PeerJS, requêtes d'autres sites) : jamais touché. Les WebSocket
+     (relais Nostr) ne passent de toute façon jamais par un service worker (pas d'événement fetch).
    Changer VERSION purge les anciens caches à l'activation. */
-const VERSION = "v1";
+const VERSION = "v2-relais";
 const APP = "gf-app-" + VERSION, LIB = "gf-lib-" + VERSION;
 const CDN_HOSTS = ["cdnjs.cloudflare.com", "cdn.jsdelivr.net", "unpkg.com", "fonts.googleapis.com", "fonts.gstatic.com"];
 const SCOPE = new URL(self.registration ? self.registration.scope : "./", self.location.href);

@@ -1,7 +1,7 @@
 /* Gonflette Party : kit partagé.
    - Bus d'événements du lobby : GONFLETTE.kit.on("chosen" | "count" | "game:start" | "game:end" | "results" | "place" | "unlock" | "mute", fn)
      (index.html appelle kit.emit aux moments clés ; ambiance.js, announcer.js et rules.js s'y abonnent).
-   - Sons courts (WebAudio, aucun fichier) : kit.sfx("tap" | "win" | "lose" | "count" | "go" | "whoosh").
+   - Sons courts (WebAudio, aucun fichier) : kit.sfx("tap" | "pop" | "win" | "lose" | "count" | "go" | "whoosh").
    - Vibrations : kit.haptic("light" | "heavy" | "success" | "fail").
    - Style commun des jeux : variables CSS sur .game-root, classes .gk-btn / .gk-title, bandeau de jeu harmonisé
      (emoji du lieu + bouton « ? » des règles), écran « FIN ! » d'une seconde avant les résultats du lobby.
@@ -73,6 +73,7 @@ function tone(c, t, f, dur, type, vol, f2) {
 }
 const SFX = {
   tap(c, t) { tone(c, t, 880, .07, "sine", .35, 520); },
+  pop(c, t) { tone(c, t, 420, .09, "sine", .22, 980); tone(c, t + .05, 1250, .06, "triangle", .08); }, // bulle de chat (doux)
   count(c, t) { tone(c, t, 660, .14, "square", .12); },
   go(c, t) { tone(c, t, 880, .1, "square", .14); tone(c, t + .09, 1320, .35, "square", .14); },
   win(c, t) { [523, 659, 784, 1047].forEach((f, i) => tone(c, t + i * .09, f, .22, "triangle", .3)); [523, 659, 784].forEach(f => tone(c, t + .4, f * 2, .7, "triangle", .14)); },

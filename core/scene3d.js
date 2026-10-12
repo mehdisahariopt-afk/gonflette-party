@@ -1240,6 +1240,11 @@
           en.svg = d.svg; en.cache = d.svg ? acquireSvg(d.svg) : null;
           if (old) releaseSvg(old);
         }
+        if ((d.svg2 || null) !== (en.svg2 || null)) { // 2e image facultative (pose « 67 ») : alternée avec la 1re toutes les 0,28 s
+          const old2 = en.svg2;
+          en.svg2 = d.svg2 || null; en.cache2 = en.svg2 ? acquireSvg(en.svg2) : null;
+          if (old2) releaseSvg(old2);
+        }
         const pr = d.pr > 0 ? d.pr | 0 : 0, bReady = pr && G.legend ? G.legend.badgeReady(pr) : false;
         const tk = [d.name, d.sub, en.me, !!d.voted, !!d.crown, pr, bReady].join("\u0001");
         if (tk !== en.tagKey) { en.tagKey = tk; en.name = d.name; en.sub = d.sub; en.voted = !!d.voted; en.crown = !!d.crown; en.pr = pr; drawTag(en); }
@@ -1251,6 +1256,7 @@
       en.mat.dispose(); en.shMat.dispose(); en.tagMat.dispose(); en.ring.material.dispose();
       if (en.tagTex) en.tagTex.dispose();
       if (en.svg) releaseSvg(en.svg);
+      if (en.svg2) releaseSvg(en.svg2);
       ents.delete(k);
     }
 
@@ -1395,7 +1401,7 @@
         if (!en.me) { const k = 1 - Math.exp(-dt * 12); en.x += (en.tx - en.x) * k; en.y += (en.ty - en.y) * k; }
         en.walkK += ((en.walking ? 1 : 0) - en.walkK) * Math.min(1, dt * 8);
         en.ph += dt * (en.walking ? 2 * Math.PI / .64 : 2);
-        const e = en.cache, ready = e && e.tex;
+        const e = en.cache2 && en.cache2.tex && en.cache && en.cache.tex && !reduced && Math.floor(performance.now() / 280) % 2 ? en.cache2 : en.cache, ready = e && e.tex;
         if (ready && en.mat.map !== e.tex) { en.mat.map = e.tex; en.mat.needsUpdate = true; }
         en.fade = Math.min(1, en.fade + (ready ? dt * 4 : 0));
         let X = wx(en.x); const Z = wz(en.y), floorY = tileTopAt(en.x, en.y);

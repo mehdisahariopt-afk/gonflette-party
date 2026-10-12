@@ -1,6 +1,8 @@
 /* Gonflette Party : personnage qui prend du muscle avec l'expérience.
    GONFLETTE.avatar.svg(look, xp, {pose, view, m}) renvoie une chaîne SVG.
-   pose : "idle" | "flex" (double biceps) | "most" (most muscular) | "kiss" (bisou au biceps) | "back" (pose de dos) | "leg" (flex de jambe) | "wave".
+   pose : "idle" | "flex" (double biceps) | "most" (most muscular) | "kiss" (bisou au biceps) | "back" (pose de dos) | "leg" (flex de jambe) | "wave"
+     | "67" (« six seven » : avant-bras en avant paumes vers le haut, les mains montent et descendent en alternance :
+       deux images "67a" / "67b" basculées par SMIL dans un seul SVG ; "67a" / "67b" seuls = une image fixe, ex. sprites 3D).
    look peut porter (facultatif, rétrocompatible) :
      look.mg = ancien choix de groupes musculaires : ignoré (tout le monde est équilibré)
      look.it = ["bandana", "chaine", ...] objets de la boutique équipés (un par emplacement ; « arme » = main gauche)
@@ -214,7 +216,7 @@
     return eq;
   }
 
-  const POSES = [["flex", "Double biceps", "💪"], ["most", "Most muscular", "😤"], ["kiss", "Bisou au biceps", "😘"], ["back", "Pose de dos", "🦅"], ["leg", "Flex de jambe", "🦵"]];
+  const POSES = [["flex", "Double biceps", "💪"], ["most", "Most muscular", "😤"], ["kiss", "Bisou au biceps", "😘"], ["back", "Pose de dos", "🦅"], ["leg", "Flex de jambe", "🦵"], ["67", "Six… seven", "6️⃣7️⃣"]];
 
   const f = n => Math.round(n * 10) / 10;
   function shade(hex, k) {
@@ -829,6 +831,16 @@
     const m = opts.m != null ? opts.m : muscle(xp);
     const mc = Math.min(m, 1);
     let pose = opts.pose || "idle";
+    if (pose === "67") { // « six seven » : deux images (main gauche haute / main droite haute) basculées toutes les ~0,28 s
+      const a = svg(look, xp, Object.assign({}, opts, {pose: "67a"})), b = svg(look, xp, Object.assign({}, opts, {pose: "67b", out: null}));
+      const ta = /^<svg[^>]*>/.exec(a)[0], tb = /^<svg[^>]*>/.exec(b)[0];
+      let ia = a.slice(ta.length, -6), ib = b.slice(tb.length, -6);
+      const sh = /^<ellipse cx="100" cy="258"[^>]*\/>/.exec(ia); // ombre au sol commune, gardée en tête (scene3d / legend la cherchent là)
+      if (sh) { ia = ia.slice(sh[0].length); ib = ib.replace(/^<ellipse cx="100" cy="258"[^>]*\/>/, ""); }
+      const sw = v => `<animate attributeName="display" values="${v}" dur=".56s" calcMode="discrete" repeatCount="indefinite"/>`;
+      return ta + (sh ? sh[0] : "") + `<g>${ia}${sw("inline;none")}</g><g display="none">${ib}${sw("none;inline")}</g></svg>`;
+    }
+    const p67 = pose === "67a" || pose === "67b";
     const back = pose === "back";
     const cx = 100;
     const gr = groups(look), eq = equipped(look);
@@ -1455,6 +1467,11 @@
       else if (pose === "wave" && d === 1) { E = [J[0] + 26 + 8 * m, yS + 4]; Hd = [J[0] + 34 + 10 * m, yS - 38]; }
       else if (pose === "most") { E = [J[0] + d * (8 + 10 * m), yS + 46 + 4 * m]; Hd = [cx + d * (7 + 3 * m), yS + 70 + 6 * m]; }
       else if (pose === "back" || pose === "leg" || pose === "kiss") { E = [J[0] + d * (22 + 14 * m + lat * .5), yS + 36]; Hd = hipHand; }
+      else if (p67) { // coudes au corps, avant-bras vers l'avant et l'extérieur, paumes vers le haut ; une main haute, l'autre basse
+        const up = (pose === "67a") === (d === -1);
+        E = [J[0] + d * (5 + 5 * Math.min(m, 1) + lat * .3), yS + 44 + 4 * m];
+        Hd = [E[0] + d * (20 + 9 * Math.min(m, 1)), E[1] + (up ? -(17 + 9 * m) : 7 + 3 * m)];
+      }
       else { E = [J[0] + d * (5 + 13 * m + lat * .6), yS + 50]; Hd = [J[0] + d * (3 + 15 * m + lat * .6), yS + 86]; }
       arms.push({d, J, E, Hd, fx});
     }
@@ -1469,8 +1486,10 @@
     const fore = A => { const c = lerp(A.E, A.Hd, .38); return [c[0], c[1], FA * .62 + 2]; };
     const handR = 8 + 6 * m + 3 * Math.max(0, kb - 1);
     // mains : poing (doigts repliés, pouce, reflet) ; main ouverte pour le salut (pose « wave », main droite libre)
-    const openHand = A => pose === "wave" && A.d === 1 && !eq.main && eq.poignets !== "gants";
+    const openHand = A => ((pose === "wave" && A.d === 1) || (p67 && !(A.d === -1 && eq.arme && WEAPONS[eq.arme]))) && !eq.main && eq.poignets !== "gants";
     const fingers = A => { const u = nrm(A.E, A.Hd), R = handR - 2.5;
+      if (p67) { const h = [1, 0], up = -A.d; // paume vers le haut : doigts vers l'extérieur, bouts relevés, pouce dressé
+        return [[-8, 1.5], [4, 1.65], [16, 1.6], [28, 1.35], [84, 1.25]].map(([a, l]) => [add(A.Hd, rot([h[0] * A.d, 0], a * up), R * .3), add(A.Hd, rot([h[0] * A.d, 0], (a + (a > 60 ? -14 : 8)) * up), R * l)]); }
       return [[-36, 1.5], [-12, 1.75], [12, 1.7], [36, 1.45], [-82, 1.3]].map(([a, l]) => [add(A.Hd, rot(u, a), R * .3), add(A.Hd, rot(u, a + (a < -60 ? 16 : 0)), R * l)]); };
     const fingW = Math.max(3.6, (handR - 2.5) * .52);
     const fistR = (Hd, E, d) => {
@@ -1750,7 +1769,7 @@
       if (eq.visage === "guerre") s += `<path d="M${f(hx - ex - 6)} ${f(ey + 6)}h11M${f(hx - ex - 6)} ${f(ey + 10)}h11M${f(hx + ex - 5)} ${f(ey + 6)}h11M${f(hx + ex - 5)} ${f(ey + 10)}h11" stroke="${ink}" stroke-width="2.6" stroke-linecap="round"/><path d="M${hx} ${f(ey - r * .55)}v${f(r * .35)}" stroke="#d62828" stroke-width="3.4" stroke-linecap="round"/>`;
       const my = hy + r * .45;
       const grillz = eq.visage === "grillz";
-      const grin = mood === "fight" || (mood !== "lose" && mood !== "win" && (pose === "most" || eq.visage === "dentor" || grillz || (m >= .9 && pose !== "kiss")));
+      const grin = mood === "fight" || (mood !== "lose" && mood !== "win" && (pose === "most" || p67 || eq.visage === "dentor" || grillz || (m >= .9 && pose !== "kiss")));
       if (mood === "win") {
         // bouche grande ouverte (dents + langue)
         s += `<path d="M${f(hx - 12)} ${f(my - 4)}h24q-1 14 -12 14t-12 -14z" fill="#5a1020" stroke="${ink}" stroke-width="2.8" stroke-linejoin="round"/><path d="M${f(hx - 10.5)} ${f(my - 3)}h21v3.2h-21z" fill="#fff"/><path d="M${f(hx - 6)} ${f(my + 6.5)}q6 -5 12 0q-6 4 -12 0z" fill="#ff6b81"/>`;
