@@ -609,6 +609,10 @@ html.imm .pose-btn{flex:none;width:var(--pb,48px);height:var(--pb,48px);padding:
 html.imm .pose-btn .e{font-size:1.3rem}
 html.imm .pose-btn:nth-child(2){animation-delay:.03s}html.imm .pose-btn:nth-child(3){animation-delay:.06s}html.imm .pose-btn:nth-child(4){animation-delay:.09s}html.imm .pose-btn:nth-child(5){animation-delay:.12s}html.imm .pose-btn:nth-child(6){animation-delay:.15s}
 @keyframes fanin{from{opacity:0;transform:translateX(30px) scale(.4)}}
+/* emotes (11 boutons) : 2 rangées de 6 au plus */
+.posebar{flex-wrap:wrap}.pose-btn{flex:1 1 calc(16.66% - 6px)}
+@media (orientation:portrait){html.imm .posebar{flex-wrap:wrap-reverse;width:calc(6 * var(--pb,48px) + 30px)}html.imm.poses-open .actionbar{visibility:hidden}}
+html.imm .pose-btn:nth-child(n+7){animation-delay:.08s}
 /* zone du sol 2D sous le HUD ; le décor remplit tout l'écran */
 html.imm .floor{top:var(--ft);bottom:var(--fb);height:auto}
 html.imm .tile.teampad .tsub{display:none}
@@ -864,7 +868,7 @@ html.imm .ov-card{max-height:calc(100dvh - 2 * max(16px,env(safe-area-inset-top,
           </div>
           <div class="floor" id="floor" aria-label="Sol du lobby : touchez pour vous déplacer"></div>
         </div>
-        <div class="posebar" id="posebar" role="group" aria-label="Prendre la pose"></div>
+        <div class="posebar" id="posebar" role="group" aria-label="Emotes"></div>
         <div class="actionbar"><div class="act-who" id="act-who" aria-label="Joueurs sur ce carré"></div><div class="msg" id="act-msg" role="status" aria-live="polite"></div><div class="tools" id="act-btns"></div></div>
       </div>
       <aside class="roster">
@@ -885,7 +889,7 @@ html.imm .ov-card{max-height:calc(100dvh - 2 * max(16px,env(safe-area-inset-top,
     <button class="hud-b loot" type="button" id="hb-loot" aria-label="Shakers mystère à ouvrir" title="Shakers mystère à ouvrir" hidden>🎁<i class="hud-n" id="hb-loot-n"></i></button>
     <button class="hud-b" type="button" id="hb-help" aria-label="Comment jouer" title="Comment jouer">ℹ️</button>
     <span class="hud-sp"></span>
-    <button class="hud-b big" type="button" id="hb-pose" aria-expanded="false" aria-controls="posebar" aria-label="Prendre la pose" title="Prendre la pose">💪</button>
+    <button class="hud-b big" type="button" id="hb-pose" aria-expanded="false" aria-controls="posebar" aria-label="Emotes" title="Emotes">🕺</button>
   </div>
   <div class="hud-pill" id="hud-net" role="status" hidden><button type="button" class="hp-main" id="hud-net-go"></button><button type="button" class="hp-x" id="hud-net-x" aria-label="Masquer">✕</button></div>
 </section>
@@ -980,6 +984,7 @@ const pcOf = pl => (PLACES[pl] && PLACES[pl].pc) || null;
 /* Pont vers les modules core/kit.js, rules.js, ambiance.js, announcer.js (événements + lecture de l'état du lobby). */
 const emit = (ev, d) => { if (G.kit) G.kit.emit(ev, d); };
 G.lobby = {profile: () => profile, saveProfile: () => saveProfile(), pushPresence: () => pushPresence(), hostNow: () => hostNow(), myPeer: () => myPeer, peers: () => peers, place: () => place,
+  emote: id => strikePose(id), // core/chat.js : emote choisie dans le 💬 du lobby (le perso la fait, comme la barre d'emotes)
   myLook: () => myLook(), chatCtx: () => mounted ? "m:" + mounted : inLobby && !inGame ? "l:" + place : null, // chat rapide (core/chat.js) : partie en cours, sinon lieu du lobby
   game: id => { const g = gameById(id); return g ? {id: g.id, name: g.name, min: g.min, max: g.max, teams: !!g.teams, place: placeOfGame(g), emoji: PLACES[placeOfGame(g)].emoji} : null; }};
 
@@ -1687,8 +1692,8 @@ function renderEntities() {
       if (typeof x !== "number" || typeof y !== "number") continue;
       const xp = isMe ? profile.xp : pr.xp || 0, BM = matchOf(hostSt, p.peer), bg = BM && gameById(BM.g);
       const look = isMe ? myLook() : pr.lk, pz = BM ? null : poseOf(p.peer), pd = pz && POSE[pz];
-      const p67 = pz === "67", sf = cachedSvgFx(look, xp, p67 ? "67a" : pz, "sprite"); // 67 : deux images fixes, alternées par scene3d (svg2)
-      list.push({key: p.peer, pr: prOf(look), x, y, svg: sf.svg, svg2: p67 ? cachedSvgFx(look, xp, "67b", "sprite").svg : null, fx: p67 ? {kind: "word", x: 100, y: 30, ang: -90, word: "SIX… SEVEN !", color: "#ffd23f"} : pz ? sf.fx : null, poseKey: pz ? pz + ":" + (isMe ? myPose.seq : (seenPoses.get(p.peer) || {}).k) : null, name: pr.ps + (SO ? SO.badge(p, true) : ""), sub:(pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " : "") + (BM ? "🎮 " + (bg ? bg.name : "en partie") : pd ? pd[2] + " " + pd[1] + " !" : titleOf(look, xp)),
+      const em = pz && A.emote ? A.emote(pz) : null, ee = em && A.EMOTE[pz], sf = cachedSvgFx(look, xp, em ? em.frames[0] : pz, "sprite"); // emote : images fixes alternées par scene3d (frames)
+      list.push({key: p.peer, pr: prOf(look), x, y, svg: sf.svg, frames: em ? em.frames.map(fr => cachedSvgFx(look, xp, fr, "sprite").svg) : null, frameMs: em ? em.ms : null, frameOnce: !!(em && em.once), fx: ee ? {kind: "word", x: 100, y: 30, ang: -90, word: ee[4], color: ee[5]} : pz ? sf.fx : null, poseKey: pz ? pz + ":" + (isMe ? myPose.seq : (seenPoses.get(p.peer) || {}).k) : null, name: pr.ps + (SO ? SO.badge(p, true) : ""), sub:(pr.tm === 0 || pr.tm === 1 ? TEAM_EMOJI[pr.tm] + " " : "") + (BM ? "🎮 " + (bg ? bg.name : "en partie") : pd ? pd[2] + " " + pd[1] + " !" : titleOf(look, xp)),
         me: isMe, scale: A.size(xp) * .55 * (1 + .4 * (1 - A.level(xp) / A.MAX_LEVEL)), pose: pz, /* 3D : petits gabarits encore un peu agrandis (la caméra est loin), taille max inchangée */ walking: !!(isMe ? me.walking : pr.w), facing: (isMe ? me.facing : pr.f) === -1 ? -1 : 1, busy: !!BM && !isMe, crown: host === p.peer, voted: !!pr.v && !BM});
     }
     s3d.setEntities(list);
@@ -1715,7 +1720,7 @@ function renderEntities() {
     if (key !== e.key) {
       e.key = key;
       const look = isMe ? myLook() : pr.lk, xp = isMe ? profile.xp : pr.xp || 0, sf = cachedSvgFx(look, xp, pz, "full"), P = prOf(look);
-      e.el.innerHTML = `<div class="body">${sf.svg}${pd ? weaponFxHtml(sf.fx, fc) : ""}${pr.v && !BM ? `<span class="voted" title="A validé">✔</span>` : ""}${host === p.peer ? `<span class="crown" title="Hôte">👑</span>` : ""}${pd ? `<span class="poseflash"></span><span class="posefx${pz === "67" ? " p67" : ""}">${pz === "67" ? P67_FX : pd[2]}</span>` : ""}</div><div class="tag${P ? " lgp" : ""}"${P ? ` style="--lgc:${LG.color(P)}"` : ""}>${nmH(pr.ps, look, {plain: isMe})}${esc(sob)}${BM ?`<small>🎮 ${esc(bg ? bg.name : "en partie")}</small>` : pd ? `<small class="pz">${pd[2]} ${esc(pd[1])} !</small>` : `<small>${esc(titleOf(look, xp))}</small>`}</div>`;
+      e.el.innerHTML = `<div class="body">${sf.svg}${pd ? weaponFxHtml(sf.fx, fc) : ""}${pr.v && !BM ? `<span class="voted" title="A validé">✔</span>` : ""}${host === p.peer ? `<span class="crown" title="Hôte">👑</span>` : ""}${pd ? `<span class="poseflash"></span><span class="posefx${emoFx(pz) ? " p67" : ""}">${emoFx(pz) || pd[2]}</span>` : ""}</div><div class="tag${P ? " lgp" : ""}"${P ? ` style="--lgc:${LG.color(P)}"` : ""}>${nmH(pr.ps, look, {plain: isMe})}${esc(sob)}${BM ?`<small>🎮 ${esc(bg ? bg.name : "en partie")}</small>` : pd ? `<small class="pz">${pd[2]} ${esc(pd[1])} !</small>` : `<small>${esc(titleOf(look, xp))}</small>`}</div>`;
       e.el.classList.toggle("posing", !!pd);
       const tg = e.el.querySelector(".tag"); e.tw = tg ? tg.offsetWidth : 0; e.th = tg ? tg.offsetHeight : 0; e.tdy = 0;
     }
@@ -1947,7 +1952,7 @@ function measureHud() {
 }
 function fitHud() { if (measureHud()) { layoutTiles(); entEls.forEach(e => e.el.remove()); entEls.clear(); } }
 // poses : le bouton 💪 déplie la rangée de poses
-function closePoses() { document.documentElement.classList.remove("poses-open"); const b = $("hb-pose"); if (b) { b.setAttribute("aria-expanded", "false"); b.textContent = "💪"; } }
+function closePoses() { document.documentElement.classList.remove("poses-open"); const b = $("hb-pose"); if (b) { b.setAttribute("aria-expanded", "false"); b.textContent = "🕺"; } }
 $("hb-pose").addEventListener("click", () => {
   const open = !document.documentElement.classList.contains("poses-open");
   if (!open) { closePoses(); return; }
@@ -2020,7 +2025,7 @@ function openDrawer(kind) {
     openSheet("soiree", `<div class="dr"><h2>Mode soirée</h2><div id="dr-box"></div><p class="sub" style="margin:10px 0 0">Un maître du jeu 🎤 choisit une playlist de jeux ; chaque partie rapporte des points au classement de la soirée, et le champion repart avec sa couronne.</p></div>`);
     sheetCleanup = moveInto($("dr-box"), [$("so-bar")]);
   } else if (kind === "help") {
-    openSheet("help", `<div class="dr"><h2>Comment jouer</h2><div id="dr-box"></div><p class="sub" style="margin-top:6px">En bas : 👥 les joueurs, 🎉 le mode soirée, 💪 les poses. En haut : 🛒 la boutique, ⋯ le menu (salle, lien, réglages). Touchez votre perso en haut à gauche pour le modifier.</p></div>`);
+    openSheet("help", `<div class="dr"><h2>Comment jouer</h2><div id="dr-box"></div><p class="sub" style="margin-top:6px">En bas : 👥 les joueurs, 🎉 le mode soirée, 🕺 les emotes. En haut : 🛒 la boutique, ⋯ le menu (salle, lien, réglages). Touchez votre perso en haut à gauche pour le modifier.</p></div>`);
     sheetCleanup = moveInto($("dr-box"), [document.querySelector(".howto")]);
   } else if (kind === "menu") {
     const nb = $("netbadge"), help = $("net-help"), n = players().length, s3ok = !!(G.scene3d && G.scene3d.supported);
@@ -2257,9 +2262,13 @@ function showResults(M) {
 }
 
 /* ---------- poses dans le lobby ---------- */
-const POSE = {}; A.POSES.forEach(p => { POSE[p[0]] = p; });
-const POSE_SHORT = {flex: "Biceps", most: "Most musc.", kiss: "Bisou", back: "Dos", leg: "Jambe", 67: "6-7"};
+// barre d'emotes (danses, « L », facepalm… + « 6-7 ») ; les anciennes poses de muscu restent reçues (anciens clients)
+// et servent ailleurs (podium, boutique). Un id inconnu d'un autre client est ignoré (POSE[id] absent).
+const EMOTES = A.EMOTES || A.POSES;
+const POSE = {}; A.POSES.concat(A.EMOTES || []).forEach(p => { POSE[p[0]] = p; });
+const POSE_SHORT = {flex: "Biceps", most: "Most musc.", kiss: "Bisou", back: "Dos", leg: "Jambe", 67: "6-7"}; (A.EMOTES || []).forEach(e => { POSE_SHORT[e[0]] = e[3]; });
 const P67_FX = `<span><i>6️⃣</i><i>7️⃣</i></span><b>SIX… SEVEN !</b>`; // « six seven » : les deux chiffres sautent en alternance
+const emoFx = id => { const e = A.EMOTE && A.EMOTE[id]; return id === "67" ? P67_FX : e ? `<span><i>${e[2]}</i></span><b style="color:${e[5]}">${esc(e[4])}</b>` : ""; };
 const POSE_MS = 2600;
 let myPose = null, poseSeq = Math.floor(Math.random() * 1e5), poseHist = [], poseCdUntil = 0;
 const seenPoses = new Map(); // pose des autres : affichée ~2,5 s à partir du moment où CE téléphone la reçoit (horloges différentes)
@@ -2299,7 +2308,7 @@ function checkPoses() {
 function renderPoseBar() {
   const bar = $("posebar"); if (!bar) return;
   const cd = Date.now() < poseCdUntil;
-  const html = A.POSES.map(([id, name, e]) => `<button type="button" class="pose-btn" data-pose="${id}"${cd ? " disabled" : ""} title="${esc(name)}" aria-label="Pose : ${esc(name)}"><span class="e">${e}</span>${esc(POSE_SHORT[id] || name)}</button>`).join("");
+  const html = EMOTES.map(([id, name, e]) => `<button type="button" class="pose-btn" data-pose="${id}"${cd ? " disabled" : ""} title="${esc(name)}" aria-label="Emote : ${esc(name)}"><span class="e">${e}</span>${esc(POSE_SHORT[id] || name)}</button>`).join("");
   if (bar.dataset.h !== html) { bar.innerHTML = html; bar.dataset.h = html; }
 }
 $("posebar").addEventListener("click", e => { const b = e.target.closest("[data-pose]"); if (b && !b.disabled) strikePose(b.dataset.pose); });

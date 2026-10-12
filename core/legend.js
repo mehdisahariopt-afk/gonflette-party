@@ -468,10 +468,12 @@
     if (lift && anim && shadow) { const rx = (28 + 40 * m) * .6; shadow = `<ellipse cx="100" cy="258" rx="${f(rx)}" ry="5" fill="rgba(0,0,0,.22)"><animate attributeName="rx" values="${f(rx)};${f(rx * .83)};${f(rx)}" dur="3s" repeatCount="indefinite"/></ellipse>`; }
     const defs = `<defs>${F.defs ? F.defs(c) : ""}${bwDefs}</defs>`;
     const ground = F.ground ? F.ground(c) : "";
-    const behind = F.behind ? F.behind(c) : "";
+    const wrapT = (x, t) => x && t ? `<g transform="${t}">${x}</g>` : x; // emote : les effets suivent le corps / la tête
+    let behind = F.behind ? F.behind(c) : "";
+    if (A && A.bodyTf && behind) { const uses = []; behind = behind.replace(/<use href="#[^"]*(?:sil|bw)"[^>]*\/>/g, u => { uses.push(u); return ""; }); behind = uses.join("") + wrapT(behind, A.bodyTf); } // les clones du corps sont déjà transformés
     const ov = F.overlay ? F.overlay(c) : "";
     const overlay = ov ? `<g mask="url(#${TOKEN}vis)">${ov}</g>` : "";
-    const top = F.top ? F.top(c) : "";
+    const top = wrapT(F.top ? F.top(c) : "", A && A.headTf);
     const bob = lift && anim ? `<animateTransform attributeName="transform" type="translate" values="0 ${-lift};0 ${-lift - 5};0 ${-lift}" dur="3s" repeatCount="indefinite"/>` : "";
     let s = `${openTag.replace(/^<svg/, `<svg data-pr="${P}"`).replace(/\bclass="av"/, stack ? `class="av lg-main"` : `class="av"`)}${shadow}${defs}${ground}<g${lift ? ` transform="translate(0 ${-lift})"` : ""}>${bob}${behind}${body}${overlay}${top}</g></svg>`;
     if (stack) {
@@ -492,6 +494,13 @@
       if (opts.lg) { opts = Object.assign({}, opts); delete opts.lg; }
       return ORIG(look, xp, opts);
     }
+    // emote (plusieurs images clés) : chaque image dans sa forme légendaire, puis assemblées (les effets suivent le corps) ;
+    // "full" → images "still" (pas de calques animés pendant les ~2,5 s de l'emote)
+    const EM = AV.emote && AV.emote(opts.pose);
+    if (EM && AV.emoteJoin) try {
+      const mode = opts.lg === "full" || opts.lg === "smil" ? "still" : opts.lg;
+      return AV.emoteJoin(opts.pose, EM.frames.map((fr, i) => render(look, xp, Object.assign({}, opts, {pose: fr, lg: mode, out: i ? null : opts.out}), P)));
+    } catch (e) { console.warn("legend emote", e); }
     try { return render(look, xp, opts, P); }
     catch (e) { console.warn("legend", e); const o = Object.assign({}, opts); delete o.lg; return ORIG(look, xp, o); }
   }

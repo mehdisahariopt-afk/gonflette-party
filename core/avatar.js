@@ -217,6 +217,81 @@
   }
 
   const POSES = [["flex", "Double biceps", "💪"], ["most", "Most muscular", "😤"], ["kiss", "Bisou au biceps", "😘"], ["back", "Pose de dos", "🦅"], ["leg", "Flex de jambe", "🦵"], ["67", "Six… seven", "6️⃣7️⃣"]];
+  /* ---------- emotes (barre du lobby + chat rapide en partie) ----------
+     Une emote = 2 à 4 images clés (poses complètes) basculées dans un seul SVG par SMIL (comme « 67 ») ;
+     svg(look, xp, {pose: "floss"}) = l'emote animée, {pose: "floss.1"} = une image fixe (sprites 3D, tests).
+     Image clé (EFR) :
+       l / r : bras du côté gauche / droit de l'IMAGE (l = main de l'arme)
+         ["a", a1, a2, main]           angles du bras et de l'avant-bras (degrés) : 0 = vers l'extérieur, 90 = vers le bas,
+                                       -90 = vers le haut, 180 = vers l'intérieur
+         ["t", ancre, dx, dy, pli, main] main posée sur une ancre (face, brow, chest, belly, hip), dx vers l'extérieur ;
+                                       coude par cinématique inverse (pli 1 = coude vers le bas / l'extérieur, -1 = l'inverse)
+         main : "f" poing (défaut), "o" main ouverte, "L" (index + pouce en L)
+       over : bras dessiné par-dessus la tête ("l" / "r") ; legs : {l, r} = "toe" | "bend" | "lift" | "kick"
+       rot / dx / dy : tout le corps (rotation autour des pieds) ; lie : allongé par terre ; head : inclinaison de la tête
+       face : {e: yeux, m: bouche, b: sourcils} ; fx : extras (notes, larmes, « L »…), dessinés dans l'image (visibles en 3D). */
+  const EMOTES = [ // [id, nom, emoji, court, onomatopée, couleur]
+    ["floss", "Le Floss", "🕺", "Floss", "FLOSS !", "#3ae0ff"],
+    ["robot", "Danse du robot", "🤖", "Robot", "BIP BOUP", "#7fe7ff"],
+    ["dab", "Le Dab", "😎", "Dab", "DAB !", "#ffd23f"],
+    ["disco", "Fièvre du disco", "🪩", "Disco", "GROOVE !", "#ff6ad5"],
+    ["loser", "L sur le front", "🫵", "L", "LOOSER !", "#39d353"],
+    ["clap", "Applaudissements lents", "👏", "Clap…", "CLAP… CLAP…", "#ffd23f"],
+    ["facepalm", "Facepalm", "🤦", "Facepalm", "RHOOO…", "#bfa8ff"],
+    ["cry", "Pleurer", "😭", "Pleurer", "OUIIIN !", "#7fd4ff"],
+    ["guitar", "Air guitar", "🎸", "Guitare", "WAAAANG !", "#ff5a1f"],
+    ["dead", "Fausse mort", "💀", "Mort", "R.I.P.", "#e8e8f0"],
+    ["67", "Six… seven", "6️⃣7️⃣", "6-7", "SIX… SEVEN !", "#ffd23f"]
+  ];
+  const F_GRIN = {e: "n", m: "grin"};
+  const EFR = {
+    // Floss : bras tendus balancés d'un côté puis de l'autre, hanches à l'opposé
+    "floss.0": {l: ["a", 42, 46, "o"], r: ["a", 140, 150, "o"], rot: -4, dx: 7, legs: {r: "bend"}, face: F_GRIN, fx: ["notes0"]},
+    "floss.1": {l: ["a", 98, 112, "o"], r: ["a", 98, 112, "o"], face: F_GRIN, fx: ["notes1"]},
+    "floss.2": {l: ["a", 140, 150, "o"], r: ["a", 42, 46, "o"], rot: 4, dx: -7, legs: {l: "bend"}, face: F_GRIN, fx: ["notes2"]},
+    "floss.3": {l: ["a", 98, 112, "o"], r: ["a", 98, 112, "o"], face: F_GRIN, fx: ["notes1"]},
+    // Robot : angles droits, saccades, tête qui pivote
+    "robot.0": {l: ["a", 0, -90, "o"], r: ["a", 0, 90, "o"], head: 10, dy: -3, face: {e: "robot", m: "robot"}, fx: ["bip"]},
+    "robot.1": {l: ["a", 0, 90, "o"], r: ["a", 0, -90, "o"], head: -10, face: {e: "robot", m: "robot"}, fx: ["boup"]},
+    // Dab : visage dans le creux du coude, l'autre bras tendu en diagonale
+    "dab.0": {l: ["e", -146], r: ["a", -32, -34, "o"], over: "l", head: -16, dx: 3, face: {e: "closed", m: "smirk"}, fx: ["sparkR"]},
+    "dab.1": {l: ["a", -32, -34, "o"], r: ["e", -146], over: "r", head: 16, dx: -3, face: {e: "closed", m: "smirk"}, fx: ["sparkL"]},
+    // Disco : l'index pointé vers le ciel… puis vers le sol, la main sur la hanche, le bassin qui balance
+    "disco.0": {l: ["t", "hip", 0, 0, 1], r: ["a", -48, -50, "p"], rot: 4, dx: -3, legs: {l: "toe"}, face: {e: "n", m: "o", b: -2}, fx: ["disco0", "notes1"]},
+    "disco.1": {l: ["t", "hip", 0, 0, 1], r: ["a", 150, 128, "p"], rot: -4, dx: 4, legs: {r: "bend"}, face: F_GRIN, fx: ["disco1", "notes0"]},
+    // L sur le front : main en L sur le front, poing sur la hanche, langue tirée
+    "loser.0": {l: ["t", "hip", 0, 0, 1], r: ["t", "brow", .2, -.1, -1, "L"], over: "r", head: -5, legs: {l: "bend"}, face: {e: "wink", m: "tongue", b: -3}, fx: ["L0"]},
+    "loser.1": {l: ["t", "hip", 0, 0, 1], r: ["t", "brow", .2, -.1, -1, "L"], over: "r", head: 6, dy: -7, legs: {l: "lift"}, face: {e: "wink", m: "tongue", b: -3}, fx: ["L1"]},
+    // Applaudissements lents : mains écartées… puis CLAP
+    "clap.0": {l: ["t", "chest", 1.2, 0, 1, "u"], r: ["t", "chest", 1.2, 0, 1, "u"], face: {e: "half", m: "flat", b: 0}},
+    "clap.1": {l: ["t", "chest", .22, .1, 1, "u"], r: ["t", "chest", .22, .1, 1, "u"], dy: -2, face: {e: "half", m: "flat", b: 0}, fx: ["clap"]},
+    // Facepalm : la main sur la figure, la tête qui fait non
+    "facepalm.0": {l: ["t", "hip", 0, 0, 1], r: ["t", "face", -.05, -.15, 1, "u"], over: "r", head: 9, face: {e: "closed", m: "sad", b: 5}, fx: ["sweat", "dots"]},
+    "facepalm.1": {l: ["t", "hip", 0, 0, 1], r: ["t", "face", -.05, -.15, 1, "u"], over: "r", head: -4, face: {e: "closed", m: "sad", b: 5}, fx: ["sweat"]},
+    // Pleurer : bras ballants, bouche grande ouverte, fontaines de larmes et flaque
+    "cry.0": {l: ["a", 74, 84, "o"], r: ["a", 74, 84, "o"], head: -4, face: {e: "squeeze", m: "wail", b: 6}, fx: ["tears0", "puddle0"]},
+    "cry.1": {l: ["a", 70, 80, "o"], r: ["a", 70, 80, "o"], head: 4, dy: 2, face: {e: "squeeze", m: "wail", b: 6}, fx: ["tears1", "puddle1"]},
+    // Air guitar : main gauche sur le manche, main droite qui gratte, headbang
+    "guitar.0": {l: ["a", 12, -24, "o"], r: ["t", "belly", -.1, -.35, 1, "o"], legs: {l: "bend", r: "bend"}, head: -9, face: {e: "closed", m: "rock", b: -4}, fx: ["guitar", "notes0"]},
+    "guitar.1": {l: ["a", 12, -24, "o"], r: ["t", "belly", -.05, .3, 1, "o"], legs: {l: "bend", r: "bend"}, head: 11, dy: 3, face: {e: "closed", m: "rock", b: -4}, fx: ["guitar", "zap", "notes2"]},
+    // Fausse mort : la main sur le cœur, on titube… et on s'écroule (une seule fois), l'âme s'envole
+    "dead.0": {l: ["a", -40, -60, "o"], r: ["t", "chest", -.35, -.1, 1, "o"], legs: {l: "bend", r: "toe"}, rot: 9, face: {e: "wide", m: "o", b: 6}, fx: ["stars"]},
+    "dead.1": {l: ["a", 30, 10, "o"], r: ["a", 40, 20, "o"], rot: -45, dx: 46, dy: 6, face: {e: "x", m: "o", b: 0}},
+    "dead.2": {l: ["a", 80, 84, "o"], r: ["a", 80, 84, "o"], lie: true, face: {e: "x", m: "dead", b: 0}, fx: ["ghost"]}
+  };
+  // emotes : images et durée de chacune (ms) ; once = ne se répète pas (reste sur la dernière image)
+  const EMO = {67: {fr: ["67a", "67b"], ms: [280, 280]},
+    floss: {fr: ["floss.0", "floss.1", "floss.2", "floss.3"], ms: [170, 130, 170, 130]},
+    robot: {fr: ["robot.0", "robot.1"], ms: [380, 380]},
+    dab: {fr: ["dab.0", "dab.1"], ms: [650, 650]},
+    disco: {fr: ["disco.0", "disco.1"], ms: [380, 380]},
+    loser: {fr: ["loser.0", "loser.1"], ms: [330, 330]},
+    clap: {fr: ["clap.0", "clap.1"], ms: [620, 300]},
+    facepalm: {fr: ["facepalm.0", "facepalm.1"], ms: [420, 420]},
+    cry: {fr: ["cry.0", "cry.1"], ms: [260, 260]},
+    guitar: {fr: ["guitar.0", "guitar.1"], ms: [210, 210]},
+    dead: {fr: ["dead.0", "dead.1", "dead.2"], ms: [650, 160, 1e9], once: true}};
+  const EMOTE = {}; EMOTES.forEach(e => { EMOTE[e[0]] = e; });
 
   const f = n => Math.round(n * 10) / 10;
   function shade(hex, k) {
@@ -826,21 +901,111 @@
       + `<path d="M${f(o.kx - o.d * o.cw)} ${f(o.fy - 4)}Q${f(o.fx)} ${f(o.fy - 9)} ${f(o.fx + o.d * o.frx * .8)} ${f(o.fy - 4)}" stroke="#2fa8ff" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
   };
 
+  // extras des emotes (notes de musique, larmes, « L »…) : dessinés dans l'image, par-dessus le perso
+  const NOTE_COLS = ["#3ae0ff", "#ff6ad5", "#ffd23f"];
+  const note = (x, y, k, c, dbl) => {
+    const I = "#1d1420";
+    let o = `<g transform="translate(${f(x)} ${f(y)}) scale(${f(k)}) rotate(-8)">`;
+    if (dbl) o += `<path d="M3.6 -1V-16L15.6 -19V-4" stroke="${I}" stroke-width="5.4" fill="none" stroke-linejoin="round"/><path d="M3.6 -1V-16L15.6 -19V-4" stroke="${c}" stroke-width="2.4" fill="none" stroke-linejoin="round"/><ellipse cx="0" cy="0" rx="4.6" ry="3.4" transform="rotate(-20)" fill="${c}" stroke="${I}" stroke-width="2"/><ellipse cx="12" cy="-3" rx="4.6" ry="3.4" transform="rotate(-20 12 -3)" fill="${c}" stroke="${I}" stroke-width="2"/>`;
+    else o += `<path d="M3.6 -1V-18q2 5 8 7" stroke="${I}" stroke-width="5.4" fill="none" stroke-linecap="round"/><path d="M3.6 -1V-18q2 5 8 7" stroke="${c}" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="0" cy="0" rx="4.6" ry="3.4" transform="rotate(-20)" fill="${c}" stroke="${I}" stroke-width="2"/>`;
+    return o + `</g>`;
+  };
+  const word = (x, y, txt, size, col, rotDeg) => `<text x="${f(x)}" y="${f(y)}" transform="rotate(${rotDeg || 0} ${f(x)} ${f(y)})" text-anchor="middle" font-family="Anton,Impact,'Arial Black',sans-serif" font-size="${f(size)}" fill="${col}" stroke="#1d1420" stroke-width="${f(size * .16)}" paint-order="stroke" stroke-linejoin="round">${txt}</text>`;
+  const bolt = (x, y, k) => `<path d="M${f(x)} ${f(y)}l${f(9 * k)} ${f(12 * k)}l${f(-5 * k)} ${f(1.5 * k)}l${f(8 * k)} ${f(13 * k)}l${f(-15 * k)} ${f(-16 * k)}l${f(5 * k)} ${f(-1.5 * k)}z" fill="#fff36b" stroke="#1d1420" stroke-width="1.8" stroke-linejoin="round"/>`;
+  function emFx(list, C) {
+    const I = C.ink, H = C.headPt([C.hx, C.hy]), R = C.r, k = 1.15 + .25 * Math.min(1, C.m);
+    let o = "";
+    for (const n of list) {
+      if (/^notes/.test(n)) {
+        const v = +n.slice(5), P = [[[-R - 24, -R - 4], [R + 20, -R - 20]], [[R + 26, -R + 2], [-R - 16, -R - 26]], [[-R - 28, -R + 6], [R + 12, -R - 30]]][v];
+        P.forEach(([dx, dy], i) => { o += note(H[0] + dx, H[1] + dy, k, NOTE_COLS[(v + i) % 3], (v + i) % 2 === 0); });
+      } else if (n === "bip" || n === "boup") {
+        const d = n === "bip" ? -1 : 1;
+        o += word(H[0] + d * (R + 26), H[1] - R - 6, n === "bip" ? "BIP" : "BOUP", 15 + 3 * C.m, "#7fe7ff", d * 10);
+        o += `<path d="M${f(H[0] - d * (R + 8))} ${f(H[1] - R * .2)}l${f(-d * 8)} -3M${f(H[0] - d * (R + 8))} ${f(H[1] + R * .2)}l${f(-d * 9)} 2" stroke="${I}" stroke-width="2.4" stroke-linecap="round"/>`;
+      } else if (n === "sparkR" || n === "sparkL") {
+        const A = C.arms[n === "sparkR" ? 1 : 0], p = C.bodyPt(A.Hd), d = A.d, u = nrm(A.E, A.Hd);
+        o += star(p[0] + u[0] * 16 + d * 6, p[1] + u[1] * 16 - 6, 7, "#ffd23f") + star(p[0] + u[0] * 6 - d * 10, p[1] + u[1] * 6 - 14, 4.5, "#fff6c9") + star(p[0] + u[0] * 22 - d * 4, p[1] + u[1] * 22 + 8, 4, "#fff6c9");
+        o += `<path d="M${f(p[0] - u[0] * 30 + u[1] * 10)} ${f(p[1] - u[1] * 30 - u[0] * 10)}l${f(-u[0] * 18)} ${f(-u[1] * 18)}M${f(p[0] - u[0] * 30 - u[1] * 10)} ${f(p[1] - u[1] * 30 + u[0] * 10)}l${f(-u[0] * 14)} ${f(-u[1] * 14)}" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".85"/>`;
+      } else if (n === "disco0" || n === "disco1") { // boule à facettes au-dessus, petits éclats de lumière colorés
+        const v = n === "disco1" ? 1 : 0, bx = Math.max(-26, H[0] - R - 46), by = 18, br = 14;
+        o += `<path d="M${f(bx)} -12V${by - br}" stroke="${I}" stroke-width="1.6"/><circle cx="${f(bx)}" cy="${by}" r="${br}" fill="#c9d1e0" stroke="${I}" stroke-width="2.2"/>`
+          + `<path d="M${f(bx - br)} ${by}h${2 * br}M${f(bx - br * .85)} ${by - 5}h${f(br * 1.7)}M${f(bx - br * .85)} ${by + 5}h${f(br * 1.7)}M${f(bx)} ${by - br}v${2 * br}M${f(bx - 5)} ${by - br + 1}q-3 ${br - 1} 0 ${2 * br - 2}M${f(bx + 5)} ${by - br + 1}q3 ${br - 1} 0 ${2 * br - 2}" stroke="#7d8597" stroke-width="1" fill="none"/>`
+          + `<rect x="${f(bx - 6 + v * 5)}" y="${by - 7}" width="4" height="4" fill="#fff"/><rect x="${f(bx + 2 - v * 6)}" y="${by + 2}" width="4" height="4" fill="${v ? "#ff6ad5" : "#3ae0ff"}"/>`;
+        const sp = v ? [[.7, .2, "#ff6ad5"], [-.2, .62, "#3ae0ff"], [1.15, .55, "#ffd23f"], [.35, .95, "#39d353"]] : [[.25, .35, "#3ae0ff"], [.95, .3, "#ffd23f"], [.6, .75, "#ff6ad5"], [-.15, .9, "#39d353"]];
+        sp.forEach(([a, b, c], i) => { o += star(bx + 20 + a * 120, by + 10 + b * 160, 4 + (i % 2) * 2.5, c); });
+      } else if (n === "L0" || n === "L1") {
+        const big = n === "L1", s0 = (big ? 1.25 : 1) * (1 + .15 * Math.min(1, C.m)), x = H[0] - R - 22 * s0, y = Math.max(H[1] - R * .55, 26 * s0 + 2);
+        const Lp = `M${f(x - 9 * s0)} ${f(y - 22 * s0)}V${f(y + 12 * s0)}H${f(x + 14 * s0)}`;
+        o += `<g transform="rotate(${big ? -12 : -4} ${f(x)} ${f(y)})"><path d="${Lp}" stroke="${I}" stroke-width="${f(17 * s0)}" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${Lp}" stroke="#39d353" stroke-width="${f(10 * s0)}" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M${f(x - 11 * s0)} ${f(y - 19 * s0)}V${f(y + 4 * s0)}" stroke="#bff5c8" stroke-width="${f(2.6 * s0)}" stroke-linecap="round"/></g>`;
+        if (big) o += star(x + 22 * s0, y - 18 * s0, 6, "#ffd23f") + star(x - 22 * s0, y + 4 * s0, 4.5, "#fff6c9");
+      } else if (n === "clap") {
+        const a = C.bodyPt(C.arms[0].Hd), b = C.bodyPt(C.arms[1].Hd), c = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 6], rr = 18 + 8 * C.m;
+        for (let i = 0; i < 7; i++) { const t = -Math.PI * (.1 + i * .8 / 6); o += `<path d="M${f(c[0] + Math.cos(t) * rr)} ${f(c[1] + Math.sin(t) * rr)}L${f(c[0] + Math.cos(t) * (rr + 11))} ${f(c[1] + Math.sin(t) * (rr + 11))}" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>`; }
+        o += word(c[0] + rr + 26 + 6 * C.m, c[1] - rr * .6, "CLAP", 17 + 5 * C.m, "#ffd23f", 12);
+      } else if (n === "sweat") {
+        const p = C.headPt([C.hx - R * 1.05, C.hy - R * .7]);
+        o += `<path d="M${f(p[0])} ${f(p[1] - 9)}q9 13 0 18q-9 -5 0 -18z" fill="#8fd3ff" stroke="${I}" stroke-width="2"/><path d="M${f(p[0] - 2)} ${f(p[1] + 1)}q-1 3 1 5" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+      } else if (n === "dots") {
+        const x = H[0] + R + 18, y = H[1] - R - 16;
+        o += `<path d="M${f(x - 20)} ${f(y - 11)}h40a8 8 0 0 1 8 8v6a8 8 0 0 1 -8 8h-26l-8 7l1 -7h-7a8 8 0 0 1 -8 -8v-6a8 8 0 0 1 8 -8z" fill="#fff" stroke="${I}" stroke-width="2.4" stroke-linejoin="round"/>` + [-11, 0, 11].map(dx => `<circle cx="${f(x + dx)}" cy="${f(y)}" r="2.8" fill="${I}"/>`).join("");
+      } else if (n === "tears0" || n === "tears1") {
+        const L = n === "tears1" ? 1.35 : 1;
+        for (const d of [-1, 1]) {
+          const e = C.headPt([C.hx + d * C.ex, C.ey + 3]), tip = [e[0] + d * R * 2.6 * L, e[1] + R * (.9 + .8 * L)];
+          const path = `M${pt(e)}Q${f(e[0] + d * R * 1.5 * L)} ${f(e[1] - R * 1.4)} ${pt(tip)}`;
+          o += `<path d="${path}" stroke="${I}" stroke-width="9" fill="none" stroke-linecap="round"/><path d="${path}" stroke="#5ec8ff" stroke-width="5.4" fill="none" stroke-linecap="round"/><path d="${path}" stroke="#d9f4ff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-dasharray="3 7"/>`;
+          for (let i = 0; i < 3; i++) { const q = [tip[0] + d * (4 + i * 7) - d * (n === "tears1" ? 6 : 0), tip[1] + 8 + i * 12 + (n === "tears1" ? 6 : 0)]; o += `<path d="M${f(q[0])} ${f(q[1] - 5)}q5 7 0 10q-5 -3 0 -10z" fill="#5ec8ff" stroke="${I}" stroke-width="1.4"/>`; }
+        }
+      } else if (n === "puddle0" || n === "puddle1") {
+        const rx = (n === "puddle1" ? 46 : 34) + 30 * Math.min(1.3, C.m);
+        o += `<ellipse cx="100" cy="255" rx="${f(rx)}" ry="${f(n === "puddle1" ? 8 : 6)}" fill="#5ec8ff" opacity=".75" stroke="#2b8fd6" stroke-width="1.6"/><ellipse cx="${f(100 - rx * .45)}" cy="253.5" rx="${f(rx * .2)}" ry="1.6" fill="#fff" opacity=".8"/>`;
+      } else if (n === "guitar") { // guitare imaginaire : contour en pointillés, le manche jusqu'à la main gauche
+        const hl = C.bodyPt(C.arms[0].Hd), bc = C.bodyPt([C.hx - C.W * .1, 170 + 4 * C.m]), g = 1.25 + .5 * Math.min(1.3, C.m), dist = Math.hypot(hl[0] - bc[0], hl[1] - bc[1]), ang = Math.atan2(hl[1] - bc[1], hl[0] - bc[0]) * 180 / Math.PI;
+        const st = `stroke="#fff" stroke-width="3.6" stroke-dasharray="7 4" stroke-linejoin="round"`;
+        o += `<g opacity=".85" transform="translate(${pt(bc)}) rotate(${f(ang)})"><path d="M${f(10 * g)} 0H${f(dist + 4)}" stroke="#fff" stroke-width="${f(5 + 2 * g)}" stroke-dasharray="8 5" stroke-linecap="round"/>`
+          + `<path d="M${f(dist - 2)} -6h14v12h-14z" fill="none" ${st}/>`
+          + `<circle cx="${f(-14 * g)}" cy="0" r="${f(19 * g)}" fill="#fff" fill-opacity=".24" ${st}/><circle cx="${f(10 * g)}" cy="0" r="${f(13 * g)}" fill="#fff" fill-opacity=".24" ${st}/><circle cx="${f(-2 * g)}" cy="0" r="${f(6 * g)}" fill="none" stroke="#fff" stroke-width="2.4"/></g>`;
+      } else if (n === "zap") {
+        o += bolt(H[0] - R - 30, H[1] - R - 10, 1.1 + .3 * C.m) + bolt(H[0] + R + 18, H[1] - R - 18, .9 + .3 * C.m);
+      } else if (n === "stars") {
+        for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + .4; o += star(H[0] + Math.cos(a) * (R + 14), H[1] - R - 6 + Math.sin(a) * 7, 5.5, i % 2 ? "#ffd23f" : "#fff6c9"); }
+        o += `<ellipse cx="${f(H[0])}" cy="${f(H[1] - R - 6)}" rx="${f(R + 14)}" ry="7" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="3 4" opacity=".7"/>`;
+      } else if (n === "ghost") {
+        const ext = C.SW + (7 + 28 * C.m) * .5 + 4, y = Math.max(30, 238 - 2 * ext - 18), x = y > 60 ? 92 : 30, g = 1 + .3 * Math.min(1, C.m);
+        const gh = `<g transform="translate(${f(x)} ${f(y)}) scale(${f(g)})"><path d="M-15 12V-4a15 15 0 0 1 30 0V12l-5 -4l-5 5l-5 -5l-5 5l-5 -5z" fill="#fff" fill-opacity=".88" stroke="${I}" stroke-width="2.4" stroke-linejoin="round"/><circle cx="-5" cy="-3" r="2.4" fill="${I}"/><circle cx="5" cy="-3" r="2.4" fill="${I}"/><ellipse cx="0" cy="4" rx="2.6" ry="3.2" fill="${I}"/><ellipse cx="0" cy="-23" rx="11" ry="3.4" fill="none" stroke="#ffd23f" stroke-width="2.6"/></g>`;
+        o += AN.tr(["0 8", "6 -22"], 1.4, AN.op(".95;.95;0", 1.4, gh, "0;.7;1"));
+      }
+    }
+    return o;
+  }
+  // assemble les images clés d'une emote (chaînes SVG complètes, même cadre) en un seul SVG animé ; l'ombre au sol
+  // commune reste le 1er élément (scene3d / legend la cherchent là). once : s'arrête sur la dernière image.
+  function emoteJoin(id, parts) {
+    const E = EMO[id], n = parts.length, T = E.once ? E.ms.slice(0, -1).reduce((a, b) => a + b, 0) + 1 : E.ms.reduce((a, b) => a + b, 0);
+    let tag = null, sh = null, o = "", t = 0;
+    parts.forEach((x, i) => {
+      const tg = /^<svg[^>]*>/.exec(x)[0];
+      let inner = x.slice(tg.length, -6);
+      const m0 = /^<ellipse cx="100" cy="258"[^>]*\/>/.exec(inner);
+      if (m0) { inner = inner.slice(m0[0].length); if (!sh) sh = m0[0]; }
+      if (!tag) tag = tg;
+      const t0 = t, t1 = t + E.ms[i]; t = t1;
+      const kt = v => f(Math.min(1, v / T) * 1e4) / 1e4;
+      const [vals, kts] = i === 0 ? ["inline;none", "0;" + kt(t1)] : i === n - 1 ? ["none;inline", "0;" + kt(t0)] : ["none;inline;none", "0;" + kt(t0) + ";" + kt(t1)];
+      o += `<g${i ? ` display="none"` : ""}>${inner}<animate attributeName="display" values="${vals}" keyTimes="${kts}" dur="${T / 1000}s" calcMode="discrete" ${E.once ? `fill="freeze"` : `repeatCount="indefinite"`}/></g>`;
+    });
+    return tag + (sh || "") + o + `</svg>`;
+  }
   function svg(look, xp, opts = {}) {
     look = Object.assign({}, DEFAULT_LOOK, look || {});
     const m = opts.m != null ? opts.m : muscle(xp);
     const mc = Math.min(m, 1);
     let pose = opts.pose || "idle";
-    if (pose === "67") { // « six seven » : deux images (main gauche haute / main droite haute) basculées toutes les ~0,28 s
-      const a = svg(look, xp, Object.assign({}, opts, {pose: "67a"})), b = svg(look, xp, Object.assign({}, opts, {pose: "67b", out: null}));
-      const ta = /^<svg[^>]*>/.exec(a)[0], tb = /^<svg[^>]*>/.exec(b)[0];
-      let ia = a.slice(ta.length, -6), ib = b.slice(tb.length, -6);
-      const sh = /^<ellipse cx="100" cy="258"[^>]*\/>/.exec(ia); // ombre au sol commune, gardée en tête (scene3d / legend la cherchent là)
-      if (sh) { ia = ia.slice(sh[0].length); ib = ib.replace(/^<ellipse cx="100" cy="258"[^>]*\/>/, ""); }
-      const sw = v => `<animate attributeName="display" values="${v}" dur=".56s" calcMode="discrete" repeatCount="indefinite"/>`;
-      return ta + (sh ? sh[0] : "") + `<g>${ia}${sw("inline;none")}</g><g display="none">${ib}${sw("none;inline")}</g></svg>`;
-    }
+    if (EMO[pose]) // emote (« 67 », floss…) : ses images clés dans un seul SVG, basculées par SMIL (display)
+      return emoteJoin(pose, EMO[pose].fr.map((p, i) => svg(look, xp, Object.assign({}, opts, {pose: p, out: i ? null : opts.out}))));
     const p67 = pose === "67a" || pose === "67b";
+    const EF = EFR[pose] || null;
     const back = pose === "back";
     const cx = 100;
     const gr = groups(look), eq = equipped(look);
@@ -972,6 +1137,16 @@
       }
       return o;
     };
+    // emote : tout le corps bouge (glisse, penche, tombe) ; l'ombre au sol, les auras et le compagnon restent en place
+    let bodyTf = "", b0 = -1;
+    const tfP = p => p; let tfPt = tfP;
+    if (EF && (EF.rot || EF.dx || EF.dy || EF.lie)) {
+      const ext = SW + (7 + 28 * m) * .5 + 4, R0 = EF.lie ? -90 : EF.rot || 0, tx = EF.lie ? 113 : EF.dx || 0, ty = EF.lie ? 6 - ext : EF.dy || 0;
+      bodyTf = `translate(${f(tx)} ${f(ty)}) rotate(${R0} 100 250)`;
+      const c0 = Math.cos(R0 * Math.PI / 180), s0 = Math.sin(R0 * Math.PI / 180);
+      tfPt = p => [100 + (p[0] - 100) * c0 - (p[1] - 250) * s0 + tx, 250 + (p[0] - 100) * s0 + (p[1] - 250) * c0 + ty];
+      b0 = s.length;
+    }
     if (!back) s += dosItem();
     // ---- dos : cape / ailes
     if (eq.dos === "cape") {
@@ -1022,6 +1197,11 @@
     for (const d of [-1, 1]) {
       let hip = [cx + d * (H - 9 - 3 * m + spread), 172], knee = [cx + d * (H - 7 + 2 * m + spread * 1.1), 212], ank = [cx + d * (H - 9 + spread * .8), 245], toe = false;
       if (pose === "leg" && d === 1) { knee = [hip[0] + 16 + 8 * m + TW * .15, 206]; ank = [knee[0] - 3, 240]; toe = true; }
+      const lgK = EF && EF.legs && EF.legs[d < 0 ? "l" : "r"];
+      if (lgK === "toe") { knee = [knee[0] - d * 4, knee[1] - 4]; ank = [ank[0] - d * 2, ank[1] - 10]; toe = true; }
+      else if (lgK === "bend") { knee = [knee[0] + d * (12 + 7 * m), knee[1] - 3]; ank = [ank[0] + d * (7 + 5 * m), ank[1]]; }
+      else if (lgK === "lift") { knee = [hip[0] + d * (16 + 8 * m), 196]; ank = [knee[0] + d * 3, 228]; toe = true; }
+      else if (lgK === "kick") { knee = [hip[0] + d * (22 + 8 * m), 198]; ank = [hip[0] + d * (44 + 12 * m), 222]; toe = true; }
       legs.push({d, hip, knee, ank, toe});
     }
     const calf = L => { const c = lerp(L.knee, L.ank, .32); return [c[0] + L.d * CW * .3, c[1], CW * .42 + 1]; };
@@ -1459,6 +1639,28 @@
     if (!back && eq.dos === "sacsport") s += `<path d="M${f(cx - SW * .55)} ${f(trapTop + 6)}L${f(cx + W + 4)} 160" stroke="${ink}" stroke-width="9" stroke-linecap="round"/><path d="M${f(cx - SW * .55)} ${f(trapTop + 6)}L${f(cx + W + 4)} 160" stroke="#2f6fdc" stroke-width="5.4" stroke-linecap="round"/><rect x="${f(cx - SW * .2 - 4)}" y="${f(trapTop + 6 + (160 - trapTop) * .25 - 4)}" width="8" height="8" rx="1.6" fill="#c9d1d8" stroke="${ink}" stroke-width="1.6"/>`;
     // ---- bras
     const arms = [];
+    // emotes : bras par angles, ou main posée sur une ancre du corps (coude par cinématique inverse)
+    const hRot = p => EF && EF.head ? (() => { const a = EF.head * Math.PI / 180, c0 = Math.cos(a), s0 = Math.sin(a), px = p[0] - cx, py = p[1] - nkTop; return [cx + px * c0 - py * s0, nkTop + px * s0 + py * c0]; })() : p;
+    const emArm = (sp, d, J, hipHand) => {
+      const Lu = 34 + 10 * m, Lf = 34 + 10 * m, dir = a => [d * Math.cos(a * Math.PI / 180), Math.sin(a * Math.PI / 180)];
+      if (sp[0] === "a") { // bras tendu à l'horizontale : on resserre en largeur pour rester dans le cadre (gros gabarits)
+        let E = add(J, dir(sp[1]), Lu), Hd = add(E, dir(sp[2]), Lf);
+        const hr = 8 + 6 * m + 3, over = Math.max(Math.abs(E[0] - cx) + UA0 * .5 + 10, Math.abs(Hd[0] - cx) + hr + 8) - 143;
+        if (over > 0) { const k = Math.max(.3, 1 - over / Math.max(1, Math.max(Math.abs(E[0] - J[0]), Math.abs(Hd[0] - J[0])))); E = [J[0] + (E[0] - J[0]) * k, E[1]]; Hd = [J[0] + (Hd[0] - J[0]) * k, Hd[1]]; }
+        return [E, Hd, sp[3] || "f"];
+      }
+      if (sp[0] === "e") { const E = hRot([cx - d * headR * .1, headY + headR * .55]); return [E, add(E, dir(sp[1]), Lf * .95), sp[2] || "f"]; }
+      const [, k, dx, dy, bend] = sp;
+      let T;
+      if (k === "face") { const q = hRot([cx, headY]); T = [q[0] + d * dx * headR, q[1] + dy * headR]; }
+      else if (k === "brow") { const q = hRot([cx, headY - headR * .5]); T = [q[0] + d * dx * headR, q[1] + dy * headR]; }
+      else if (k === "chest") T = [cx + d * dx * (14 + 30 * m), yS + 32 + 6 * m + dy * 30];
+      else if (k === "belly") T = [cx + d * dx * (W + 8), 160 + dy * 30];
+      else T = [hipHand[0] + d * dx * 10, hipHand[1] + dy * 10];
+      const vx = T[0] - J[0], vy = T[1] - J[1], c = Math.hypot(vx, vy) || 1, kk = Math.max(1, c / ((Lu + Lf) * .96)), a = Lu * kk, b = Lf * kk, cc = Math.max(c, Math.abs(a - b) + 1);
+      const A = Math.acos(Math.max(-1, Math.min(1, (a * a + cc * cc - b * b) / (2 * a * cc)))) * 180 / Math.PI;
+      return [add(J, rot([vx / c, vy / c], -A * (bend || 1) * d), a), T, sp[5] || "f"];
+    };
     for (const d of [-1, 1]) {
       const J = [cx + d * (SW - 5), yS + 12];
       const hipHand = [cx + d * (W + 3 + lat * .25), 150];
@@ -1473,7 +1675,9 @@
         Hd = [E[0] + d * (20 + 9 * Math.min(m, 1)), E[1] + (up ? -(17 + 9 * m) : 7 + 3 * m)];
       }
       else { E = [J[0] + d * (5 + 13 * m + lat * .6), yS + 50]; Hd = [J[0] + d * (3 + 15 * m + lat * .6), yS + 86]; }
-      arms.push({d, J, E, Hd, fx});
+      let h = null;
+      if (EF && EF[d < 0 ? "l" : "r"]) { const r0 = emArm(EF[d < 0 ? "l" : "r"], d, J, hipHand); E = r0[0]; Hd = r0[1]; h = r0[2]; }
+      arms.push({d, J, E, Hd, fx, h});
     }
     const bulge = A => {
       const mx = (A.J[0] + A.E[0]) / 2, my = (A.J[1] + A.E[1]) / 2;
@@ -1486,8 +1690,11 @@
     const fore = A => { const c = lerp(A.E, A.Hd, .38); return [c[0], c[1], FA * .62 + 2]; };
     const handR = 8 + 6 * m + 3 * Math.max(0, kb - 1);
     // mains : poing (doigts repliés, pouce, reflet) ; main ouverte pour le salut (pose « wave », main droite libre)
-    const openHand = A => ((pose === "wave" && A.d === 1) || (p67 && !(A.d === -1 && eq.arme && WEAPONS[eq.arme]))) && !eq.main && eq.poignets !== "gants";
-    const fingers = A => { const u = nrm(A.E, A.Hd), R = handR - 2.5;
+    const openHand = A => EF ? !!A.h && A.h !== "f" && !(A.d === -1 && eq.arme && WEAPONS[eq.arme]) && !(A.d === 1 && eq.main) && eq.poignets !== "gants"
+      : ((pose === "wave" && A.d === 1) || (p67 && !(A.d === -1 && eq.arme && WEAPONS[eq.arme]))) && !eq.main && eq.poignets !== "gants";
+    const fingers = A => { const u = A.h === "u" ? [-A.d * .26, -.97] : nrm(A.E, A.Hd), R = handR - 2.5;
+      if (A.h === "p") return [[add(A.Hd, u, R * .3), add(A.Hd, u, R * 2.2)]]; // index pointé
+      if (A.h === "L") return [[add(A.Hd, [0, -1], R * .3), add(A.Hd, [0, -1], R * 2.5)], [add(A.Hd, [A.d, 0], R * .3), add(A.Hd, [A.d, -.1], R * 2)]]; // « L » : index en l'air, pouce sur le côté
       if (p67) { const h = [1, 0], up = -A.d; // paume vers le haut : doigts vers l'extérieur, bouts relevés, pouce dressé
         return [[-8, 1.5], [4, 1.65], [16, 1.6], [28, 1.35], [84, 1.25]].map(([a, l]) => [add(A.Hd, rot([h[0] * A.d, 0], a * up), R * .3), add(A.Hd, rot([h[0] * A.d, 0], (a + (a > 60 ? -14 : 8)) * up), R * l)]); }
       return [[-36, 1.5], [-12, 1.75], [12, 1.7], [36, 1.45], [-82, 1.3]].map(([a, l]) => [add(A.Hd, rot(u, a), R * .3), add(A.Hd, rot(u, a + (a < -60 ? 16 : 0)), R * l)]); };
@@ -1638,7 +1845,7 @@
     const fxOf = (def, pl, tipL) => { const t = tipL ? pl.toG(tipL) : pl.tip; return {kind: def.fx[2], word: def.fx[0], color: def.fx[1], x: +f(t[0]), y: +f(t[1]), ang: Math.round(pl.ang), s: +pl.s.toFixed(2)}; };
     if (eq.arme && WEAPONS[eq.arme]) {
       const W0 = WEAPONS[eq.arme], A1 = arms[0], [hx4, hy4] = A1.Hd;
-      const fam = bustArm ? "flex" : poseFam(pose);
+      const fam = bustArm ? "flex" : EF ? (A1.Hd[1] < yS ? "flex" : "idle") : poseFam(pose);
       const pl = placeLocal(W0, hx4, hy4, bestAngle(W0, fam, hx4, hy4, -1, handR / 12, wbox), true, handR / 12, 0, false, wbox);
       const fist = eq.poignets === "gants" ? `<circle cx="${f(hx4)}" cy="${f(hy4)}" r="${f(handR + 6)}" fill="#d62828" stroke="${ink}" stroke-width="3.5"/>` : `<circle cx="${f(hx4)}" cy="${f(hy4)}" r="${f(handR - .5)}" fill="${skin}" stroke="${ink}" stroke-width="3"/>` + fistD(A1.Hd, A1.E, -1);
       s += W0.front ? fist + pl.svg : pl.svg + fist;
@@ -1675,6 +1882,7 @@
         : `<path d="M${f(cx - neckH - 2)} ${f(nkTop + 12)}Q${f(cx - hw2 - 4)} ${f(nkTop + 8)} ${f(cx - hw2)} ${f(nkTop - 8)}Q${cx} ${f(nkTop - 24 - 4 * m)} ${f(cx + hw2)} ${f(nkTop - 8)}Q${f(cx + hw2 + 4)} ${f(nkTop + 8)} ${f(cx + neckH + 2)} ${f(nkTop + 12)}Z" fill="${HT.c}" stroke="${ink}" stroke-width="3.5" stroke-linejoin="round"/><path d="M${f(cx - hw2 + 5)} ${f(nkTop - 4)}Q${f(cx - neckH - 4)} ${f(nkTop + 6)} ${f(cx - neckH)} ${f(nkTop + 10)}M${f(cx + hw2 - 5)} ${f(nkTop - 4)}Q${f(cx + neckH + 4)} ${f(nkTop + 6)} ${f(cx + neckH)} ${f(nkTop + 10)}" stroke="${HT.c2}" stroke-width="2.6" fill="none"/>`;
     }
     // ---- tête
+    const h0 = s.length;
     const hx = cx, hy = headY, r = headR;
     { const rx = Math.min(r * .72, neckH + 2.5), cy0 = hy + r * .62, ry = r * .6; s += paint(`M${f(hx - rx)} ${f(cy0)}a${f(rx)} ${f(ry)} 0 1 0 ${f(2 * rx)} 0a${f(rx)} ${f(ry)} 0 1 0 ${f(-2 * rx)} 0`, "#000", ".2"); } // ombre sous le menton
     s += `<circle cx="${f(hx - r + 1)}" cy="${f(hy + 3)}" r="5.5" fill="${skin}" stroke="${ink}" stroke-width="3.5"/><circle cx="${f(hx + r - 1)}" cy="${f(hy + 3)}" r="5.5" fill="${skin}" stroke="${ink}" stroke-width="3.5"/>`;
@@ -1748,6 +1956,15 @@
       } else if (eq.visage === "coeur") {
         s += `<path d="M${f(hx - r * .9)} ${f(ey - 3)}h${f(r * 1.8)}" stroke="${ink}" stroke-width="2.4"/>`;
         for (const d of [-1, 1]) { const x = hx + d * r * .42, k = r / 22; s += `<path transform="translate(${f(x)} ${f(ey + 1)}) scale(${f(k)})" d="M0 7C-12 -1 -10 -10 -4 -10Q0 -10 0 -5Q0 -10 4 -10C10 -10 12 -1 0 7Z" fill="#ff2e63" stroke="${ink}" stroke-width="2.4"/>`; }
+      } else if (EF && EF.face && EF.face.e && EF.face.e !== "n") { // yeux des emotes
+        const fe = EF.face.e, arc = d => tap([hx + d * ex - 5.4, ey + 2], [hx + d * ex, ey - 6], [hx + d * ex + 5.4, ey + 2], 3.4);
+        if (fe === "closed") s += paint(arc(-1) + arc(1), ink, null, 1);
+        else if (fe === "wink") s += paint(arc(-1), ink, null, 1) + eye([1], 1);
+        else if (fe === "squeeze") s += [-1, 1].map(d => { const x = hx + d * ex; return `<path d="M${f(x + d * 4.6)} ${f(ey - 4.8)}L${f(x - d * 3.6)} ${f(ey)}L${f(x + d * 4.6)} ${f(ey + 4.8)}" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`; }).join("");
+        else if (fe === "x") s += [-1, 1].map(d => { const x = hx + d * ex; return `<path d="M${f(x - 4.2)} ${f(ey - 4.2)}l8.4 8.4M${f(x + 4.2)} ${f(ey - 4.2)}l-8.4 8.4" stroke="${ink}" stroke-width="3" stroke-linecap="round"/>`; }).join("");
+        else if (fe === "half") { s += eye([-1, 1], 0, .5); for (const d of [-1, 1]) { const x = hx + d * ex, rx = er * .9 + 1.2, top = ey - er * 1.05 - 1.6; s += `<path d="M${f(x - rx)} ${f(ey + .2)}H${f(x + rx)}V${f(top)}H${f(x - rx)}Z" fill="${skin}"/><path d="M${f(x - rx)} ${f(ey + .2)}H${f(x + rx)}" stroke="${ink}" stroke-width="2" stroke-linecap="round"/>`; } }
+        else if (fe === "robot") s += [-1, 1].map(d => { const x = hx + d * ex, w = er * 1.1 + 1; return `<rect x="${f(x - w)}" y="${f(ey - w)}" width="${f(2 * w)}" height="${f(2 * w)}" rx="1" fill="#fff" stroke="${ink}" stroke-width="1.6"/><rect x="${f(x - w * .45)}" y="${f(ey - w * .45)}" width="${f(w * .9)}" height="${f(w * .9)}" fill="${ink}"/>`; }).join("");
+        else s += eye([-1, 1], 0, -.15); // « wide »
       } else if (pose === "kiss") {
         s += paint(tap([hx - ex - 4.5, ey + .5], [hx - ex, ey - 4.5], [hx - ex + 4.5, ey + .5], 2.8), ink, null, 1) + eye([1]);
       } else if (mood === "win") {
@@ -1757,7 +1974,7 @@
         s += `<path d="M${f(hx - ex - 1)} ${f(ey + 5)}q-2 6 0 9q3 1 3 -2q0 -3 -3 -7z" fill="#8fd3ff" stroke="${ink}" stroke-width="1.3"/>`; // larme
       } else { const lid = mood === "fight" || pose === "most" || m > .9 ? 1 : 0; s += eye([-1, 1], lid); }
       // sourcils : inquiets quand maigre, froncés quand énorme (ou en plein effort)
-      const bt = mood === "lose" ? 5 : mood === "fight" ? -5 : mood === "win" ? 1 : pose === "most" ? -5 : m < .3 ? 4 : m > .9 ? -4 : 0;
+      const bt = EF && EF.face && EF.face.b != null ? EF.face.b : mood === "lose" ? 5 : mood === "fight" ? -5 : mood === "win" ? 1 : pose === "most" ? -5 : m < .3 ? 4 : m > .9 ? -4 : 0;
       const gOff = (eq.visage === "aviateur" || eq.visage === "coeur" ? 3 : eq.visage === "lunstar" ? 5 : 0) + (mood === "win" ? 3 : 0);
       s += paint([-1, 1].map(d => { const a = [hx + d * (ex + 6.5), ey - 9 + bt - gOff], b = [hx + d * (ex - 5), ey - 9 - bt - gOff]; return tap(a, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 1.6], b, 3.8 + m); }).join(""), shade(hc, .55), null, 1); // sourcils
       { // nez : petite boule avec narine, ombre dessous et reflet
@@ -1769,8 +1986,19 @@
       if (eq.visage === "guerre") s += `<path d="M${f(hx - ex - 6)} ${f(ey + 6)}h11M${f(hx - ex - 6)} ${f(ey + 10)}h11M${f(hx + ex - 5)} ${f(ey + 6)}h11M${f(hx + ex - 5)} ${f(ey + 10)}h11" stroke="${ink}" stroke-width="2.6" stroke-linecap="round"/><path d="M${hx} ${f(ey - r * .55)}v${f(r * .35)}" stroke="#d62828" stroke-width="3.4" stroke-linecap="round"/>`;
       const my = hy + r * .45;
       const grillz = eq.visage === "grillz";
-      const grin = mood === "fight" || (mood !== "lose" && mood !== "win" && (pose === "most" || p67 || eq.visage === "dentor" || grillz || (m >= .9 && pose !== "kiss")));
-      if (mood === "win") {
+      const grin = mood === "fight" || (mood !== "lose" && mood !== "win" && (pose === "most" || p67 || (EF && EF.face && EF.face.m === "grin") || eq.visage === "dentor" || grillz || (m >= .9 && pose !== "kiss")));
+      const fm = EF && EF.face && EF.face.m !== "grin" ? EF.face.m : null;
+      if (fm) { // bouches des emotes
+        if (fm === "o") s += `<ellipse cx="${f(hx)}" cy="${f(my + 1)}" rx="4.4" ry="5.6" fill="#5a1020" stroke="${ink}" stroke-width="2.4"/>`;
+        else if (fm === "smirk") s += paint(tap([hx - 7, my + 1.5], [hx + 2, my + 4], [hx + 9, my - 3.5], 2.8), ink, null, 1);
+        else if (fm === "tongue") s += `<path d="M${f(hx - 9)} ${f(my - 2)}Q${f(hx)} ${f(my + 9)} ${f(hx + 10)} ${f(my - 4)}Z" fill="#5a1020" stroke="${ink}" stroke-width="2.4" stroke-linejoin="round"/><path d="M${f(hx - 1)} ${f(my + 1.5)}q2 11 9 9q4 -2 1 -10z" fill="#ff6b81" stroke="${ink}" stroke-width="2" stroke-linejoin="round"/><path d="M${f(hx + 3.5)} ${f(my + 4)}l1.4 5" stroke="#c94f63" stroke-width="1.3" stroke-linecap="round"/>`;
+        else if (fm === "flat") s += `<path d="M${f(hx - 8)} ${f(my + 1.5)}H${f(hx + 8)}" stroke="${ink}" stroke-width="3" stroke-linecap="round"/>`;
+        else if (fm === "sad") s += paint(tap([hx - 8.4, my + 5.4], [hx, my - 3], [hx + 8.4, my + 5.4], 3.2), ink, null, 1);
+        else if (fm === "wail") s += `<path d="M${f(hx - 12)} ${f(my + 8)}Q${f(hx - 10)} ${f(my - 6)} ${f(hx)} ${f(my - 6)}Q${f(hx + 10)} ${f(my - 6)} ${f(hx + 12)} ${f(my + 8)}Q${f(hx)} ${f(my + 12)} ${f(hx - 12)} ${f(my + 8)}Z" fill="#5a1020" stroke="${ink}" stroke-width="2.6" stroke-linejoin="round"/><path d="M${f(hx - 7)} ${f(my + 8.6)}q7 -6 14 0q-7 2.6 -14 0z" fill="#ff6b81"/><path d="M${f(hx - 6)} ${f(my - 4.6)}h12" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>`;
+        else if (fm === "rock") s += `<path d="M${f(hx - 11)} ${f(my - 4)}h22q-1 13 -11 13t-11 -13z" fill="#5a1020" stroke="${ink}" stroke-width="2.6" stroke-linejoin="round"/><path d="M${f(hx - 9.5)} ${f(my - 3)}h19v3h-19z" fill="#fff"/><path d="M${f(hx - 5)} ${f(my + 3)}q-1 12 5 12q6 0 5 -12z" fill="#ff6b81" stroke="${ink}" stroke-width="2" stroke-linejoin="round"/><path d="M${hx} ${f(my + 5)}v6" stroke="#c94f63" stroke-width="1.3" stroke-linecap="round"/>`;
+        else if (fm === "robot") s += `<rect x="${f(hx - 9)}" y="${f(my - 3)}" width="18" height="7" rx="1" fill="#fff" stroke="${ink}" stroke-width="2.2"/><path d="M${f(hx - 4.5)} ${f(my - 3)}v7M${hx} ${f(my - 3)}v7M${f(hx + 4.5)} ${f(my - 3)}v7" stroke="${ink}" stroke-width="1.3"/>`;
+        else if (fm === "dead") s += `<path d="M${f(hx - 8)} ${f(my)}H${f(hx + 8)}" stroke="${ink}" stroke-width="3" stroke-linecap="round"/><path d="M${f(hx + 1)} ${f(my)}q-1 10 5 10q5 0 4 -10z" fill="#ff6b81" stroke="${ink}" stroke-width="2" stroke-linejoin="round"/>`;
+      } else if (mood === "win") {
         // bouche grande ouverte (dents + langue)
         s += `<path d="M${f(hx - 12)} ${f(my - 4)}h24q-1 14 -12 14t-12 -14z" fill="#5a1020" stroke="${ink}" stroke-width="2.8" stroke-linejoin="round"/><path d="M${f(hx - 10.5)} ${f(my - 3)}h21v3.2h-21z" fill="#fff"/><path d="M${f(hx - 6)} ${f(my + 6.5)}q6 -5 12 0q-6 4 -12 0z" fill="#ff6b81"/>`;
         if (eq.visage === "dentor") s += `<rect x="${f(hx + 1)}" y="${f(my - 3)}" width="5" height="3.2" fill="#f5c518" stroke="${ink}" stroke-width="1"/>`;
@@ -1883,7 +2111,23 @@
         + `<path d="${sp}" fill="#39ff14" stroke="${ink}" stroke-width="3.4" stroke-linejoin="round"/><path d="M${f(hx - 12)} ${f(hy - r - 13)}L${f(hx - 15)} ${f(hy - r - 18)}L${f(hx - 9.4)} ${f(hy - r - 13.4)}ZM${f(hx - 4.3)} ${f(hy - r - 24)}L${f(hx - 4)} ${f(hy - r - 32)}L${f(hx - 1.6)} ${f(hy - r - 24)}ZM${f(hx + 8)} ${f(hy - r - 23)}L${f(hx + 10)} ${f(hy - r - 30)}L${f(hx + 9.6)} ${f(hy - r - 22)}Z" fill="#ff2e88"/></g>`;
       if (back) s += `<path d="M${hx} ${f(hy - r + 2)}V${f(hy + r * .8)}" stroke="#39ff14" stroke-width="7" stroke-linecap="round"/>`;
     }
+    if (EF && EF.head) s = s.slice(0, h0) + `<g transform="rotate(${EF.head} ${cx} ${f(nkTop)})">` + s.slice(h0) + `</g>`;
     if (eq.peau === "doree") s += star(hx - r * .45, hy - r * .55, 4, "#fff8c2") + star(cx + SW * .3, yS + 22, 5, "#fff8c2");
+    // ---- emote : bras par-dessus la tête (dab, facepalm, « L » sur le front)
+    if (EF && EF.over) {
+      const A = arms[EF.over === "l" ? 0 : 1], b = bulge(A), big = m > .2 || kb > 1.15;
+      const uc = HT && HT.sl ? HT.c : skin, fc = HT && HT.sl && HT.sl !== "short" ? HT.c : skin;
+      s += `<path d="M${pt(A.J)}L${pt(A.E)}" stroke="${ink}" stroke-width="${f(UA + 6)}" stroke-linecap="round"/><path d="M${pt(A.E)}L${pt(A.Hd)}" stroke="${ink}" stroke-width="${f(FA + 6)}" stroke-linecap="round"/>`
+        + (big ? `<circle cx="${f(b[0])}" cy="${f(b[1])}" r="${f(b[2] + 3)}" fill="${ink}"/>` : "") + `<circle cx="${f(A.Hd[0])}" cy="${f(A.Hd[1])}" r="${f(handR)}" fill="${ink}"/>`;
+      if (openHand(A)) s += fingers(A).map(([p, q]) => `<path d="M${pt(p)}L${pt(q)}" stroke="${ink}" stroke-width="${f(fingW + 5)}" stroke-linecap="round"/>`).join("");
+      s += `<path d="M${pt(A.J)}L${pt(A.E)}" stroke="${uc}" stroke-width="${f(UA)}" stroke-linecap="round"/><path d="M${pt(A.E)}L${pt(A.Hd)}" stroke="${fc}" stroke-width="${f(FA)}" stroke-linecap="round"/>`
+        + (big ? `<circle cx="${f(b[0])}" cy="${f(b[1])}" r="${f(b[2])}" fill="${uc}"/>` : "") + `<circle cx="${f(A.Hd[0])}" cy="${f(A.Hd[1])}" r="${f(handR - 2.5)}" fill="${skin}"/>`;
+      if (eq.poignets === "gants") s += `<circle cx="${f(A.Hd[0])}" cy="${f(A.Hd[1])}" r="${f(handR + 6)}" fill="#d62828" stroke="${ink}" stroke-width="3.5"/>`;
+      else if (openHand(A)) s += handD(A);
+      else s += fistD(A.Hd, A.E, A.d);
+    }
+    if (b0 >= 0) s = s.slice(0, b0) + `<g transform="${bodyTf}">` + s.slice(b0) + `</g>`;
+    if (EF && EF.fx) s += emFx(EF.fx, {arms, feet, headPt: p => tfPt(hRot(p)), bodyPt: tfPt, hx: cx, hy: headY, r: headR, ex: headR * .38, ey: headY - headR * .05, m, SW, W, yS, nkTop, ink});
     // ---- extras de pose
     if (pose === "kiss") {
       const A = arms[1], b = bulge(A);
@@ -1914,14 +2158,15 @@
       if (mood === "win") inner += `<path transform="translate(${f(PD.w * .3)} ${f(-PD.h - 4)}) scale(.8)" d="M0 7C-12 -1 -10 -10 -4 -10Q0 -10 0 -5Q0 -10 4 -10C10 -10 12 -1 0 7Z" fill="#ff2e63" stroke="${INK}" stroke-width="2.4"/>`;
       if (mood === "lose") inner += `<path d="M${f(PD.w * .32)} ${f(-PD.h + 2)}q5 8 0 11q-5 -3 0 -11z" fill="#8fd3ff" stroke="${INK}" stroke-width="1.8"/>`;
       if (PD.leash && !bust) {
-        const H2 = arms[1].Hd, lp = [px + PD.leash[0] * k, py + PD.leash[1] * k], mid = [(lp[0] + H2[0]) / 2, Math.max(lp[1], H2[1]) + 18];
+        const H2 = tfPt(arms[1].Hd), lp = [px + PD.leash[0] * k, py + PD.leash[1] * k], mid = [(lp[0] + H2[0]) / 2, Math.max(lp[1], H2[1]) + 18];
         s += `<path d="M${pt(H2)}Q${pt(mid)} ${pt(lp)}" stroke="${ink}" stroke-width="4" fill="none"/><path d="M${pt(H2)}Q${pt(mid)} ${pt(lp)}" stroke="#e63946" stroke-width="2" fill="none"/>`;
       }
       if (!PD.perch && !bust) s += `<ellipse cx="${f(px)}" cy="258" rx="${f(PD.w * k * .42)}" ry="${f(2 + 3 * k)}" fill="rgba(0,0,0,.22)"/>`;
-      s += `<g transform="translate(${f(px)} ${f(py)}) scale(${f(flip ? -k : k)} ${f(k)})">${inner}</g>`;
+      s += (PD.perch && bodyTf ? `<g transform="${bodyTf}">` : "") + `<g transform="translate(${f(px)} ${f(py)}) scale(${f(flip ? -k : k)} ${f(k)})">${inner}</g>` + (PD.perch && bodyTf ? `</g>` : "");
       if (opts.view === "pet") { const side = Math.max(PD.w, PD.h) * k * 1.5; vbOut = `${f(px - side / 2)} ${f(py - PD.h * k / 2 - side / 2)} ${f(side)} ${f(side)}`; }
     }
     // ---- effet d'arme pendant une pose (le lobby ajoute l'onomatopée et la roquette qui s'envole)
+    if (EF) wfx = null; // emotes : pas d'effet d'arme (elles ont leurs propres extras)
     if (opts.fx && wfx) {
       if (wfx.kind === "rocket") {
         const T = wtools(2.4), a = wfx.ang * Math.PI / 180, dx = Math.cos(a), dy = Math.sin(a), k = wfx.s;
@@ -1936,6 +2181,8 @@
       opts.out.anchors = {headX: cx, headY: +f(headY), headR: +f(headR), neckY: +f(nkTop), shoulderY: +f(yS),
         shoulderL: P2(arms[0].J), shoulderR: P2(arms[1].J), handL: P2(arms[0].Hd), handR: P2(arms[1].Hd), hipY: 172,
         kneeL: P2(lg(-1).knee), kneeR: P2(lg(1).knee), footL: P2(feet[-1]), footR: P2(feet[1]), groundY: 258, viewBox: vbOut.split(" ").map(Number)};
+      // emote : transformation du corps (glisse, chute) et de la tête, pour les effets posés par-dessus (legend.js)
+      if (EF) { opts.out.anchors.bodyTf = bodyTf; opts.out.anchors.headTf = (bodyTf + (EF.head ? ` rotate(${EF.head} ${cx} ${f(nkTop)})` : "")).trim(); }
     }
     return `<svg class="av" viewBox="${vbOut}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">` + s + `</svg>`;
   }
@@ -1948,7 +2195,10 @@
   const size = xp => SIZE0 * Math.pow(SIZE_MAX / SIZE0, Math.max(0, Math.min(MAX_LEVEL * LEVEL_XP, +xp || 0)) / (MAX_LEVEL * LEVEL_XP));
   const growth = xp => size(xp) / SIZE0;
   G.avatar = {svg, tier, muscle, size, growth, SKINS, HAIR_COLORS, HAIR_STYLES, CLOTH, TOPS, ACCS, TIERS, DEFAULT_LOOK,
-    LEVEL_XP, MAX_LEVEL, level, groups, skipLegDay, RARITIES, SLOTS, ITEMS, ITEM, equipped, POSES,
+    LEVEL_XP, MAX_LEVEL, level, groups, skipLegDay, RARITIES, SLOTS, ITEMS, ITEM, equipped, POSES, EMOTES, EMOTE,
+    // emote : images fixes ["floss.0", …] et durée de chacune (ms) ; once = reste sur la dernière image (3D, bulles)
+    emoteJoin,
+    emote: id => EMO[id] ? {frames: EMO[id].fr.slice(), ms: EMO[id].ms.slice(), once: !!EMO[id].once} : null,
     // infos de l'effet d'arme pour une pose : {kind, word, color, x, y, ang, s} en unités du SVG (ou null)
     weaponFx(look, xp, pose) { const o = {}; svg(look, xp, {pose, fx: true, out: o}); return o.fx || null; }};
 })();

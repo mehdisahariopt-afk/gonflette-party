@@ -1233,17 +1233,25 @@
         en.k = typeof d.scale === "number" && d.scale > 0 ? d.scale : 1;
         en.facing = d.facing === -1 ? -1 : 1;
         const pz = d.pose || null, pk = d.poseKey || pz;   // pose en cours : petit « pop » + anneau doré (+ effet d'arme)
-        if (pk !== (en.poseKey || null)) { en.pose = pz; en.poseKey = pk; if (pz) { en.popT = 0; en.pendingFx = d.fx || null; } else en.pendingFx = null; }
+        if (pk !== (en.poseKey || null)) { en.pose = pz; en.poseKey = pk; en.poseT0 = performance.now(); if (pz) { en.popT = 0; en.pendingFx = d.fx || null; } else en.pendingFx = null; }
         if (en.me) { en.x = d.x; en.y = d.y; }
         if (d.svg !== en.svg) {
           const old = en.svg;
           en.svg = d.svg; en.cache = d.svg ? acquireSvg(d.svg) : null;
           if (old) releaseSvg(old);
         }
-        if ((d.svg2 || null) !== (en.svg2 || null)) { // 2e image facultative (pose « 67 ») : alternée avec la 1re toutes les 0,28 s
+        if ((d.svg2 || null) !== (en.svg2 || null)) { // 2e image facultative (ancienne pose « 67 ») : alternée avec la 1re toutes les 0,28 s
           const old2 = en.svg2;
           en.svg2 = d.svg2 || null; en.cache2 = en.svg2 ? acquireSvg(en.svg2) : null;
           if (old2) releaseSvg(old2);
+        }
+        // emote : images fixes (d.frames, 1re = d.svg) jouées selon d.frameMs depuis le début de la pose ; frameOnce = reste sur la dernière
+        const fk = Array.isArray(d.frames) && d.frames.length > 1 ? d.frames.join("\u0002") : "";
+        if (fk !== (en.framesKey || "")) {
+          const oldF = en.frames || [];
+          en.framesKey = fk; en.frames = fk ? d.frames.slice() : null; en.fcaches = en.frames ? en.frames.map(acquireSvg) : null;
+          en.frameMs = fk && Array.isArray(d.frameMs) ? d.frameMs.slice() : null; en.frameOnce = !!d.frameOnce;
+          for (const x of oldF) releaseSvg(x);
         }
         const pr = d.pr > 0 ? d.pr | 0 : 0, bReady = pr && G.legend ? G.legend.badgeReady(pr) : false;
         const tk = [d.name, d.sub, en.me, !!d.voted, !!d.crown, pr, bReady].join("\u0001");
@@ -1257,6 +1265,7 @@
       if (en.tagTex) en.tagTex.dispose();
       if (en.svg) releaseSvg(en.svg);
       if (en.svg2) releaseSvg(en.svg2);
+      if (en.frames) for (const x of en.frames) releaseSvg(x);
       ents.delete(k);
     }
 
@@ -1401,7 +1410,15 @@
         if (!en.me) { const k = 1 - Math.exp(-dt * 12); en.x += (en.tx - en.x) * k; en.y += (en.ty - en.y) * k; }
         en.walkK += ((en.walking ? 1 : 0) - en.walkK) * Math.min(1, dt * 8);
         en.ph += dt * (en.walking ? 2 * Math.PI / .64 : 2);
-        const e = en.cache2 && en.cache2.tex && en.cache && en.cache.tex && !reduced && Math.floor(performance.now() / 280) % 2 ? en.cache2 : en.cache, ready = e && e.tex;
+        let e = en.cache2 && en.cache2.tex && en.cache && en.cache.tex && !reduced && Math.floor(performance.now() / 280) % 2 ? en.cache2 : en.cache;
+        if (en.fcaches && en.frameMs && en.cache && en.cache.tex && !reduced) { // emote : image courante (si sa texture est prête)
+          const ms = en.frameMs, T = ms.reduce((a, b) => a + Math.min(b, 1e6), 0) || 1;
+          let el = performance.now() - (en.poseT0 || 0), i = 0;
+          if (en.frameOnce) { el = Math.min(el, T - 1); } else el %= T;
+          while (i < ms.length - 1 && el >= ms[i]) { el -= ms[i]; i++; }
+          const c2 = en.fcaches[i]; if (c2 && c2.tex) e = c2;
+        }
+        const ready = e && e.tex;
         if (ready && en.mat.map !== e.tex) { en.mat.map = e.tex; en.mat.needsUpdate = true; }
         en.fade = Math.min(1, en.fade + (ready ? dt * 4 : 0));
         let X = wx(en.x); const Z = wz(en.y), floorY = tileTopAt(en.x, en.y);

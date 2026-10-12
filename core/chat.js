@@ -7,14 +7,21 @@
      « pointer-events: none » : elles ne bloquent jamais un toucher.
    - Anti-spam : 1 message / 1,5 s et 4 / 10 s par joueur (vérifié à l'envoi ET à la réception).
    - « Couper le chat » (réglage de l'appareil) : plus aucune bulle ni son des autres.
+   - Emotes (rangée du haut du sélecteur, les mêmes que la barre du lobby) : en partie, presence.qc = [id de l'emote, numéro,
+     contexte, heure] et une bulle montre le perso de l'envoyeur qui fait l'emote (même anti-spam, même contexte, même « couper ») ;
+     dans le lobby, le perso la fait sur le sol (G.lobby.emote → presence.po, comme la barre d'emotes).
+     Les anciens clients ignorent un qc dont le 1er élément n'est pas un numéro de phrase (et les numéros qu'ils ne connaissent pas).
    Index.html fournit G.lobby.chatCtx() / hostNow() / peers() / myPeer() / pushPresence(), met G.chat.presence() dans sa
    présence et appelle G.chat.update() à chaque changement des joueurs. Les anciens clients ignorent presence.qc. */
 (() => {
 "use strict";
 const G = window.GONFLETTE = window.GONFLETTE || {};
-const PHRASES = ["je t'ai bien baisé", "ahahahaha", "looser", "soooorrryyy", "ah d'accooord", "6️⃣7️⃣"];
-const I67 = 5;
-const SHOW_MS = 2600, MAX_SHOWN = 3, GAP_MS = 1500, WIN_MS = 10000, WIN_MAX = 4, STALE_MS = 20000;
+const PHRASES = ["je t'ai bien baisé", "ahahahaha", "looser", "soooorrryyy", "ah d'accooord", "6️⃣7️⃣", "battle d'aura ?"];
+const I67 = 5, IAURA = 6;
+const ORDER = [0, 1, 2, 3, 4, IAURA, I67]; // ordre dans le sélecteur (les numéros restent ceux des anciens clients)
+const EMOTES = () => (G.avatar && G.avatar.EMOTES) || [];
+const emo = id => typeof id === "string" ? EMOTES().find(e => e[0] === id) || null : null;
+const EM_SHOW_MS = 3200, SHOW_MS = 2600, MAX_SHOWN = 3, GAP_MS = 1500, WIN_MS = 10000, WIN_MAX = 4, STALE_MS = 20000;
 const KEY_OFF = "gonflette-chat-off";
 const store = {get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }};
 let off = store.get(KEY_OFF) === "1";
@@ -57,6 +64,21 @@ html.imm .qc-lob:active{transform:scale(.92)}
 #qc-pick button.qc-p67{justify-content:center;background:#ffcc3322;border-color:#ffcc3388}
 #qc-pick .qc-x{min-height:30px;font-size:.82rem;color:var(--dim,#b9aec6);justify-content:center;border-style:dashed}
 @keyframes qcpk{from{opacity:0;transform:translateY(-8px) scale(.9)}}
+.qc-aura{background:linear-gradient(90deg,#c77dff,#ffd23f,#7fe7ff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 4px #b14dff99)}
+#qc-pick button.qc-pa{border-color:#b14dff88;background:#b14dff22}
+/* emotes : bulle avec le perso entier qui fait l'emote */
+.qc-b.qc-em{padding:2px 12px 2px 3px;border-radius:18px;gap:7px}
+.qc-b.qc-em .qc-av{flex:none;width:62px;height:58px;border-radius:14px;overflow:hidden;background:radial-gradient(circle at 50% 35%,#ffffff30,transparent 70%),#2a2233;border:2px solid #ffcc33}
+.qc-b.qc-em .qc-av svg{width:100%;height:100%;display:block}
+.qc-b.qc-em .qc-tx{display:grid;gap:1px;min-width:0}
+.qc-b.qc-em .qc-e{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.9rem}
+.qc-b.qc-em .qc-w{font-family:var(--f-display,"Anton",Impact,sans-serif);font-weight:400;letter-spacing:.03em;font-size:.82rem;color:var(--qcw,#ffcc33);-webkit-text-stroke:.8px #1d1420;paint-order:stroke fill;white-space:nowrap}
+#qc-pick .qc-lb{font:800 .72rem var(--f-ui,"Barlow Condensed",sans-serif);letter-spacing:.08em;text-transform:uppercase;color:var(--dim,#b9aec6);padding:0 4px}
+#qc-pick .qc-eg{display:grid;grid-template-columns:repeat(6,40px);gap:4px;justify-content:center}
+#qc-pick .qc-eg button{display:grid;place-items:center;width:40px;height:40px;min-height:0;padding:0;border-radius:12px;font-size:1.25rem;line-height:1;justify-content:center;background:#ffcc3314;border-color:#ffcc3355}
+#qc-pick .qc-eg button small{display:none}
+#qc-pick .qc-eg button.e67{font-size:.72rem;letter-spacing:-.04em}
+#qc-pick .qc-sep{height:1px;background:#ffffff22;margin:2px 4px}
 @media (prefers-reduced-motion:reduce){.qc-b,.qc-67 i,#qc-pick{animation:none!important}}
 `;
 { const s = document.createElement("style"); s.id = "qc-css"; s.textContent = css; document.head.appendChild(s); }
@@ -70,7 +92,15 @@ function headSvg(look, xp) {
   if (v == null) { try { v = A.svg(look, xp || 0, {view: "bust"}); } catch (e) { v = ""; } heads.set(k, v); if (heads.size > 40) heads.delete(heads.keys().next().value); }
   return v;
 }
-const phraseHtml = i => i === I67 ? `<span class="qc-67"><i>6️⃣</i><i>7️⃣</i><b>SIX… SEVEN !</b></span>` : esc(PHRASES[i]);
+const emSvgs = new Map();
+function emoteSvg(look, xp, id) {
+  const A = G.avatar; if (!A || !look) return "";
+  const k = JSON.stringify([look, xp || 0, id]);
+  let v = emSvgs.get(k);
+  if (v == null) { try { v = A.svg(look, xp || 0, {pose: id}); } catch (e) { v = ""; } emSvgs.set(k, v); if (emSvgs.size > 24) emSvgs.delete(emSvgs.keys().next().value); }
+  return v;
+}
+const phraseHtml = i => i === IAURA ? `<span class="qc-aura">${esc(PHRASES[i])}</span>` : i === I67 ? `<span class="qc-67"><i>6️⃣</i><i>7️⃣</i><b>SIX… SEVEN !</b></span>` : esc(PHRASES[i]);
 function stackTop() {
   const gl = document.getElementById("game-layer");
   if (gl && !gl.classList.contains("hidden")) { const t = gl.querySelector(".game-top"); return t ? t.getBoundingClientRect().bottom + 5 : 8; }
@@ -95,20 +125,24 @@ function show(peer, i, isMe) {
   const s = stack();
   s.style.top = Math.round(stackTop()) + "px";
   const b = document.createElement("div");
-  b.className = "qc-b" + (isMe ? " me" : "");
-  b.innerHTML = `<span class="qc-h">${headSvg(look, xp)}</span><span class="qc-n">${esc(name)}</span><span class="qc-t">${phraseHtml(i)}</span>`;
+  const E = emo(i);
+  b.className = "qc-b" + (isMe ? " me" : "") + (E ? " qc-em" : "");
+  if (E) { // emote : le perso entier (images clés animées dans le SVG) + nom + emote
+    b.style.setProperty("--qcw", E[5]);
+    b.innerHTML = `<span class="qc-av">${emoteSvg(look, xp, E[0])}</span><span class="qc-tx"><span class="qc-n">${esc(name)}</span><span class="qc-e">${E[0] === "67" ? `<span class="qc-67"><i>6️⃣</i><i>7️⃣</i></span>` : E[2]} ${esc(E[1])}</span><span class="qc-w">${esc(E[4])}</span></span>`;
+  } else b.innerHTML = `<span class="qc-h">${headSvg(look, xp)}</span><span class="qc-n">${esc(name)}</span><span class="qc-t">${phraseHtml(i)}</span>`;
   s.appendChild(b);
   s.querySelectorAll(".qc-b.out").forEach(x => x.remove()); // une bulle qui s'efface laisse tout de suite la place
   const live = [...s.children];
   const max = innerHeight < 780 ? 2 : MAX_SHOWN; // petit écran : 2 bulles au plus (le haut du jeu reste visible)
   for (const x of live.slice(0, Math.max(0, live.length - max))) x.remove();
-  setTimeout(() => { b.classList.add("out"); setTimeout(() => b.remove(), 320); }, SHOW_MS);
-  if (G.kit) { G.kit.sfx("pop"); G.kit.emit("qc", {peer, i, text: PHRASES[i], me: !!isMe}); }
+  setTimeout(() => { b.classList.add("out"); setTimeout(() => b.remove(), 320); }, E ? EM_SHOW_MS : SHOW_MS);
+  if (G.kit) { G.kit.sfx("pop"); if (E) G.kit.emit("qc:em", {peer, id: E[0], me: !!isMe}); else G.kit.emit("qc", {peer, i, text: PHRASES[i], me: !!isMe}); }
 }
 function peerPresence(k) { const ps = L().peers ? L().peers() : []; const p = ps.find(q => q.peer === k); return p && p.presence; }
 
 /* ---------- réception ---------- */
-function valid(qc) { return Array.isArray(qc) && Number.isInteger(qc[0]) && qc[0] >= 0 && qc[0] < PHRASES.length && qc[1] != null; }
+function valid(qc) { return Array.isArray(qc) && ((Number.isInteger(qc[0]) && qc[0] >= 0 && qc[0] < PHRASES.length) || !!emo(qc[0])) && qc[1] != null; }
 function update() {
   const ps = L().peers ? L().peers() : [], me = L().myPeer ? L().myPeer() : null, ctx = ctxNow(), t = now();
   for (const p of ps) {
@@ -135,7 +169,7 @@ function canSend() {
   return 0;
 }
 function send(i) {
-  if (!(i >= 0 && i < PHRASES.length)) return false;
+  if (!(i >= 0 && i < PHRASES.length) && !emo(i)) return false;
   const ctx = ctxNow(); if (!ctx) return false;
   const wait = canSend();
   if (wait > 0) { hint(wait); return false; }
@@ -148,6 +182,13 @@ function send(i) {
   setTimeout(syncBtns, GAP_MS + 30);
   if (sent.length >= WIN_MAX) setTimeout(syncBtns, sent[0] + WIN_MS - now() + 30);
   return true;
+}
+// emote : dans le lobby, le perso la fait sur le sol (presence.po, anti-spam des poses) ; en partie, bulle animée (presence.qc)
+function sendEmote(id) {
+  if (!emo(id)) return false;
+  const ctx = ctxNow(); if (!ctx) return false;
+  if (ctx.slice(0, 2) === "l:" && L().emote) return !!L().emote(id);
+  return send(id);
 }
 function hint(ms) {
   const s = stack(); s.style.top = Math.round(stackTop()) + "px";
@@ -180,9 +221,13 @@ function openPick(anchor) {
   if (!ctxNow()) return;
   const p = document.createElement("div");
   p.id = "qc-pick"; p.setAttribute("role", "menu"); p.setAttribute("aria-label", "Chat rapide");
-  p.innerHTML = PHRASES.map((t, i) => `<button type="button" role="menuitem" data-qc="${i}"${i === I67 ? ` class="qc-p67" aria-label="Six seven"` : ""}>${i === I67 ? phraseHtml(i) : "💬 " + esc(t)}</button>`).join("")
+  const ems = EMOTES();
+  p.innerHTML = (ems.length ? `<div class="qc-lb">Emotes</div><div class="qc-eg">${ems.map(e => `<button type="button" role="menuitem" data-qe="${e[0]}"${e[0] === "67" ? ` class="e67"` : ""} title="${esc(e[1])}" aria-label="Emote : ${esc(e[1])}">${e[0] === "67" ? "6️⃣7️⃣" : e[2]}</button>`).join("")}</div><div class="qc-sep"></div>` : "")
+    + ORDER.map(i => `<button type="button" role="menuitem" data-qc="${i}"${i === I67 ? ` class="qc-p67" aria-label="Six seven"` : i === IAURA ? ` class="qc-pa"` : ""}>${i === I67 ? phraseHtml(i) : "💬 " + phraseHtml(i)}</button>`).join("")
     + `<button type="button" class="qc-x" data-qc="mute">${off ? "🔔 Réactiver le chat" : "🔕 Couper le chat"}</button>`;
   p.addEventListener("click", e => {
+    const be = e.target.closest("[data-qe]");
+    if (be) { e.stopPropagation(); closePick(); sendEmote(be.dataset.qe); return; }
     const b = e.target.closest("[data-qc]"); if (!b) return;
     e.stopPropagation();
     if (b.dataset.qc === "mute") { setOff(!off); closePick(); return; }
@@ -212,6 +257,6 @@ function addButtons() {
 }
 addButtons();
 
-G.chat = {PHRASES, send, update, presence: () => mine, muted: () => off, setMuted: setOff, close: closePick, canSend,
+G.chat = {PHRASES, send, sendEmote, update, presence: () => mine, muted: () => off, setMuted: setOff, close: closePick, canSend,
   debug: () => ({mine, sent: sent.slice(), off, seen: [...seen], shown: [...document.querySelectorAll("#qc-stack .qc-b:not(.out)")].map(b => b.textContent)})};
 })();
