@@ -65,6 +65,17 @@ button{font:inherit;color:inherit}
 .room-row{display:flex;gap:8px;flex-wrap:wrap}
 .room-row input{flex:1;min-width:0;font:inherit;font-family:var(--f-display);font-size:1.6rem;padding:8px 12px;border-radius:12px;border:3px solid var(--ink);background:#fff;color:var(--ink);text-transform:uppercase;letter-spacing:.08em}
 .room-box small{color:var(--dim);font-weight:600}
+.ed-pseudo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.ed-pseudo label{font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-size:.9rem}
+.ed-pseudo input{flex:1 1 200px;max-width:340px;min-width:0;font:inherit;font-family:var(--f-display);font-size:1.5rem;padding:6px 12px;border-radius:12px;border:3px solid var(--ink);background:#fff;color:var(--ink);text-transform:uppercase}
+.ed-pseudo input:focus-visible,.rm input:focus-visible{outline:4px solid var(--gold)}
+/* 🚪 changer de salle */
+.rm{display:grid;gap:10px;text-align:left}
+.sheet .rm h2{margin:0 44px 0 0}
+.rm .net-box{margin:0}
+.rm label{font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-size:.85rem}
+.rm form{display:grid;gap:8px}
+.rm small{color:var(--dim);font-weight:600;line-height:1.25}
 .roomtag{font-weight:800;font-size:.85rem;background:#ffffff14;border-radius:999px;padding:3px 10px}
 .lead{margin:0;color:var(--dim);font-size:1.1rem;max-width:52ch}
 .editor{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:22px;align-items:start}
@@ -525,7 +536,7 @@ html.imm.lob body{position:fixed;inset:0;width:100%}
 html.imm #scr-lobby .wrap{padding:0;max-width:none}
 html.imm .lobby-grid{display:block}
 html.imm .scene{position:fixed;left:0;right:0;top:0;width:auto;height:100vh;height:100dvh;aspect-ratio:auto;border:0;border-radius:0;box-shadow:none;z-index:1;touch-action:none;-webkit-tap-highlight-color:transparent;--ft:150px;--fb:130px}
-html.imm aside.roster,html.imm .teambar,html.imm .net-help,html.imm .brand,html.imm #btn-edit,html.imm #wallet,html.imm #btn-loot,html.imm #roomtag,html.imm #btn-share,html.imm #netbadge,html.imm .placebar .lbl-decor,html.imm #btn-shop .lbl{display:none!important}
+html.imm aside.roster,html.imm .teambar,html.imm .net-help,html.imm .brand,html.imm #btn-edit,html.imm #wallet,html.imm #btn-loot,html.imm #roomtag,html.imm #btn-share,html.imm #btn-room,html.imm #netbadge,html.imm .placebar .lbl-decor,html.imm #btn-shop .lbl{display:none!important}
 /* haut : mon perso (à gauche), boutons ronds (à droite) */
 html.imm .topbar{position:fixed;z-index:30;top:var(--top1);left:calc(var(--hx) + var(--sal));right:calc(var(--hx) + var(--sar));margin:0;display:flex;flex-wrap:nowrap;gap:6px;align-items:center;justify-content:space-between;pointer-events:none}
 html.imm .topbar>*{pointer-events:auto}
@@ -795,13 +806,14 @@ html.imm .ov-card{max-height:calc(100dvh - 2 * max(16px,env(safe-area-inset-top,
 <section class="entry hidden" id="scr-edit">
   <div class="entry-card">
     <h1 class="logo" style="font-size:clamp(2rem,6vw,3.4rem)">Votre perso</h1>
+    <div class="ed-pseudo"><label for="ed-pseudo">Pseudo</label><input id="ed-pseudo" maxlength="14" autocomplete="nickname" placeholder="MUSCLOR" enterkeyhint="done"></div>
     <div class="editor">
       <div class="preview"><div id="ed-preview"></div><div class="who" id="ed-name"></div><div class="lvl" id="ed-lvl"></div></div>
       <div class="opts" id="ed-opts"></div>
     </div>
     <div class="ed-extra" id="ed-extra"></div>
     <p class="muscle-note">Les muscles ne se choisissent pas, ils se gagnent : <b>+100 XP par victoire</b>, +40 pour la 2e place, +25 pour chaque partie jouée. <b>Chaque victoire vous fait gonfler d’environ 5 %</b> (chaque partie jouée, un peu aussi) : à 1 500 XP vous êtes une montagne, à 2 000 XP un titan démesuré. Seuls les gagnants remportent des shakers 🥤 et un shaker mystère.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="ed-go">Entrer dans le lobby</button><button class="btn alt" type="button" id="ed-rename">Changer de pseudo</button><button class="btn alt" type="button" id="ed-save">💾 Sauvegarder mon perso</button></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="ed-go">Entrer dans le lobby</button><button class="btn alt" type="button" id="ed-save">💾 Sauvegarder mon perso</button></div>
   </div>
 </section>
 
@@ -818,6 +830,7 @@ html.imm .ov-card{max-height:calc(100dvh - 2 * max(16px,env(safe-area-inset-top,
         <button class="chip loot-chip" type="button" id="btn-loot" hidden>🎁 Shakers à ouvrir : <b id="loot-n">0</b></button>
         <span class="roomtag" id="roomtag" hidden></span>
         <button class="chip" type="button" id="btn-share" hidden>Copier le lien</button>
+        <button class="chip" type="button" id="btn-room" hidden>🚪 Changer de salle</button>
         <span class="netbadge" id="netbadge" role="status"></span>
         <button class="chip hud-menu" type="button" id="hb-menu" aria-label="Menu" title="Menu">⋯<i class="hud-dot" id="hb-net-dot"></i></button>
       </div>
@@ -1048,6 +1061,7 @@ const OPTS = [
 ];
 let editing = false;
 function drawEditor() {
+  if (document.activeElement !== $("ed-pseudo")) $("ed-pseudo").value = profile.pseudo;
   $("ed-preview").innerHTML = A.svg(myLook(), profile.xp, {pose: "flex", lg: "full"});
   $("ed-name").innerHTML = LG ? LG.nameHtml(esc(profile.pseudo), profile.pr) : esc(profile.pseudo);
   const t = A.tier(profile.xp);
@@ -1063,9 +1077,19 @@ $("ed-opts").addEventListener("click", e => {
   const f = document.querySelector(`[data-k="${b.dataset.k}"][data-v="${b.dataset.v}"]`); if (f) f.focus();
   pushPresence();
 });
-function openEditor() { editing = true; drawEditor(); show("scr-edit"); pushPresence(); }
+function openEditor() { editing = true; drawEditor(); $("ed-go").textContent = inLobby ? "Retour au lobby" : "Entrer dans le lobby"; show("scr-edit"); pushPresence(); }
 $("ed-go").addEventListener("click", () => { editing = false; enterLobby(); });
-$("ed-rename").addEventListener("click", () => { editing = false; show("scr-name"); $("pseudo").focus(); });
+// pseudo modifiable ici (le joueur qui revient entre directement dans sa salle : plus d'écran pseudo)
+const cleanPseudo = v => String(v == null ? "" : v).trim().replace(/\s+/g, " ").slice(0, 14);
+$("ed-pseudo").addEventListener("input", () => {
+  const v = cleanPseudo($("ed-pseudo").value);
+  if (!v || v === profile.pseudo) return;
+  profile.pseudo = v; saveProfile(); $("pseudo").value = v;
+  $("ed-name").innerHTML = LG ? LG.nameHtml(esc(v), profile.pr) : esc(v);
+  pushPresence();
+});
+$("ed-pseudo").addEventListener("blur", () => { $("ed-pseudo").value = profile.pseudo; });
+$("ed-pseudo").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("ed-pseudo").blur(); } });
 $("btn-edit").addEventListener("click", openEditor);
 
 /* ---------- réseau ---------- */
@@ -1099,15 +1123,22 @@ function renderNet() {
 }
 const MODE = G.net.mode();
 let roomCode = "", booted = false;
+// Dernière salle à code rejointe sur cet appareil (hors profil : une restauration de perso ne la change pas).
+// Au lancement, un joueur qui a déjà un perso y entre directement (voir la fin du script).
+const ROOM_KEY = "gonflette-lastroom" + PROF_KEY.slice("gonflette-profile".length);
+const cleanCode = c => String(c == null ? "" : c).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+function lastRoom() { try { const c = cleanCode(localStorage.getItem(ROOM_KEY)); return c.length >= 3 ? c : ""; } catch (e) { return ""; } }
+function saveLastRoom(c) { try { localStorage.setItem(ROOM_KEY, c); } catch (e) {} }
 if (MODE === "p2p") {
   $("room-box").hidden = false;
-  const h = roomHash();
+  const h = roomHash() || lastRoom();
   if (h) $("room-code").value = h;
 }
 const newCode = () => { const A = "ABCDEFGHJKLMNPQRSTUVWXYZ"; let c = ""; for (let i = 0; i < 4; i++) c += A[Math.floor(Math.random() * A.length)]; return c + Math.floor(10 + Math.random() * 90); };
 $("room-new").addEventListener("click", () => { $("room-code").value = newCode(); });
+const roomUrl = () => location.href.split("#")[0] + "#" + roomCode;
 $("btn-share").addEventListener("click", () => {
-  const url = location.href.split("#")[0] + "#" + roomCode;
+  const url = roomUrl();
   const fallback = () => toast("Lien : " + url);
   try { navigator.clipboard.writeText(url).then(() => toast("Lien copié : envoyez-le à vos amis !"), fallback); } catch (e) { fallback(); }
 });
@@ -1115,7 +1146,8 @@ async function boot() {
   booted = true;
   renderNet();
   if (MODE === "p2p") {
-    $("roomtag").hidden = false; $("roomtag").textContent = "Salle " + roomCode; $("btn-share").hidden = false;
+    $("roomtag").hidden = false; $("roomtag").textContent = "Salle " + roomCode; $("btn-share").hidden = false; $("btn-room").hidden = false;
+    saveLastRoom(roomCode);
     net = await G.net.connectP2P(roomCode);
   } else net = await G.net.connect();
   if (net.offline) { netState = "offline"; lastNetError = {timeout: "pas de réponse après 20 s", error: "erreur", unavailable: "accès refusé ou non disponible", p2p: "connexion directe au téléphone relais impossible", "relay-unsupported": "navigateur trop ancien"}[net.reason] || net.reason; renderNet(); return; }
@@ -1994,8 +2026,8 @@ function openDrawer(kind) {
     const nb = $("netbadge"), help = $("net-help"), n = players().length, s3ok = !!(G.scene3d && G.scene3d.supported);
     const li = (k, i, t, sub, x) => `<li><button type="button" data-menu="${k}"><span class="mi">${i}</span><span>${t}${sub ? `<small>${sub}</small>` : ""}</span>${x ? `<span class="mx">${x}</span>` : ""}</button></li>`;
     openSheet("menu", `<div class="dr"><h2>Menu</h2><div class="net-box"><span class="${esc(nb.className)}">${esc(nb.textContent)}</span>${MODE === "p2p" && roomCode ? `<div>Salle <span class="room">${esc(roomCode)}</span></div>` : ""}${!help.hidden && help.textContent ? `<p>${esc(help.textContent)}</p>` : ""}</div>
-      <ul class="menu-list">${MODE === "p2p" && roomCode ? li("share", "🔗", "Copier le lien d'invitation", "Envoyez-le à vos amis") : ""}
-      ${li("edit", "✏️", "Mon perso", esc(titleOf(myLook(), profile.xp)) + " · " + profile.xp + " XP")}
+      <ul class="menu-list">${MODE === "p2p" && roomCode ? li("share", "🔗", "Copier le lien d'invitation", "Envoyez-le à vos amis") + li("room", "🚪", "Changer de salle", "Nouveau code, ou rejoindre la salle d'un ami") : ""}
+      ${li("edit", "✏️", "Modifier mon perso", esc(profile.pseudo) + " · " + esc(titleOf(myLook(), profile.xp)) + " · " + profile.xp + " XP")}
       ${li("save", "💾", "Sauvegarder mon perso", "Code ou QR : retrouvez-le sur un autre téléphone")}
       ${li("shop", "🛒", "Boutique", "🥤 " + profile.sh + " shakers")}
       ${profile.loot > 0 ? li("loot", "🎁", "Shakers mystère à ouvrir", "", profile.loot) : ""}
@@ -2017,6 +2049,7 @@ $("sheet").addEventListener("click", e => {
     else if (k === "loot") openLoot();
     else if (k === "rivals") openRivals();
     else if (k === "share") $("btn-share").click();
+    else if (k === "room") openRoom();
     else if (k === "save") openSave();
     else if (k === "install") doInstall();
     else if (k === "netdiag") openNetDiag();
@@ -2029,6 +2062,47 @@ $("sheet").addEventListener("click", e => {
   // tiroir de soirée : une action (lancer, photo, classement…) ouvre l'écran de soirée par-dessus, on referme le tiroir
   if (sheetKind === "soiree" && e.target.closest("[data-so]")) setTimeout(() => { if (sheetKind === "soiree") { closeSheet(); renderAll(); } }, 0);
   // liste des joueurs : la fiche d'un joueur (face-à-face) remplace le tiroir
+});
+/* 🚪 Changer de salle (salles à code) : copier / partager le lien de la salle actuelle, ou en rejoindre une autre.
+   Changer de salle = recharger la page sur le nouveau code : l'ancienne salle est quittée proprement (« au revoir »
+   envoyé à la fermeture de la page, core/net.js), la mémoire de l'onglet (équipe, parties) repart de zéro, et l'entrée
+   automatique du lancement (fin du script) nous place directement dans le lobby de la nouvelle salle. */
+function openRoom() {
+  if (MODE !== "p2p" || !roomCode) return;
+  closePoses();
+  const n = players().length;
+  openSheet("room", `<div class="rm"><h2>🚪 Changer de salle</h2>
+    <div class="net-box"><div>Vous êtes dans la salle <span class="room" id="rm-cur">${esc(roomCode)}</span></div><small>${n > 1 ? `${n} joueurs dans la salle` : "Vous êtes seul dans la salle pour l'instant"}</small></div>
+    <div class="sv-acts"><button class="btn alt" type="button" data-rm="copy">🔗 Copier le lien</button>${typeof navigator.share === "function" ? `<button class="btn alt" type="button" data-rm="share">📤 Partager</button>` : ""}</div>
+    <form id="rm-form" autocomplete="off" novalidate><label for="rm-code">Aller dans une autre salle</label>
+    <div class="room-row"><input id="rm-code" maxlength="12" placeholder="EX : MUSCU42" autocapitalize="characters" enterkeyhint="go" spellcheck="false"></div>
+    <p class="sv-err" id="rm-err" role="alert"></p>
+    <div class="sv-acts"><button class="btn alt" type="button" data-rm="new">🎲 Nouvelle salle</button><button class="btn" type="submit" id="rm-go">Rejoindre</button></div>
+    <small>Tapez le code d'un ami pour le rejoindre, ou créez une nouvelle salle et envoyez-lui le lien.</small></form></div>`, true);
+}
+function switchRoom(c) {
+  saveLastRoom(c);
+  for (const k of Object.keys(sess)) delete sess[k];
+  saveSess({sw: c}); // seul souvenir gardé : « on vient de changer de salle » (message d'accueil)
+  try { history.replaceState(null, "", location.pathname + location.search + "#" + c); } catch (e) { location.hash = c; }
+  location.reload();
+}
+$("btn-room").addEventListener("click", openRoom);
+$("sheet").addEventListener("click", e => {
+  const b = e.target.closest("[data-rm]"); if (!b) return;
+  const k = b.dataset.rm, okMsg = "Lien copié : envoyez-le à vos amis !";
+  if (k === "copy") copyText(roomUrl(), okMsg);
+  else if (k === "share") navigator.share({title: "Gonflette Party", text: `Viens me rejoindre dans la salle ${roomCode} sur Gonflette Party 💪`, url: roomUrl()}).catch(err => { if (!err || err.name !== "AbortError") copyText(roomUrl(), okMsg); });
+  else if (k === "new") { $("rm-code").value = newCode(); $("rm-err").textContent = ""; }
+});
+$("sheet").addEventListener("submit", e => {
+  if (e.target.id !== "rm-form") return;
+  e.preventDefault();
+  const c = cleanCode($("rm-code").value);
+  if (c.length < 3) { $("rm-err").textContent = "Le code de la salle doit faire au moins 3 caractères (lettres et chiffres)."; $("rm-code").focus(); return; }
+  if (c === roomCode) { $("rm-err").textContent = `Vous êtes déjà dans la salle ${c}.`; return; }
+  $("rm-go").disabled = true; $("rm-go").textContent = `Direction la salle ${c}…`;
+  switchRoom(c);
 });
 // bandeau de soirée (téléphone) : le toucher ouvre le tiroir 🎉
 document.addEventListener("click", e => { const b = imm && e.target.closest("#scr-lobby #so-bar"); if (b && !e.target.closest("button")) openDrawer("soiree"); });
@@ -3052,8 +3126,15 @@ var SO = G.soiree ? G.soiree.init({players, peers: () => peers, me: () => myPeer
 requestAnimationFrame(frame);
 if (MODE !== "p2p") boot();
 if (profile.pseudo) { $("pseudo").value = profile.pseudo; }
+/* Entrée automatique : un joueur qui a déjà un perso sur cet appareil entre directement dans le lobby, sans écran
+   pseudo ni éditeur. Salle à code : celle du lien (invitation) d'abord, sinon celle de l'onglet (rechargement),
+   sinon la dernière salle de cet appareil ; aucune salle connue → écran pseudo pré-rempli. Salle claude.ai : toujours.
+   Mode ?mock (tests, onglets locaux) : inchangé, seulement après un rechargement depuis le lobby.
+   Nouveau joueur : écran pseudo (+ code de salle), puis éditeur. Pour changer : ⋯ › 🚪 Changer de salle / ✏️ Modifier mon perso. */
+const autoCode = MODE === "p2p" ? [roomHash(), sess.r, lastRoom()].map(cleanCode).find(c => c.length >= 3) || "" : "";
+const autoIn = !!profile.pseudo && (MODE === "p2p" ? !!autoCode : MODE === "claude" || !!sess.lob);
 show("scr-name");
-$("pseudo").focus();
+if (!autoIn) $("pseudo").focus();
 /* ---------- écran allumé, onglet caché ---------- */
 // Wake Lock : l'écran reste allumé dans le lobby et en jeu (surtout le téléphone hôte, qui organise les parties).
 // Non pris en charge ou refusé (iframe, vieux navigateur) : on continue sans, l'hôte passe la main s'il est caché.
@@ -3075,10 +3156,19 @@ addEventListener("pointerdown", () => keepAwake(), {passive: true}); // certains
 
 // Rechargement (ou onglet tué puis restauré) alors qu'on était dans le lobby : on y retourne directement,
 // avec la même clé (core/net.js), donc dans sa partie si elle continue.
-if (sess.lob && profile.pseudo) {
-  if (sess.tm === 0 || sess.tm === 1) { me.team = sess.tm; me.teamName = sess.tn || null; }
-  const code = MODE === "p2p" ? (roomHash() || sess.r || "") : "";
-  if (MODE !== "p2p" || code.length >= 3) { if (MODE === "p2p") { roomCode = code; if (!booted) boot(); } enterLobby(); }
+if (autoIn) {
+  if (sess.lob && (sess.tm === 0 || sess.tm === 1)) { me.team = sess.tm; me.teamName = sess.tn || null; }
+  const switched = sess.sw && sess.sw === autoCode;
+  if (sess.sw) saveSess({sw: null});
+  if (MODE === "p2p") {
+    roomCode = autoCode; $("room-code").value = autoCode;
+    // l'adresse porte le code de la salle (lien à partager, rechargement) ; un lien #restore= est nettoyé après coup
+    if (roomHash() !== autoCode && !restoreFromHash()) try { history.replaceState(null, "", location.pathname + location.search + "#" + autoCode); } catch (e) {}
+    if (!booted) boot();
+  }
+  enterLobby();
+  const nm = cleanPseudo(profile.pseudo);
+  toast(MODE === "p2p" ? (switched ? `Salle ${autoCode} · C'est parti ${nm} ! 💪` : `Salle ${autoCode} · Bon retour ${nm} ! 💪`) : `Bon retour ${nm} ! 💪`);
 }
 // Lien de restauration (QR code scanné : …/#restore=GF1.…) : fenêtre de confirmation avec l'aperçu du perso
 { const rc = restoreFromHash(); if (rc) openRestore(rc, "link"); }
